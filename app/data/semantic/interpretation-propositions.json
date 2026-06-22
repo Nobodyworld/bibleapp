@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "content_version": "local-packaged-2026-06-20",
+  "description": "Starter interpretation propositions for future opt-in polls and local analytics. These are prompts, not conclusions, and do not contain aggregate responses.",
+  "propositions": [
+    {
+      "id": "proposition:john-1-1-logos-eternal-existence",
+      "schema_version": 1,
+      "target": {
+        "target_type": "verse",
+        "edition_id": "bsb",
+        "reference": {
+          "book_id": "john",
+          "chapter": 1,
+          "verse_start": 1,
+          "verse_end": 1
+        }
+      },
+      "prompt": "Does this verse present the Word as existing before creation?",
+      "response_type": "agreement_scale",
+      "options": ["strongly_disagree", "disagree", "uncertain", "agree", "strongly_agree"],
+      "version": 1,
+      "status": "draft"
+    },
+    {
+      "id": "proposition:genesis-1-1-definite-creation-beginning",
+      "schema_version": 1,
+      "target": {
+        "target_type": "verse",
+        "edition_id": "bsb",
+        "reference": {
+          "book_id": "genesis",
+          "chapter": 1,
+          "verse_start": 1,
+          "verse_end": 1
+        }
+      },
+      "prompt": "Does this verse present creation as having a definite beginning?",
+      "response_type": "agreement_scale",
+      "options": ["strongly_disagree", "disagree", "uncertain", "agree", "strongly_agree"],
+      "version": 1,
+      "status": "draft"
+    },
+    {
+      "id": "proposition:proverbs-1-7-knowledge-wisdom-foundation",
+      "schema_version": 1,
+      "target": {
+        "target_type": "verse",
+        "edition_id": "bsb",
+        "reference": {
+          "book_id": "proverbs",
+          "chapter": 1,
+          "verse_start": 7,
+          "verse_end": 7
+        }
+      },
+      "prompt": "Does this verse frame reverence for the LORD as the foundation for knowledge or wisdom?",
+      "response_type": "agreement_scale",
+      "options": ["strongly_disagree", "disagree", "uncertain", "agree", "strongly_agree"],
+      "version": 1,
+      "status": "draft"
+    }
+  ]
+}

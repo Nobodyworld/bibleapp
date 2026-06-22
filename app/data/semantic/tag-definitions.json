@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "content_version": "local-packaged-2026-06-20",
+  "description": "System semantic tag definitions. These define concepts; user tag applications are stored separately as assertions.",
+  "definitions": [
+    {
+      "id": "tag:positive-sentiment",
+      "schema_version": 1,
+      "namespace": "system",
+      "legacy_id": "positive_sentiment",
+      "label": "Positive",
+      "description": "The target expresses blessing, approval, hope, comfort, gratitude, or another positive sentiment.",
+      "category": "sentiment",
+      "allowed_target_types": ["verse", "verse_range", "text_span", "source_token"],
+      "default_icon": "+",
+      "default_color": "#1f7a4d",
+      "status": "active"
+    },
+    {
+      "id": "tag:negative-sentiment",
+      "schema_version": 1,
+      "namespace": "system",
+      "legacy_id": "negative_sentiment",
+      "label": "Negative",
+      "description": "The target expresses warning, grief, judgment, opposition, lament, or another negative sentiment.",
+      "category": "sentiment",
+      "allowed_target_types": ["verse", "verse_range", "text_span", "source_token"],
+      "default_icon": "-",
+      "default_color": "#a33a3a",
+      "status": "active"
+    },
+    {
+      "id": "tag:command-declaration",
+      "schema_version": 1,
+      "namespace": "system",
+      "legacy_id": "command_declaration",
+      "label": "Command/Declaration",
+      "description": "The target contains or expresses an instruction, imperative, charge, formal declaration, or authoritative statement.",
+      "category": "discourse_function",
+      "allowed_target_types": ["verse", "verse_range", "text_span", "source_token"],
+      "default_icon": "!",
+      "default_color": "#7a5c12",
+      "status": "active"
+    },
+    {
+      "id": "tag:question",
+      "schema_version": 1,
+      "namespace": "system",
+      "legacy_id": "question",
+      "label": "Question",
+      "description": "The target contains or expresses a question, whether direct, rhetorical, or implied by the discourse.",
+      "category": "discourse_function",
+      "allowed_target_types": ["verse", "verse_range", "text_span", "source_token"],
+      "default_icon": "?",
+      "default_color": "#315f99",
+      "status": "active"
+    }
+  ]
+}

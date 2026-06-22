@@ -1,0 +1,4 @@
+server.err.log
+server.out.log
+.edge-cdp-profile*/
+.tmp*/

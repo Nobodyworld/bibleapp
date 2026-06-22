@@ -1,0 +1,37 @@
+{
+  "translation": {
+    "id": "slt",
+    "code": "SLT",
+    "name": "Smith's Literal Translation"
+  },
+  "book": {
+    "id": "obadiah",
+    "name": "Obadiah",
+    "osis": "Obad"
+  },
+  "chapters": {
+    "1": {
+      "1": "The vision of Obadiah. Thus said the Lord Jehovah to Edom: We heard a report from Jehovah, a messenger was sent among the nations; arise ye, and we will rise up against her for war.",
+      "2": "Behold, I gave thee small among the nations: thou being greatly despised.",
+      "3": "The pride of thy heart deceived thee, dwelling in the refuges of the rock, the height his seat; he said in his heart, Who shall bring me down to the earth?",
+      "4": "If thou shalt exalt as the eagle, and set thy nest between the stars, from thence will I bring thee down, says Jehovah.",
+      "5": "If thieves came to thee, if those laying waste by night, (how thou wert destroyed!) will not they steal their sufficiency? If the grape gatherers came to thee will they not leave gleanings?",
+      "6": "How were they of Esau sought out! His hidden things were sought out.",
+      "7": "All the men of thy covenant sent thee even to the bound: the men of thy peace deceived thee, they prevailed against thee; they set thy bread a snare under thee: no understanding in him.",
+      "8": "Was it not in that day, says Jehovah, and I destroyed the wise out of Edom, and understanding from mount Esau?",
+      "9": "And thy strong ones were terrified, O Teman, so that each shall be cut off from mount Esau from slaughter.",
+      "10": "From this violence of thy brother Jacob, shame shall cover thee, and thou wert cut off forever.",
+      "11": "In the day of thy standing from before, in the day of the strangers carrying away captive his strength, and foreigners came into his gate, and upon Jerusalem they cast the lot, also thou as one of them.",
+      "12": "And thou shalt not look upon thy brother in the day of his calamity, and thou shalt not rejoice to the sons of Judah in the day of their perishing, and thou shalt not magnify thy mouth in the day of straits.",
+      "13": "Thou shalt not come in to the gate of my people in the day of their misfortune; also thou shalt not look upon his evil in the day of his misfortune, and thou shalt not stretch forth upon his wealth in the day of his misfortune.",
+      "14": "Thou shalt not stand upon the fork of the roads to cut off those of his escaping; and thou shalt not deliver up those remaining of his in the day of straits.",
+      "15": "For the day of Jehovah is near upon all the nations: as thou didst, it shall be done to thee: thy recompense shall turn back upon thy head.",
+      "16": "For as thou didst drink upon my holy mountain, all the nations shall drink continually, and they drank and they swallowed down, and they were as they not being.",
+      "17": "And in mount Zion shall be an escaping and there was holiness; and the house of Jacob shall possess their possessions.",
+      "18": "And the house of Jacob was a fire, and the house of Joseph for a flame, and the house of Esau for straw; and they burned in them, and they devoured them; and a survivor shall not be to the house of Esau, for Jehovah spake.",
+      "19": "And they of the south shall possess mount Esau, and of the low country, the rovers: and they shall possess the field of Ephraim, and the field of Shomeron: and Benjamin, Gilead.",
+      "20": "And the captivity of this beginning to the sons of Israel, that of the Canaanites even to Zarephath; and the captivity of Jerusalem which is in Sepharad shall possess the cities of the south.",
+      "21": "And survivors came up into mount Zion to judge the mount Esau; and the kingdom was to Jehovah."
+    }
+  }
+}

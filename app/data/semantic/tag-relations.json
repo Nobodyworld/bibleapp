@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "content_version": "local-packaged-2026-06-20",
+  "description": "System tag relationships. These relationships describe tag concepts, not user agreement or objective truth.",
+  "relations": [
+    {
+      "source_tag_id": "tag:positive-sentiment",
+      "relation": "opposite_of",
+      "target_tag_id": "tag:negative-sentiment",
+      "confidence": 1,
+      "source": "system-seed",
+      "status": "active"
+    },
+    {
+      "source_tag_id": "tag:negative-sentiment",
+      "relation": "opposite_of",
+      "target_tag_id": "tag:positive-sentiment",
+      "confidence": 1,
+      "source": "system-seed",
+      "status": "active"
+    },
+    {
+      "source_tag_id": "tag:command-declaration",
+      "relation": "related_to",
+      "target_tag_id": "tag:question",
+      "confidence": 0.5,
+      "source": "system-seed",
+      "status": "active"
+    },
+    {
+      "source_tag_id": "tag:question",
+      "relation": "related_to",
+      "target_tag_id": "tag:command-declaration",
+      "confidence": 0.5,
+      "source": "system-seed",
+      "status": "active"
+    }
+  ]
+}

@@ -1,0 +1,508 @@
+import { els, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=clean-app-v1-detail-context2";
+import { resolvePassageText } from "./data-service.js?v=clean-app-v1-sofit4";
+import { referenceKey, refDomId, parseLocationFromHref } from "./references.js?v=clean-app-v1-sofit4";
+import { addRedLetterRange, ensureStores, getRedLetterRanges } from "./stores.js";
+import { mapStrongChapterRanges } from "./strongs.js";
+
+export function createChapterRenderer(ctx) {
+  let selectionMenu = null;
+
+  function eventKey(event, index) {
+    return `${event.type}:${event.offset}:${event.marker || event.text || index}`;
+  }
+
+  function appendInlineEvent(parent, event) {
+    if (event.type === "footnote") {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "fn-marker";
+      button.textContent = event.marker;
+      button.title = `Footnote ${event.marker}`;
+      button.dataset.tooltip = `Footnote ${event.marker}: ${event.note?.text || ""}`;
+      button.addEventListener("click", () => {
+        ctx.highlightReaderContext?.({ verse: event.verse });
+        ctx.detailViews.showFootnote(event.note, event.reference, { verse: event.verse });
+      });
+      parent.append(button);
+      return;
+    }
+
+    const label = document.createElement("span");
+    label.className = "inline-block-label";
+    label.textContent = event.text;
+    parent.append(label);
+  }
+
+  function strongTooltip(token) {
+    return [
+      [token.strong_code, token.original].filter(Boolean).join(" "),
+      token.transliteration || token.morphology,
+      token.gloss,
+    ]
+      .filter(Boolean)
+      .join(" - ");
+  }
+
+  function activateStrongToken(event, token, tokenRange, element) {
+    event.stopPropagation();
+    if (element) element.dataset.suppressTooltip = "true";
+    ctx.highlightReaderContext?.({
+      verse: tokenRange.verseContext?.verse,
+      wordElement: element,
+    });
+    ctx.detailViews.showStrong(token, {
+      pin: true,
+      forceHistory: true,
+      verseContext: tokenRange.verseContext,
+    });
+  }
+
+  function showHoverStrongForElement(element) {
+    const token = element?.__bibleAppStrongToken;
+    if (!token) return;
+    ctx.detailViews.showStrong(token, { hover: true, history: "replace" });
+  }
+
+  els.content?.addEventListener("mouseover", (event) => {
+    const token = event.target.closest?.(".strong-token");
+    if (token && els.content.contains(token)) showHoverStrongForElement(token);
+  });
+
+  els.content?.addEventListener("focusin", (event) => {
+    const token = event.target.closest?.(".strong-token");
+    if (token && els.content.contains(token)) showHoverStrongForElement(token);
+  });
+
+  function selectedTextRange(verseText, body) {
+    const selection = window.getSelection?.();
+    const selected = String(selection?.toString() || "").trim();
+    if (!selected || !body.contains(selection.anchorNode) || !body.contains(selection.focusNode)) return null;
+    const normalizedVerse = verseText.replace(/\s+/g, " ");
+    const normalizedSelected = selected.replace(/\s+/g, " ");
+    const index = normalizedVerse.indexOf(normalizedSelected);
+    if (index < 0) return null;
+    return { start: index, end: index + normalizedSelected.length, text: normalizedSelected };
+  }
+
+  function ensureSelectionMenu() {
+    if (selectionMenu) return selectionMenu;
+    selectionMenu = document.createElement("div");
+    selectionMenu.className = "selection-action-menu";
+    selectionMenu.hidden = true;
+    document.body.append(selectionMenu);
+    document.addEventListener("pointerdown", (event) => {
+      if (!selectionMenu || selectionMenu.hidden) return;
+      if (event.target.closest?.(".selection-action-menu, .verse-body")) return;
+      selectionMenu.hidden = true;
+    });
+    return selectionMenu;
+  }
+
+  function placeSelectionMenu(menu, selection) {
+    const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
+    const rect = range?.getBoundingClientRect();
+    if (!rect) return;
+    menu.hidden = false;
+    const menuRect = menu.getBoundingClientRect();
+    const left = Math.min(
+      Math.max(10, rect.left + rect.width / 2 - menuRect.width / 2),
+      window.innerWidth - menuRect.width - 10,
+    );
+    const top = Math.max(10, rect.top - menuRect.height - 10);
+    menu.style.left = `${left}px`;
+    menu.style.top = `${top}px`;
+  }
+
+  function showSelectionMenuForVerse(reference, verse, verseText, body, key) {
+    const range = selectedTextRange(verseText, body);
+    if (!range) {
+      if (selectionMenu) selectionMenu.hidden = true;
+      return;
+    }
+    const menu = ensureSelectionMenu();
+    menu.replaceChildren();
+
+    const red = document.createElement("button");
+    red.type = "button";
+    red.textContent = "Red letters";
+    red.addEventListener("click", () => {
+      addRedLetterRange(ctx.state, key, range);
+      menu.hidden = true;
+      window.getSelection?.()?.removeAllRanges();
+      ctx.renderChapter();
+    });
+
+    const draft = document.createElement("button");
+    draft.type = "button";
+    draft.textContent = "Draft";
+    draft.addEventListener("click", () => {
+      menu.hidden = true;
+      void ctx.detailViews.showTranslationVerseWorkspace(verse, { selectedRange: range });
+    });
+
+    const study = document.createElement("button");
+    study.type = "button";
+    study.textContent = "Study";
+    study.addEventListener("click", () => {
+      menu.hidden = true;
+      void ctx.detailViews.showInterlinearVerse(reference, verse, { forceHistory: true });
+    });
+
+    menu.append(red, draft, study);
+    placeSelectionMenu(menu, window.getSelection?.());
+  }
+
+  function hydrateReferencePreview(button, location) {
+    if (!location || button.dataset.previewLoaded === "true") return;
+    button.dataset.tooltip = "Loading passage...";
+    resolvePassageText(ctx.state.translationId, location)
+      .then((passage) => {
+        if (!button.isConnected) return;
+        button.dataset.previewLoaded = "true";
+        button.dataset.tooltip = passage?.text || "Referenced passage could not be loaded.";
+      })
+      .catch(() => {
+        if (!button.isConnected) return;
+        button.dataset.previewLoaded = "true";
+        button.dataset.tooltip = "Referenced passage could not be loaded.";
+      });
+  }
+
+  function locationWithLabelRange(location, label) {
+    if (!location) return null;
+    const match = String(label || "").match(/\b(\d+):(\d+)(?:-(\d+))?/);
+    if (!match) return location;
+    return {
+      ...location,
+      chapter: Number(match[1]),
+      verse_start: Number(match[2]),
+      verse_end: match[3] ? Number(match[3]) : Number(match[2]),
+    };
+  }
+
+  function appendTextSegment(parent, text, isRed) {
+    if (!isRed) {
+      parent.append(textNode(text));
+      return;
+    }
+    const span = document.createElement("span");
+    span.className = "red-letter";
+    span.textContent = text;
+    parent.append(span);
+  }
+
+  function appendTextWithAnnotations(parent, verseText, start, end, events, tokenRanges, redRanges) {
+    const inserted = new Set();
+    const boundaries = new Set([start, end]);
+
+    events.forEach((event) => {
+      if (event.offset >= start && event.offset <= end) boundaries.add(event.offset);
+    });
+    tokenRanges.forEach((range) => {
+      if (range.end <= start || range.start >= end) return;
+      boundaries.add(Math.max(start, range.start));
+      boundaries.add(Math.min(end, range.end));
+    });
+    redRanges.forEach((range) => {
+      if (range.end <= start || range.start >= end) return;
+      boundaries.add(Math.max(start, range.start));
+      boundaries.add(Math.min(end, range.end));
+    });
+
+    const points = [...boundaries].sort((a, b) => a - b);
+    for (let index = 0; index < points.length - 1; index += 1) {
+      const point = points[index];
+      events.forEach((event, eventIndex) => {
+        const key = eventKey(event, eventIndex);
+        if (event.offset === point && !inserted.has(key)) {
+          appendInlineEvent(parent, event);
+          inserted.add(key);
+        }
+      });
+
+      const next = points[index + 1];
+      if (next <= point) continue;
+      const text = verseText.slice(point, next);
+      const tokenRange = tokenRanges.find((range) => range.start <= point && range.end >= next);
+      const isRed = redRanges.some((range) => range.start <= point && range.end >= next);
+      if (!tokenRange) {
+        appendTextSegment(parent, text, isRed);
+        continue;
+      }
+
+      const token = document.createElement("span");
+      token.className = "strong-token";
+      token.tabIndex = 0;
+      token.setAttribute("role", "button");
+      token.textContent = text;
+      token.title = `${tokenRange.token.strong_code || ""} ${tokenRange.token.original || ""}`.trim();
+      token.dataset.tooltip = strongTooltip(tokenRange.token);
+      token.__bibleAppStrongToken = tokenRange.token;
+      token.__bibleAppVerseContext = tokenRange.verseContext;
+      token.setAttribute("aria-label", `Open Strong's details for ${text.trim()}: ${token.dataset.tooltip}`);
+      if (isRed) token.classList.add("red-letter");
+      const showHoverStrong = () => ctx.detailViews.showStrong(tokenRange.token, { hover: true, history: "replace" });
+      token.addEventListener("mouseenter", showHoverStrong);
+      token.addEventListener("mouseover", showHoverStrong);
+      token.addEventListener("mouseleave", () => {
+        delete token.dataset.suppressTooltip;
+      });
+      token.addEventListener("focus", showHoverStrong);
+      token.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        activateStrongToken(event, tokenRange.token, tokenRange, token);
+      });
+      token.addEventListener("click", (event) => activateStrongToken(event, tokenRange.token, tokenRange, token));
+      parent.append(token);
+    }
+
+    events.forEach((event, eventIndex) => {
+      const key = eventKey(event, eventIndex);
+      if (event.offset === end && !inserted.has(key)) {
+        appendInlineEvent(parent, event);
+        inserted.add(key);
+      }
+    });
+  }
+
+  function renderPresentationBlock(block, headingNotes, reference) {
+    const node = document.createElement("div");
+    node.className = `presentation-block ${block.kind || ""}`;
+    const label = document.createElement("div");
+    label.textContent = block.text;
+    node.append(label);
+
+    headingNotes
+      .filter((note) => note.anchor?.container_class === block.class)
+      .forEach((note) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "fn-marker";
+        button.textContent = note.marker;
+        button.title = `Footnote ${note.marker}`;
+        button.dataset.tooltip = `Footnote ${note.marker}: ${note.text || ""}`;
+        button.addEventListener("click", () => {
+          ctx.highlightReaderContext?.({ verse: note.anchor?.verse || block.verse });
+          ctx.detailViews.showFootnote(note, reference, { verse: note.anchor?.verse || block.verse });
+        });
+        node.append(button);
+      });
+
+    if (block.cross_references?.length) {
+      const cross = document.createElement("div");
+      cross.className = "cross-links";
+      block.cross_references.forEach((ref) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "mini-button reference-hover";
+        button.textContent = ref.label;
+        const location = locationWithLabelRange(parseLocationFromHref(ref.href, ctx.findBook), ref.label);
+        if (location) {
+          button.dataset.tooltip = "Hover preview";
+          button.addEventListener("mouseenter", () => hydrateReferencePreview(button, location));
+          button.addEventListener("mouseover", () => hydrateReferencePreview(button, location));
+          button.addEventListener("pointerenter", () => hydrateReferencePreview(button, location));
+          button.addEventListener("focus", () => hydrateReferencePreview(button, location));
+          window.setTimeout(() => hydrateReferencePreview(button, location), 0);
+        }
+        button.addEventListener("click", () => {
+          if (location) {
+            void ctx.goToLocation(location.book_id, location.chapter, location.verse_start);
+            return;
+          }
+          const wrap = document.createElement("div");
+          const heading = document.createElement("h3");
+          heading.textContent = ref.label;
+          const path = document.createElement("p");
+          path.textContent = ref.href;
+          wrap.append(heading, path);
+          setDetail("Heading Reference", wrap);
+        });
+        cross.append(button);
+      });
+      node.append(cross);
+    }
+    return node;
+  }
+
+  function renderVerse(reference, verse, verseText, chapterData) {
+    const key = referenceKey(ctx.state.bookId, ctx.state.chapter, verse);
+    const row = document.createElement("div");
+    row.className = "verse-row";
+    row.id = refDomId(key);
+    row.dataset.refKey = key;
+    row.dataset.verse = verse;
+
+    const number = document.createElement("button");
+    number.type = "button";
+    number.className = "verse-number";
+    number.textContent = verse;
+    number.title = "Show parallel translations";
+    number.addEventListener("click", () => {
+      ctx.highlightReaderContext?.({ verse });
+      void ctx.detailViews.showParallelVerse(reference, verse, verseText);
+    });
+
+    const numberWrap = document.createElement("div");
+    numberWrap.className = "verse-number-wrap";
+    const numberMenuWrap = document.createElement("div");
+    numberMenuWrap.className = "verse-number-menu-wrap";
+
+    const body = document.createElement("div");
+    body.className = "verse-body";
+
+    const notes = chapterData.notesByVerse[verse] || [];
+    const events = [];
+    notes
+      .filter((note) => note.anchor?.scope === "verse")
+      .forEach((note) => {
+        events.push({
+          type: "footnote",
+          offset: Number(note.anchor.char_offset || 0),
+          marker: note.marker,
+          note,
+          reference,
+          verse,
+        });
+      });
+
+    chapterData.inlineBlocks
+      .filter((block) => block.verse === verse)
+      .forEach((block) => {
+        events.push({
+          type: "block",
+          offset: Number(block.char_offset || 0),
+          text: block.text,
+        });
+      });
+
+    const tokenRanges = ctx.canUseCapability?.("strongs-overlay") ? chapterData.strongRangesByVerse?.[verse] || [] : [];
+    const redRanges = getRedLetterRanges(ctx.state, key);
+    const lines = chapterData.linesByVerse[verse] || [
+      { class: "reg", char_offset: 0, char_length: verseText.length, order: 1 },
+    ];
+
+    lines
+      .slice()
+      .sort((a, b) => Number(a.order || 0) - Number(b.order || 0))
+      .forEach((line) => {
+        const lineNode = document.createElement("div");
+        lineNode.className = `verse-line ${line.class || "reg"} ${line.style || ""}`;
+        const start = Number(line.char_offset || 0);
+        const end = Math.min(verseText.length, start + Number(line.char_length || 0));
+        appendTextWithAnnotations(lineNode, verseText, start, end, events, tokenRanges, redRanges);
+        body.append(lineNode);
+      });
+
+    const badges = ctx.detailViews.renderTagBadges(key);
+    if (badges) numberWrap.append(badges);
+    numberMenuWrap.append(number, ctx.detailViews.renderInlineTagPicker(key));
+    numberWrap.append(numberMenuWrap);
+
+    const crossRecord = ctx.canUseCapability?.("crossrefs") ? chapterData.crossrefs?.[`${ctx.state.chapter}:${verse}`] : null;
+    const hasInterlinear = ctx.canUseCapability?.("interlinear") && Boolean(chapterData.interlinear?.[verse]?.length);
+    const hasCommentary = ctx.canUseCapability?.("commentary");
+    const studyButton = document.createElement("button");
+    studyButton.type = "button";
+    studyButton.className = "verse-study-button";
+    studyButton.title = "Open verse study tabs";
+    studyButton.setAttribute("aria-label", `Open study tools for ${reference}`);
+    studyButton.textContent = "⋯";
+    studyButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      ctx.highlightReaderContext?.({ verse });
+      if (crossRecord) {
+        ctx.detailViews.showCrossrefs(reference, crossRecord, { verse, forceHistory: true });
+      } else if (hasInterlinear) {
+        void ctx.detailViews.showInterlinearVerse(reference, verse, { forceHistory: true });
+      } else if (hasCommentary) {
+        void ctx.detailViews.showCommentary(reference, verse, { forceHistory: true });
+      }
+    });
+    studyButton.disabled = !crossRecord && !hasInterlinear && !hasCommentary;
+    numberWrap.append(studyButton);
+
+    body.addEventListener("mouseup", () => showSelectionMenuForVerse(reference, verse, verseText, body, key));
+    body.addEventListener("touchend", () => window.setTimeout(() => showSelectionMenuForVerse(reference, verse, verseText, body, key), 0));
+    body.addEventListener("keyup", () => showSelectionMenuForVerse(reference, verse, verseText, body, key));
+
+    row.append(numberWrap, body);
+    return row;
+  }
+
+  function renderChapter() {
+    ensureStores(ctx.state);
+    const book = ctx.state.verseBook?.book;
+    const chapterVerses = ctx.state.verseBook?.chapters?.[ctx.state.chapter] || {};
+    const chapterPresentation = ctx.state.presentation?.chapters?.[ctx.state.chapter] || {};
+    const notesByVerse = ctx.state.footnotes?.chapters?.[ctx.state.chapter] || {};
+    const crossrefs = ctx.canUseCapability?.("crossrefs") ? ctx.state.crossrefs?.verses || {} : {};
+    const strongs = ctx.canUseCapability?.("strongs-overlay") ? ctx.state.strongs?.chapters?.[ctx.state.chapter] || {} : {};
+    const interlinear = ctx.canUseCapability?.("interlinear") ? ctx.state.interlinear?.chapters?.[ctx.state.chapter] || {} : {};
+    const blocks = chapterPresentation.blocks || [];
+    const linesByVerse = chapterPresentation.verse_lines || {};
+    const inlineBlocks = blocks.filter((block) => block.verse);
+
+    els.title.textContent = `${book?.name || ctx.state.bookId} ${ctx.state.chapter}`;
+    els.content.replaceChildren();
+
+    const verses = sortedNumericKeys(chapterVerses);
+    const strongRangesByVerse =
+      ctx.state.translationId === "bsb" ? mapStrongChapterRanges(chapterVerses, strongs) : {};
+    Object.entries(strongRangesByVerse).forEach(([verse, ranges]) => {
+      const reference = ctx.currentReference(verse);
+      ranges.forEach((range) => {
+        range.verseContext = { reference, verse };
+      });
+    });
+    if (!verses.length) {
+      const empty = document.createElement("div");
+      empty.className = "empty-state";
+      empty.textContent = "No verses found for this chapter.";
+      els.content.append(empty);
+      return;
+    }
+
+    verses.forEach((verse) => {
+      const reference = ctx.currentReference(verse);
+      const headingNotes = (notesByVerse[verse] || []).filter((note) => note.anchor?.scope === "heading");
+      blocks
+        .filter((block) => block.before_verse === verse)
+        .forEach((block) => {
+          els.content.append(renderPresentationBlock(block, headingNotes, reference));
+        });
+      els.content.append(
+        renderVerse(reference, verse, chapterVerses[verse], {
+          notesByVerse,
+          inlineBlocks,
+          linesByVerse,
+          crossrefs,
+          strongs,
+          strongRangesByVerse,
+          interlinear,
+        }),
+      );
+    });
+
+    ctx.syncChapterButtons();
+    ctx.syncToolButtons();
+    setStatus(`${ctx.state.verseBook.translation?.code || ctx.state.translationId.toUpperCase()} data loaded`);
+
+    if (ctx.state.pendingScrollVerse) {
+      const target = document.querySelector(
+        `#${refDomId(referenceKey(ctx.state.bookId, ctx.state.chapter, ctx.state.pendingScrollVerse))}`,
+      );
+      ctx.state.pendingScrollVerse = null;
+      if (target) {
+        target.scrollIntoView({ block: "center", behavior: "smooth" });
+        target.classList.add("target-verse");
+        window.setTimeout(() => target.classList.remove("target-verse"), 1600);
+      }
+    }
+  }
+
+  return {
+    renderChapter,
+  };
+}

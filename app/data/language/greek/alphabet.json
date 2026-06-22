@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "language": "greek",
+  "description": "Curated editable Greek alphabet metadata for word inspection.",
+  "letters": [
+    { "uppercase": "Α", "lowercase": "α", "name": "Alpha", "transliteration": "a", "sound": "a", "description": "First Greek letter; usually an a vowel." },
+    { "uppercase": "Β", "lowercase": "β", "name": "Beta", "transliteration": "b", "sound": "b", "description": "B-sound consonant." },
+    { "uppercase": "Γ", "lowercase": "γ", "name": "Gamma", "transliteration": "g", "sound": "g/ng", "description": "G-sound consonant; nasal before some consonants." },
+    { "uppercase": "Δ", "lowercase": "δ", "name": "Delta", "transliteration": "d", "sound": "d", "description": "D-sound consonant." },
+    { "uppercase": "Ε", "lowercase": "ε", "name": "Epsilon", "transliteration": "e", "sound": "e", "description": "Short e vowel." },
+    { "uppercase": "Ζ", "lowercase": "ζ", "name": "Zeta", "transliteration": "z", "sound": "z/dz", "description": "Z-sound consonant." },
+    { "uppercase": "Η", "lowercase": "η", "name": "Eta", "transliteration": "ē", "sound": "long e", "description": "Long e vowel in Koine transliteration." },
+    { "uppercase": "Θ", "lowercase": "θ", "name": "Theta", "transliteration": "th", "sound": "th", "description": "Aspirated t/th consonant." },
+    { "uppercase": "Ι", "lowercase": "ι", "name": "Iota", "transliteration": "i", "sound": "i", "description": "I vowel; also appears as iota subscript." },
+    { "uppercase": "Κ", "lowercase": "κ", "name": "Kappa", "transliteration": "k", "sound": "k", "description": "K-sound consonant." },
+    { "uppercase": "Λ", "lowercase": "λ", "name": "Lambda", "transliteration": "l", "sound": "l", "description": "L-sound consonant." },
+    { "uppercase": "Μ", "lowercase": "μ", "name": "Mu", "transliteration": "m", "sound": "m", "description": "M-sound consonant." },
+    { "uppercase": "Ν", "lowercase": "ν", "name": "Nu", "transliteration": "n", "sound": "n", "description": "N-sound consonant." },
+    { "uppercase": "Ξ", "lowercase": "ξ", "name": "Xi", "transliteration": "x", "sound": "ks", "description": "Compound ks consonant." },
+    { "uppercase": "Ο", "lowercase": "ο", "name": "Omicron", "transliteration": "o", "sound": "short o", "description": "Short o vowel." },
+    { "uppercase": "Π", "lowercase": "π", "name": "Pi", "transliteration": "p", "sound": "p", "description": "P-sound consonant." },
+    { "uppercase": "Ρ", "lowercase": "ρ", "name": "Rho", "transliteration": "r", "sound": "r", "description": "R-sound consonant; initial rho often has rough breathing." },
+    { "uppercase": "Σ", "lowercase": "σ", "alternate_forms": ["ς"], "name": "Sigma", "transliteration": "s", "sound": "s", "description": "S-sound consonant; final sigma is used at word endings." },
+    { "uppercase": "Τ", "lowercase": "τ", "name": "Tau", "transliteration": "t", "sound": "t", "description": "T-sound consonant." },
+    { "uppercase": "Υ", "lowercase": "υ", "name": "Upsilon", "transliteration": "u/y", "sound": "u/y", "description": "Vowel used in several diphthongs." },
+    { "uppercase": "Φ", "lowercase": "φ", "name": "Phi", "transliteration": "ph", "sound": "ph/f", "description": "Aspirated p/ph consonant." },
+    { "uppercase": "Χ", "lowercase": "χ", "name": "Chi", "transliteration": "ch", "sound": "kh/ch", "description": "Aspirated k/ch consonant." },
+    { "uppercase": "Ψ", "lowercase": "ψ", "name": "Psi", "transliteration": "ps", "sound": "ps", "description": "Compound ps consonant." },
+    { "uppercase": "Ω", "lowercase": "ω", "name": "Omega", "transliteration": "ō", "sound": "long o", "description": "Long o vowel." }
+  ]
+}

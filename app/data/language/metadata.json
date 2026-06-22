@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "description": "Language metadata manifest for lazy word breakdown loading.",
+  "languages": {
+    "hebrew": {
+      "alphabet": "language/hebrew/alphabet.json",
+      "marks": "language/hebrew/marks.json"
+    },
+    "greek": {
+      "alphabet": "language/greek/alphabet.json",
+      "marks": "language/greek/marks.json"
+    }
+  }
+}

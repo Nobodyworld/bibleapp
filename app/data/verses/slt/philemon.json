@@ -1,0 +1,41 @@
+{
+  "translation": {
+    "id": "slt",
+    "code": "SLT",
+    "name": "Smith's Literal Translation"
+  },
+  "book": {
+    "id": "philemon",
+    "name": "Philemon",
+    "osis": "Phlm"
+  },
+  "chapters": {
+    "1": {
+      "1": "PAUL, imprisoned of Jesus Christ, Timothy the brother, to Philemon, dearly beloved, and cooperating,",
+      "2": "And to the dearly beloved Apphia, and to Archippus our fellow-soldier, and the church in thy house:",
+      "3": "Grace to you, and peace, from God our Father, and the Lord Jesus Christ.",
+      "4": "I thank my God, always making remembrance of thee in my prayers,",
+      "5": "Hearing of thy love and faith, which thou hast to the Lord Jesus, and to all the holy;",
+      "6": "So that the mutual participation of thy faith might be effective in acknowledgment of every good in you to Christ Jesus.",
+      "7": "For we have much grace and consolation upon thy love, for the bowels of the holy are refreshed by thee, brother.",
+      "8": "Wherefore, having much freedom of speech in Christ to enjoin thee what concerns thee,",
+      "9": "By love I beseech rather, being such as Paul an aged man, and now also the imprisoned of Jesus Christ.",
+      "10": "I beseech thee for my child whom I begat in my bonds, Onesimus.",
+      "11": "Once unprofitable to thee, but now more profitable to thee and to me:",
+      "12": "Whom I sent back: and thou him, that is, my bowels, receive again:",
+      "13": "Whom I was wishing to retain to myself, that for thee he might serve me in the bonds of the good news:",
+      "14": "But without thy judgment I would do nothing; that good might not be as according to necessity, but according to free will.",
+      "15": "For perhaps therefore he was separated for a time, that thou mightest receive him forever;",
+      "16": "No more as a servant, but above a servant, a dearly beloved brother, especially to me, and how much rather to thee, also in the flesh, and in the Lord?",
+      "17": "If therefore thou hold me a participator, receive him in addition as me.",
+      "18": "And if he injured thee any, or is indebted, charge this to me.",
+      "19": "I Paul wrote with my hand, I will pay back: that I say not to thee, for thou owest thyself to me also in addition.",
+      "20": "Yea, brother, may I be profited by thee in the Lord: refresh my bowels in the Lord.",
+      "21": "Having confidence in thy obedience I wrote to thee, knowing that thou wilt do above what I say to thee.",
+      "22": "And at the same time also prepare for me a reception as a guest: for I hope that by your prayers I shall be given as a favor to you.",
+      "23": "Epaphras greets thee, my fellow-captive in Christ Jesus;",
+      "24": "Marcus, Aristarchus, Demas, Lucas, my co-workers.",
+      "25": "The grace of our Lord Jesus Christ with your spirit. Amen."
+    }
+  }
+}

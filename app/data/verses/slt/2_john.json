@@ -1,0 +1,29 @@
+{
+  "translation": {
+    "id": "slt",
+    "code": "SLT",
+    "name": "Smith's Literal Translation"
+  },
+  "book": {
+    "id": "2_john",
+    "name": "2 John",
+    "osis": "2John"
+  },
+  "chapters": {
+    "1": {
+      "1": "The elder to the chosen mistress in truth; (and not I only, but also all and to her children, whom I love they having known the truth;)",
+      "2": "For the truth remaining in us, and shall be with us forever.",
+      "3": "There shall be with you grace, mercy, peace, from God the Father, and from the Lord Jesus Christ, the Son of the Father, in truth, and love.",
+      "4": "I was greatly rejoiced that I found of thy children walking about in the truth, as we received a command from the Father.",
+      "5": "And now I entreat thee, mistress, not as writing a new command, but what we had from the beginning, that we should love one another.",
+      "6": "And this is love, that we walk about according to his commands. This is the command, That as ye heard from the beginning, ye should walk in it.",
+      "7": "For many cheats come into the world, they not acknowledging Jesus Christ coming in the flesh. This is the cheat and antichrist.",
+      "8": "Look to yourselves, lest we should destroy what things we have wrought, but we should receive a full reward.",
+      "9": "Every one passing by, and not remaining in the teaching of Christ, has not God. He remaining in the teaching of Christ, the same also has the Father and the Son.",
+      "10": "If there come any to you, and bring not this teaching, receive ye him not into the household, and to rejoice tell him not:",
+      "11": "For he telling him to rejoice, partakes of his evil works.",
+      "12": "Having many things to write to you, I was not willing by paper and ink: but I hope to come to you, and to speak mouth to month, that our joy might be filled up.",
+      "13": "The children of thy chosen sister greet thee. Amen."
+    }
+  }
+}

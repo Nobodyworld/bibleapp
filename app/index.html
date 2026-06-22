@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bible App Reader</title>
+    <link rel="stylesheet" href="./styles.css?v=clean-app-v1-strong-tooltip4" />
+  </head>
+  <body>
+    <header class="app-header">
+      <button id="homeButton" class="brand home-button" type="button" title="Open home">
+        <span class="brand-mark">BA</span>
+        <div>
+          <h1>Bible App Reader</h1>
+          <p id="statusText">Loading data...</p>
+        </div>
+      </button>
+      <nav class="reader-controls" aria-label="Reader controls">
+        <label>
+          <span>Translation</span>
+          <select id="translationSelect"></select>
+        </label>
+        <label>
+          <span>Book</span>
+          <select id="bookSelect"></select>
+        </label>
+        <label>
+          <span>Chapter</span>
+          <select id="chapterSelect"></select>
+        </label>
+      </nav>
+    </header>
+
+    <main class="app-shell">
+      <section class="reader-pane" aria-label="Bible reader">
+        <div class="chapter-title">
+          <div class="chapter-heading">
+            <h2 id="chapterTitle">Loading...</h2>
+            <div class="chapter-stepper" aria-label="Chapter navigation">
+              <button id="prevChapter" class="chapter-nav-button" type="button" title="Previous chapter">
+                <span aria-hidden="true">‹</span>
+                <span>Previous</span>
+              </button>
+              <button id="nextChapter" class="chapter-nav-button" type="button" title="Next chapter">
+                <span>Next</span>
+                <span aria-hidden="true">›</span>
+              </button>
+            </div>
+          </div>
+          <div class="chapter-actions" aria-label="Chapter tools">
+            <div class="action-group" aria-label="Study tools">
+              <button id="showSearch" class="toolbar-button primary-tool" type="button" title="Search this book">
+                <span aria-hidden="true" class="toolbar-icon">⌕</span>
+                <span>Search</span>
+              </button>
+              <button id="showOutline" class="toolbar-button" type="button" title="Book outline">
+                <span aria-hidden="true" class="toolbar-icon">☷</span>
+                <span>Outline</span>
+              </button>
+              <button id="showInterlinear" class="toolbar-button" type="button" title="Interlinear words">
+                <span aria-hidden="true" class="toolbar-icon">א</span>
+                <span>Interlinear</span>
+              </button>
+            </div>
+            <div class="action-group" aria-label="Workspace tools">
+              <button id="showTags" class="toolbar-button" type="button" title="Verse tags">
+                <span aria-hidden="true" class="toolbar-icon">◆</span>
+                <span>Tags</span>
+              </button>
+              <button id="showProverbs" class="toolbar-button" type="button" title="Translation workspace">
+                <span aria-hidden="true" class="toolbar-icon">✎</span>
+                <span>Translate</span>
+              </button>
+              <button id="showJobs" class="toolbar-button" type="button" title="Local jobs">
+                <span aria-hidden="true" class="toolbar-icon">↻</span>
+                <span>Jobs</span>
+              </button>
+              <button id="showUserData" class="toolbar-button" type="button" title="User data">
+                <span aria-hidden="true" class="toolbar-icon">▣</span>
+                <span>Data</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="reader-floating-nav" aria-label="Reader chapter navigation">
+          <button id="prevChapterFloat" class="reader-nav-arrow previous-chapter" type="button" title="Previous chapter" aria-label="Previous chapter">
+            ‹
+          </button>
+          <button id="nextChapterFloat" class="reader-nav-arrow next-chapter" type="button" title="Next chapter" aria-label="Next chapter">
+            ›
+          </button>
+        </div>
+        <div id="chapterContent" class="chapter-content"></div>
+      </section>
+
+      <aside class="detail-pane" aria-label="Reference details">
+        <div class="detail-header">
+          <h2 id="detailTitle">Details</h2>
+          <div class="detail-header-actions">
+            <button id="clearDetail" type="button">Clear</button>
+          </div>
+        </div>
+        <div id="detailContext" class="detail-context" hidden></div>
+        <div class="detail-floating-nav" aria-label="Detail panel history">
+          <button id="detailBack" class="detail-nav-arrow" type="button" title="Panel history back" aria-label="Panel history back" disabled>
+            ↶
+          </button>
+          <button id="detailForward" class="detail-nav-arrow" type="button" title="Panel history forward" aria-label="Panel history forward" disabled>
+            ↷
+          </button>
+        </div>
+        <div id="detailContent" class="detail-content">
+          Select a verse, tag, or reader tool.
+        </div>
+      </aside>
+    </main>
+
+    <script type="module" src="./app.js?v=clean-app-v1-strong-tooltip1"></script>
+  </body>
+</html>

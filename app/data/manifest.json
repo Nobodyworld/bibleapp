@@ -1,0 +1,411 @@
+{
+  "books": [
+    {
+      "id": "genesis",
+      "name": "Genesis",
+      "osis": "Gen"
+    },
+    {
+      "id": "exodus",
+      "name": "Exodus",
+      "osis": "Exod"
+    },
+    {
+      "id": "leviticus",
+      "name": "Leviticus",
+      "osis": "Lev"
+    },
+    {
+      "id": "numbers",
+      "name": "Numbers",
+      "osis": "Num"
+    },
+    {
+      "id": "deuteronomy",
+      "name": "Deuteronomy",
+      "osis": "Deut"
+    },
+    {
+      "id": "joshua",
+      "name": "Joshua",
+      "osis": "Josh"
+    },
+    {
+      "id": "judges",
+      "name": "Judges",
+      "osis": "Judg"
+    },
+    {
+      "id": "ruth",
+      "name": "Ruth",
+      "osis": "Ruth"
+    },
+    {
+      "id": "1_samuel",
+      "name": "1 Samuel",
+      "osis": "1Sam"
+    },
+    {
+      "id": "2_samuel",
+      "name": "2 Samuel",
+      "osis": "2Sam"
+    },
+    {
+      "id": "1_kings",
+      "name": "1 Kings",
+      "osis": "1Kgs"
+    },
+    {
+      "id": "2_kings",
+      "name": "2 Kings",
+      "osis": "2Kgs"
+    },
+    {
+      "id": "1_chronicles",
+      "name": "1 Chronicles",
+      "osis": "1Chr"
+    },
+    {
+      "id": "2_chronicles",
+      "name": "2 Chronicles",
+      "osis": "2Chr"
+    },
+    {
+      "id": "ezra",
+      "name": "Ezra",
+      "osis": "Ezra"
+    },
+    {
+      "id": "nehemiah",
+      "name": "Nehemiah",
+      "osis": "Neh"
+    },
+    {
+      "id": "esther",
+      "name": "Esther",
+      "osis": "Esth"
+    },
+    {
+      "id": "job",
+      "name": "Job",
+      "osis": "Job"
+    },
+    {
+      "id": "psalms",
+      "name": "Psalms",
+      "osis": "Ps"
+    },
+    {
+      "id": "proverbs",
+      "name": "Proverbs",
+      "osis": "Prov"
+    },
+    {
+      "id": "ecclesiastes",
+      "name": "Ecclesiastes",
+      "osis": "Eccl"
+    },
+    {
+      "id": "songs",
+      "name": "Song of Songs",
+      "osis": "Song"
+    },
+    {
+      "id": "isaiah",
+      "name": "Isaiah",
+      "osis": "Isa"
+    },
+    {
+      "id": "jeremiah",
+      "name": "Jeremiah",
+      "osis": "Jer"
+    },
+    {
+      "id": "lamentations",
+      "name": "Lamentations",
+      "osis": "Lam"
+    },
+    {
+      "id": "ezekiel",
+      "name": "Ezekiel",
+      "osis": "Ezek"
+    },
+    {
+      "id": "daniel",
+      "name": "Daniel",
+      "osis": "Dan"
+    },
+    {
+      "id": "hosea",
+      "name": "Hosea",
+      "osis": "Hos"
+    },
+    {
+      "id": "joel",
+      "name": "Joel",
+      "osis": "Joel"
+    },
+    {
+      "id": "amos",
+      "name": "Amos",
+      "osis": "Amos"
+    },
+    {
+      "id": "obadiah",
+      "name": "Obadiah",
+      "osis": "Obad"
+    },
+    {
+      "id": "jonah",
+      "name": "Jonah",
+      "osis": "Jonah"
+    },
+    {
+      "id": "micah",
+      "name": "Micah",
+      "osis": "Mic"
+    },
+    {
+      "id": "nahum",
+      "name": "Nahum",
+      "osis": "Nah"
+    },
+    {
+      "id": "habakkuk",
+      "name": "Habakkuk",
+      "osis": "Hab"
+    },
+    {
+      "id": "zephaniah",
+      "name": "Zephaniah",
+      "osis": "Zeph"
+    },
+    {
+      "id": "haggai",
+      "name": "Haggai",
+      "osis": "Hag"
+    },
+    {
+      "id": "zechariah",
+      "name": "Zechariah",
+      "osis": "Zech"
+    },
+    {
+      "id": "malachi",
+      "name": "Malachi",
+      "osis": "Mal"
+    },
+    {
+      "id": "matthew",
+      "name": "Matthew",
+      "osis": "Matt"
+    },
+    {
+      "id": "mark",
+      "name": "Mark",
+      "osis": "Mark"
+    },
+    {
+      "id": "luke",
+      "name": "Luke",
+      "osis": "Luke"
+    },
+    {
+      "id": "john",
+      "name": "John",
+      "osis": "John"
+    },
+    {
+      "id": "acts",
+      "name": "Acts",
+      "osis": "Acts"
+    },
+    {
+      "id": "romans",
+      "name": "Romans",
+      "osis": "Rom"
+    },
+    {
+      "id": "1_corinthians",
+      "name": "1 Corinthians",
+      "osis": "1Cor"
+    },
+    {
+      "id": "2_corinthians",
+      "name": "2 Corinthians",
+      "osis": "2Cor"
+    },
+    {
+      "id": "galatians",
+      "name": "Galatians",
+      "osis": "Gal"
+    },
+    {
+      "id": "ephesians",
+      "name": "Ephesians",
+      "osis": "Eph"
+    },
+    {
+      "id": "philippians",
+      "name": "Philippians",
+      "osis": "Phil"
+    },
+    {
+      "id": "colossians",
+      "name": "Colossians",
+      "osis": "Col"
+    },
+    {
+      "id": "1_thessalonians",
+      "name": "1 Thessalonians",
+      "osis": "1Thess"
+    },
+    {
+      "id": "2_thessalonians",
+      "name": "2 Thessalonians",
+      "osis": "2Thess"
+    },
+    {
+      "id": "1_timothy",
+      "name": "1 Timothy",
+      "osis": "1Tim"
+    },
+    {
+      "id": "2_timothy",
+      "name": "2 Timothy",
+      "osis": "2Tim"
+    },
+    {
+      "id": "titus",
+      "name": "Titus",
+      "osis": "Titus"
+    },
+    {
+      "id": "philemon",
+      "name": "Philemon",
+      "osis": "Phlm"
+    },
+    {
+      "id": "hebrews",
+      "name": "Hebrews",
+      "osis": "Heb"
+    },
+    {
+      "id": "james",
+      "name": "James",
+      "osis": "Jas"
+    },
+    {
+      "id": "1_peter",
+      "name": "1 Peter",
+      "osis": "1Pet"
+    },
+    {
+      "id": "2_peter",
+      "name": "2 Peter",
+      "osis": "2Pet"
+    },
+    {
+      "id": "1_john",
+      "name": "1 John",
+      "osis": "1John"
+    },
+    {
+      "id": "2_john",
+      "name": "2 John",
+      "osis": "2John"
+    },
+    {
+      "id": "3_john",
+      "name": "3 John",
+      "osis": "3John"
+    },
+    {
+      "id": "jude",
+      "name": "Jude",
+      "osis": "Jude"
+    },
+    {
+      "id": "revelation",
+      "name": "Revelation",
+      "osis": "Rev"
+    }
+  ],
+  "counts": {
+    "verses_by_translation": {
+      "bsb": 31086,
+      "kjv": 31102,
+      "wbt": 31102,
+      "asv": 31100,
+      "erv": 31089,
+      "web": 31098,
+      "dbt": 31099,
+      "drb": 31092,
+      "slt": 31100,
+      "ylt": 31102
+    }
+  },
+  "generated_at": "2026-06-16T05:23:41.918Z",
+  "translations": [
+    {
+      "id": "bsb",
+      "code": "BSB",
+      "name": "Berean Study Bible",
+      "license_note": "Public domain as of 2023-04-30 per Berean Bible free licensing."
+    },
+    {
+      "id": "kjv",
+      "code": "KJV",
+      "name": "King James Version",
+      "license_note": "Public domain in the United States."
+    },
+    {
+      "id": "wbt",
+      "code": "WBT",
+      "name": "Webster Bible Translation",
+      "license_note": "Public domain in the United States."
+    },
+    {
+      "id": "asv",
+      "code": "ASV",
+      "name": "American Standard Version",
+      "license_note": "Public domain in the United States."
+    },
+    {
+      "id": "erv",
+      "code": "ERV",
+      "name": "English Revised Version",
+      "license_note": "Public domain in the United States."
+    },
+    {
+      "id": "web",
+      "code": "WEB",
+      "name": "World English Bible",
+      "license_note": "Public domain per eBible.org / World English Bible copyright notice."
+    },
+    {
+      "id": "dbt",
+      "code": "DBT",
+      "name": "Darby Bible Translation",
+      "license_note": "Public domain in the United States."
+    },
+    {
+      "id": "drb",
+      "code": "DRB",
+      "name": "Douay-Rheims Bible",
+      "license_note": "Public domain in the United States."
+    },
+    {
+      "id": "slt",
+      "code": "SLT",
+      "name": "Smith's Literal Translation",
+      "license_note": "Public domain in the United States."
+    },
+    {
+      "id": "ylt",
+      "code": "YLT",
+      "name": "Young's Literal Translation",
+      "license_note": "Public domain in the United States."
+    }
+  ]
+}

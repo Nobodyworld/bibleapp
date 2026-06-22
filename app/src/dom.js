@@ -1,0 +1,213 @@
+export const els = {
+  homeButton: document.querySelector("#homeButton"),
+  status: document.querySelector("#statusText"),
+  translation: document.querySelector("#translationSelect"),
+  book: document.querySelector("#bookSelect"),
+  chapter: document.querySelector("#chapterSelect"),
+  title: document.querySelector("#chapterTitle"),
+  content: document.querySelector("#chapterContent"),
+  detailTitle: document.querySelector("#detailTitle"),
+  detailContext: document.querySelector("#detailContext"),
+  detail: document.querySelector("#detailContent"),
+  detailPane: document.querySelector(".detail-pane"),
+  detailBack: document.querySelector("#detailBack"),
+  detailForward: document.querySelector("#detailForward"),
+  clearDetail: document.querySelector("#clearDetail"),
+  prev: document.querySelector("#prevChapter"),
+  next: document.querySelector("#nextChapter"),
+  prevFloat: document.querySelector("#prevChapterFloat"),
+  nextFloat: document.querySelector("#nextChapterFloat"),
+  showOutline: document.querySelector("#showOutline"),
+  showInterlinear: document.querySelector("#showInterlinear"),
+  showSearch: document.querySelector("#showSearch"),
+  showTags: document.querySelector("#showTags"),
+  showJobs: document.querySelector("#showJobs"),
+  showUserData: document.querySelector("#showUserData"),
+  showProverbs: document.querySelector("#showProverbs"),
+};
+
+export function option(value, label) {
+  const item = document.createElement("option");
+  item.value = value;
+  item.textContent = label;
+  return item;
+}
+
+export function sortedNumericKeys(object) {
+  return Object.keys(object || {}).sort((a, b) => Number(a) - Number(b));
+}
+
+export function setStatus(text) {
+  els.status.textContent = text;
+}
+
+const defaultDetailText =
+  "Select a footnote, cross-reference, commentary, outline item, interlinear token, search result, verse tag, job, or user-data tool.";
+const detailHistory = [];
+const detailForwardHistory = [];
+let currentDetailTransient = false;
+let transientBase = null;
+let detailHoverLocked = false;
+
+function updateDetailHistoryButtons() {
+  if (els.detailBack) els.detailBack.disabled = detailHistory.length === 0;
+  if (els.detailForward) els.detailForward.disabled = detailForwardHistory.length === 0;
+  if (els.detailPane) els.detailPane.dataset.hoverLocked = detailHoverLocked ? "true" : "false";
+}
+
+function isDefaultDetail() {
+  return els.detailTitle.textContent === "Details" && els.detail.textContent.trim().startsWith("Select a ");
+}
+
+function canStoreCurrentDetail() {
+  return Boolean(els.detail?.childNodes?.length) && !isDefaultDetail();
+}
+
+function snapshotDetail() {
+  return {
+    title: els.detailTitle.textContent,
+    contextNodes: els.detailContext ? [...els.detailContext.childNodes] : [],
+    contextHidden: els.detailContext ? els.detailContext.hidden : true,
+    nodes: [...els.detail.childNodes],
+  };
+}
+
+function extractContextNode(node, options = {}) {
+  if (options.context) return options.context;
+  if (!node?.querySelector) return null;
+  const directTabs = [...node.children].find((child) => child.classList?.contains("verse-context-tabs"));
+  if (directTabs) {
+    directTabs.remove();
+    return directTabs;
+  }
+  return null;
+}
+
+function setDetailContext(node) {
+  if (!els.detailContext) return;
+  els.detailContext.replaceChildren();
+  if (!node) {
+    els.detailContext.hidden = true;
+    return;
+  }
+  els.detailContext.append(node);
+  els.detailContext.hidden = false;
+}
+
+export function setDetail(title, node, options = {}) {
+  const historyMode = options.history || "push";
+  const sameTitle = els.detailTitle.textContent === title;
+  const storedCurrent = currentDetailTransient ? transientBase : canStoreCurrentDetail() ? snapshotDetail() : null;
+  if (historyMode === "push" && storedCurrent && (!sameTitle || options.forceHistory || currentDetailTransient)) {
+    detailHistory.push(storedCurrent);
+    detailForwardHistory.length = 0;
+  }
+  if (options.lock === true || (!options.transient && historyMode === "push")) {
+    detailHoverLocked = true;
+  } else if (options.lock === false) {
+    detailHoverLocked = false;
+  }
+  if (options.transient && !currentDetailTransient) {
+    transientBase = canStoreCurrentDetail() ? snapshotDetail() : null;
+  } else if (!options.transient) {
+    transientBase = null;
+  }
+  const contextNode = extractContextNode(node, options);
+  els.detailTitle.textContent = title;
+  setDetailContext(contextNode);
+  els.detail.replaceChildren(node);
+  currentDetailTransient = Boolean(options.transient);
+  updateDetailHistoryButtons();
+}
+
+export function isDetailHoverLocked() {
+  return detailHoverLocked;
+}
+
+export function setDetailHoverLocked(locked) {
+  detailHoverLocked = Boolean(locked);
+  updateDetailHistoryButtons();
+}
+
+export function setDetailMessage(title, message, options = {}) {
+  const node = document.createElement("p");
+  node.textContent = message;
+  setDetail(title, node, options);
+}
+
+export function goBackDetail() {
+  const previous = detailHistory.pop();
+  if (!previous) {
+    updateDetailHistoryButtons();
+    return;
+  }
+  if (canStoreCurrentDetail()) detailForwardHistory.push(snapshotDetail());
+  transientBase = null;
+  currentDetailTransient = false;
+  detailHoverLocked = true;
+  els.detailTitle.textContent = previous.title;
+  setDetailContext(null);
+  if (els.detailContext) {
+    els.detailContext.replaceChildren(...(previous.contextNodes || []));
+    els.detailContext.hidden = Boolean(previous.contextHidden);
+  }
+  els.detail.replaceChildren(...previous.nodes);
+  updateDetailHistoryButtons();
+}
+
+export function goForwardDetail() {
+  const next = detailForwardHistory.pop();
+  if (!next) {
+    updateDetailHistoryButtons();
+    return;
+  }
+  if (canStoreCurrentDetail()) detailHistory.push(snapshotDetail());
+  transientBase = null;
+  currentDetailTransient = false;
+  detailHoverLocked = true;
+  els.detailTitle.textContent = next.title;
+  setDetailContext(null);
+  if (els.detailContext) {
+    els.detailContext.replaceChildren(...(next.contextNodes || []));
+    els.detailContext.hidden = Boolean(next.contextHidden);
+  }
+  els.detail.replaceChildren(...next.nodes);
+  updateDetailHistoryButtons();
+}
+
+export function resetDetail(title = "Details", message = defaultDetailText) {
+  detailHistory.length = 0;
+  detailForwardHistory.length = 0;
+  transientBase = null;
+  currentDetailTransient = false;
+  detailHoverLocked = false;
+  els.detailTitle.textContent = title;
+  setDetailContext(null);
+  els.detail.textContent = message;
+  updateDetailHistoryButtons();
+}
+
+export function textNode(text) {
+  return document.createTextNode(text);
+}
+
+export function createDetailList(items, renderItem) {
+  const list = document.createElement("ul");
+  list.className = "detail-list";
+  items.forEach((item) => {
+    const li = document.createElement("li");
+    renderItem(li, item);
+    list.append(li);
+  });
+  return list;
+}
+
+export function addToolButton(parent, label, title, handler) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "mini-button";
+  button.textContent = label;
+  button.title = title;
+  button.addEventListener("click", handler);
+  parent.append(button);
+}

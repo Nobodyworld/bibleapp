@@ -1,0 +1,117 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-22T20:44:02.020Z",
+  "note": "Clean publish metadata for retained public-domain/no-license text editions only.",
+  "editions": [
+    {
+      "id": "bsb",
+      "code": "BSB",
+      "name": "Berean Study Bible",
+      "language": "en",
+      "edition_kind": "translation",
+      "license_note": "Public domain as of 2023-04-30 per Berean Bible free licensing.",
+      "coverage": {
+        "books": 66
+      }
+    },
+    {
+      "id": "kjv",
+      "code": "KJV",
+      "name": "King James Version",
+      "language": "en",
+      "edition_kind": "translation",
+      "license_note": "Public domain in the United States.",
+      "coverage": {
+        "books": 66
+      }
+    },
+    {
+      "id": "wbt",
+      "code": "WBT",
+      "name": "Webster Bible Translation",
+      "language": "en",
+      "edition_kind": "translation",
+      "license_note": "Public domain in the United States.",
+      "coverage": {
+        "books": 66
+      }
+    },
+    {
+      "id": "asv",
+      "code": "ASV",
+      "name": "American Standard Version",
+      "language": "en",
+      "edition_kind": "translation",
+      "license_note": "Public domain in the United States.",
+      "coverage": {
+        "books": 66
+      }
+    },
+    {
+      "id": "erv",
+      "code": "ERV",
+      "name": "English Revised Version",
+      "language": "en",
+      "edition_kind": "translation",
+      "license_note": "Public domain in the United States.",
+      "coverage": {
+        "books": 66
+      }
+    },
+    {
+      "id": "web",
+      "code": "WEB",
+      "name": "World English Bible",
+      "language": "en",
+      "edition_kind": "translation",
+      "license_note": "Public domain per eBible.org / World English Bible copyright notice.",
+      "coverage": {
+        "books": 66
+      }
+    },
+    {
+      "id": "dbt",
+      "code": "DBT",
+      "name": "Darby Bible Translation",
+      "language": "en",
+      "edition_kind": "translation",
+      "license_note": "Public domain in the United States.",
+      "coverage": {
+        "books": 66
+      }
+    },
+    {
+      "id": "drb",
+      "code": "DRB",
+      "name": "Douay-Rheims Bible",
+      "language": "en",
+      "edition_kind": "translation",
+      "license_note": "Public domain in the United States.",
+      "coverage": {
+        "books": 66
+      }
+    },
+    {
+      "id": "slt",
+      "code": "SLT",
+      "name": "Smith's Literal Translation",
+      "language": "en",
+      "edition_kind": "translation",
+      "license_note": "Public domain in the United States.",
+      "coverage": {
+        "books": 66
+      }
+    },
+    {
+      "id": "ylt",
+      "code": "YLT",
+      "name": "Young's Literal Translation",
+      "language": "en",
+      "edition_kind": "translation",
+      "license_note": "Public domain in the United States.",
+      "coverage": {
+        "books": 66
+      }
+    }
+  ]
+}

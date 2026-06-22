@@ -1,0 +1,14 @@
+/backup/
+/.agents/
+/.codex/
+/.edge-cdp-profile*/
+/.tmp*/
+
+/openbible-clean-app/
+/app/server.err.log
+/app/server.out.log
+/app/tmp-http-server.err.log
+/app/tmp-http-server.log
+/app/scripts/
+/app/scripts/__pycache__/
+*.pyc

@@ -1,0 +1,253 @@
+{
+  "schema_version": 1,
+  "language": "hebrew",
+  "description": "Curated editable Hebrew alphabet metadata for word inspection, gematria, and traditional symbolic notes.",
+  "letters": [
+    {
+      "letter": "א",
+      "name": "Aleph",
+      "transliteration": "ʾ",
+      "gematria": 1,
+      "symbolic_meaning": "ox, strength, firstness",
+      "description": "A silent guttural consonant; traditionally associated with strength and beginning."
+    },
+    {
+      "letter": "ב",
+      "name": "Bet",
+      "transliteration": "b/v",
+      "gematria": 2,
+      "symbolic_meaning": "house, dwelling",
+      "description": "A labial consonant that can be hard or soft; traditionally associated with a house."
+    },
+    {
+      "letter": "ג",
+      "name": "Gimel",
+      "transliteration": "g",
+      "gematria": 3,
+      "symbolic_meaning": "camel, movement, provision",
+      "description": "A consonant traditionally linked with the image of a camel and movement."
+    },
+    {
+      "letter": "ד",
+      "name": "Dalet",
+      "transliteration": "d",
+      "gematria": 4,
+      "symbolic_meaning": "door, entry, way",
+      "description": "A consonant traditionally associated with a door or pathway."
+    },
+    {
+      "letter": "ה",
+      "name": "He",
+      "transliteration": "h",
+      "gematria": 5,
+      "symbolic_meaning": "window, breath, revelation",
+      "description": "A consonant often used as a vowel letter at word endings; traditionally linked with breath or disclosure."
+    },
+    {
+      "letter": "ו",
+      "name": "Vav",
+      "transliteration": "w/v",
+      "gematria": 6,
+      "symbolic_meaning": "hook, connection",
+      "description": "A consonant and vowel letter; traditionally associated with a hook or connector."
+    },
+    {
+      "letter": "ז",
+      "name": "Zayin",
+      "transliteration": "z",
+      "gematria": 7,
+      "symbolic_meaning": "weapon, cutting, sustenance",
+      "description": "A z-sound consonant with traditional associations of a weapon or provision."
+    },
+    {
+      "letter": "ח",
+      "name": "Het",
+      "transliteration": "ḥ",
+      "gematria": 8,
+      "symbolic_meaning": "fence, enclosure, life",
+      "description": "A strong guttural consonant traditionally associated with enclosure or life."
+    },
+    {
+      "letter": "ט",
+      "name": "Tet",
+      "transliteration": "ṭ",
+      "gematria": 9,
+      "symbolic_meaning": "basket, hidden good, surrounding",
+      "description": "An emphatic t-sound consonant with traditional associations of what is enclosed or hidden."
+    },
+    {
+      "letter": "י",
+      "name": "Yod",
+      "transliteration": "y",
+      "gematria": 10,
+      "symbolic_meaning": "hand, work, action",
+      "description": "A small consonant and vowel letter traditionally linked with the hand and action."
+    },
+    {
+      "letter": "כ",
+      "final_form": "ך",
+      "name": "Kaf",
+      "transliteration": "k/kh",
+      "gematria": 20,
+      "final_name": "Kaf Sofit",
+      "final_gematria": 500,
+      "symbolic_meaning": "palm, covering, capacity",
+      "description": "A consonant with a final form; traditionally associated with the palm of the hand."
+    },
+    {
+      "letter": "ל",
+      "name": "Lamed",
+      "transliteration": "l",
+      "gematria": 30,
+      "symbolic_meaning": "goad, teaching, authority",
+      "description": "An l-sound consonant traditionally associated with a goad and instruction."
+    },
+    {
+      "letter": "מ",
+      "final_form": "ם",
+      "name": "Mem",
+      "transliteration": "m",
+      "gematria": 40,
+      "final_name": "Mem Sofit",
+      "final_gematria": 600,
+      "symbolic_meaning": "water, chaos, nations",
+      "description": "A consonant with a final form; traditionally associated with water."
+    },
+    {
+      "letter": "נ",
+      "final_form": "ן",
+      "name": "Nun",
+      "transliteration": "n",
+      "gematria": 50,
+      "final_name": "Nun Sofit",
+      "final_gematria": 700,
+      "symbolic_meaning": "fish, seed, continuation",
+      "description": "A consonant with a final form; traditionally associated with fish or continuation."
+    },
+    {
+      "letter": "ס",
+      "name": "Samekh",
+      "transliteration": "s",
+      "gematria": 60,
+      "symbolic_meaning": "support, prop, surrounding",
+      "description": "An s-sound consonant traditionally linked with support."
+    },
+    {
+      "letter": "ע",
+      "name": "Ayin",
+      "transliteration": "ʿ",
+      "gematria": 70,
+      "symbolic_meaning": "eye, seeing, perception",
+      "description": "A guttural consonant traditionally associated with the eye and seeing."
+    },
+    {
+      "letter": "פ",
+      "final_form": "ף",
+      "name": "Pe",
+      "transliteration": "p/f",
+      "gematria": 80,
+      "final_name": "Pe Sofit",
+      "final_gematria": 800,
+      "symbolic_meaning": "mouth, speech",
+      "description": "A consonant with a final form; traditionally associated with the mouth and speech."
+    },
+    {
+      "letter": "צ",
+      "final_form": "ץ",
+      "name": "Tsade",
+      "transliteration": "ts",
+      "gematria": 90,
+      "final_name": "Tsade Sofit",
+      "final_gematria": 900,
+      "symbolic_meaning": "fishhook, righteousness, pursuit",
+      "description": "A consonant with a final form; traditionally associated with a hook or righteous pursuit."
+    },
+    {
+      "letter": "ק",
+      "name": "Qof",
+      "transliteration": "q",
+      "gematria": 100,
+      "symbolic_meaning": "back of head, horizon, holiness",
+      "description": "A q-sound consonant traditionally associated with what is behind or set apart."
+    },
+    {
+      "letter": "ר",
+      "name": "Resh",
+      "transliteration": "r",
+      "gematria": 200,
+      "symbolic_meaning": "head, person, beginning",
+      "description": "An r-sound consonant traditionally associated with a head or chief."
+    },
+    {
+      "letter": "ש",
+      "name": "Shin/Sin",
+      "transliteration": "sh/s",
+      "gematria": 300,
+      "symbolic_meaning": "tooth, fire, consuming",
+      "description": "A consonant whose dot distinguishes shin from sin; traditionally associated with a tooth."
+    },
+    {
+      "letter": "ת",
+      "name": "Tav",
+      "transliteration": "t",
+      "gematria": 400,
+      "symbolic_meaning": "mark, sign, covenant",
+      "description": "A t-sound consonant traditionally associated with a mark or sign."
+    },
+    {
+      "letter": "ך",
+      "base_letter": "כ",
+      "name": "Kaf Sofit",
+      "transliteration": "k/kh",
+      "gematria": 500,
+      "standard_gematria": 20,
+      "final_form_of": "Kaf",
+      "symbolic_meaning": "palm, covering, capacity",
+      "description": "The final form of Kaf used at the end of a word; counted as 500 in final-form gematria."
+    },
+    {
+      "letter": "ם",
+      "base_letter": "מ",
+      "name": "Mem Sofit",
+      "transliteration": "m",
+      "gematria": 600,
+      "standard_gematria": 40,
+      "final_form_of": "Mem",
+      "symbolic_meaning": "water, chaos, nations",
+      "description": "The final form of Mem used at the end of a word; counted as 600 in final-form gematria."
+    },
+    {
+      "letter": "ן",
+      "base_letter": "נ",
+      "name": "Nun Sofit",
+      "transliteration": "n",
+      "gematria": 700,
+      "standard_gematria": 50,
+      "final_form_of": "Nun",
+      "symbolic_meaning": "fish, seed, continuation",
+      "description": "The final form of Nun used at the end of a word; counted as 700 in final-form gematria."
+    },
+    {
+      "letter": "ף",
+      "base_letter": "פ",
+      "name": "Pe Sofit",
+      "transliteration": "p/f",
+      "gematria": 800,
+      "standard_gematria": 80,
+      "final_form_of": "Pe",
+      "symbolic_meaning": "mouth, speech",
+      "description": "The final form of Pe used at the end of a word; counted as 800 in final-form gematria."
+    },
+    {
+      "letter": "ץ",
+      "base_letter": "צ",
+      "name": "Tsade Sofit",
+      "transliteration": "ts",
+      "gematria": 900,
+      "standard_gematria": 90,
+      "final_form_of": "Tsade",
+      "symbolic_meaning": "fishhook, righteousness, pursuit",
+      "description": "The final form of Tsade used at the end of a word; counted as 900 in final-form gematria."
+    }
+  ]
+}

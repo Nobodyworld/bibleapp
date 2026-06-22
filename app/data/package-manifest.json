@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-06-22T20:44:02.022Z",
+  "distribution": "clean-private-publish",
+  "note": "Feature packs are limited to retained public-domain/no-license verse text. Aggregated study datasets and uncertain-provenance data were removed.",
+  "packages": [
+    {
+      "id": "reader-texts",
+      "label": "Reader texts",
+      "description": "Static Bible reader with retained text editions.",
+      "feature_pack_ids": [
+        "translation-bsb",
+        "translation-kjv",
+        "translation-wbt",
+        "translation-asv",
+        "translation-erv",
+        "translation-web",
+        "translation-dbt",
+        "translation-drb",
+        "translation-slt",
+        "translation-ylt"
+      ]
+    }
+  ],
+  "feature_packs": [
+    {
+      "id": "translation-bsb",
+      "label": "BSB text",
+      "description": "Berean Study Bible verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 0,
+      "gzip_bytes": 0,
+      "license_note": "Public domain as of 2023-04-30 per Berean Bible free licensing.",
+      "paths": [
+        "data/verses/bsb"
+      ]
+    },
+    {
+      "id": "translation-kjv",
+      "label": "KJV text",
+      "description": "King James Version verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 0,
+      "gzip_bytes": 0,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/kjv"
+      ]
+    },
+    {
+      "id": "translation-wbt",
+      "label": "WBT text",
+      "description": "Webster Bible Translation verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 0,
+      "gzip_bytes": 0,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/wbt"
+      ]
+    },
+    {
+      "id": "translation-asv",
+      "label": "ASV text",
+      "description": "American Standard Version verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 0,
+      "gzip_bytes": 0,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/asv"
+      ]
+    },
+    {
+      "id": "translation-erv",
+      "label": "ERV text",
+      "description": "English Revised Version verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 0,
+      "gzip_bytes": 0,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/erv"
+      ]
+    },
+    {
+      "id": "translation-web",
+      "label": "WEB text",
+      "description": "World English Bible verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 0,
+      "gzip_bytes": 0,
+      "license_note": "Public domain per eBible.org / World English Bible copyright notice.",
+      "paths": [
+        "data/verses/web"
+      ]
+    },
+    {
+      "id": "translation-dbt",
+      "label": "DBT text",
+      "description": "Darby Bible Translation verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 0,
+      "gzip_bytes": 0,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/dbt"
+      ]
+    },
+    {
+      "id": "translation-drb",
+      "label": "DRB text",
+      "description": "Douay-Rheims Bible verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 0,
+      "gzip_bytes": 0,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/drb"
+      ]
+    },
+    {
+      "id": "translation-slt",
+      "label": "SLT text",
+      "description": "Smith's Literal Translation verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 0,
+      "gzip_bytes": 0,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/slt"
+      ]
+    },
+    {
+      "id": "translation-ylt",
+      "label": "YLT text",
+      "description": "Young's Literal Translation verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 0,
+      "gzip_bytes": 0,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/ylt"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "language": "greek",
+  "description": "Greek accent, breathing, and vowel marks observed in the corpus.",
+  "marks": [
+    {
+      "code_point": "U+0300",
+      "char": "̀",
+      "name": "Grave accent",
+      "short_label": "grave",
+      "category": "accent",
+      "description": "Accent mark used in Greek orthography; often replaces acute in certain positions."
+    },
+    {
+      "code_point": "U+0301",
+      "char": "́",
+      "name": "Acute accent",
+      "short_label": "acute",
+      "category": "accent",
+      "description": "Accent mark indicating the stressed syllable in printed Greek."
+    },
+    {
+      "code_point": "U+0308",
+      "char": "̈",
+      "name": "Diaeresis",
+      "short_label": "diaeresis",
+      "category": "vowel",
+      "description": "Shows that a vowel is pronounced separately rather than as part of a diphthong."
+    },
+    {
+      "code_point": "U+0313",
+      "char": "̓",
+      "name": "Smooth breathing",
+      "short_label": "smooth",
+      "category": "breathing",
+      "description": "Marks absence of an initial h sound on a vowel or rho in Greek orthography."
+    },
+    {
+      "code_point": "U+0314",
+      "char": "̔",
+      "name": "Rough breathing",
+      "short_label": "rough",
+      "category": "breathing",
+      "description": "Marks an initial h sound on a vowel or rho in Greek orthography."
+    },
+    {
+      "code_point": "U+0342",
+      "char": "͂",
+      "name": "Circumflex accent",
+      "short_label": "circumflex",
+      "category": "accent",
+      "description": "Accent mark used with long vowels or diphthongs in Greek orthography."
+    },
+    {
+      "code_point": "U+0345",
+      "char": "ͅ",
+      "name": "Iota subscript",
+      "short_label": "iota sub.",
+      "category": "vowel",
+      "description": "Small iota written beneath a vowel, reflecting an older diphthong."
+    },
+    {
+      "code_point": "U+1FBD",
+      "char": "᾽",
+      "name": "Koronis",
+      "short_label": "koronis",
+      "category": "punctuation",
+      "description": "Curved mark used in Greek elision or crasis notation."
+    }
+  ]
+}
