@@ -2,6 +2,7 @@
   "schema_version": 1,
   "generated_at": "2026-06-22T20:44:02.022Z",
   "distribution": "clean-private-publish",
+  "license_matrix": "data/license-matrix.json",
   "note": "Feature packs are limited to retained public-domain/no-license verse text. Aggregated study datasets and uncertain-provenance data were removed.",
   "packages": [
     {

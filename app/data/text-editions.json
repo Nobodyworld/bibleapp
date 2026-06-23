@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "generated_at": "2026-06-22T20:44:02.020Z",
+  "license_matrix": "data/license-matrix.json",
   "note": "Clean publish metadata for retained public-domain/no-license text editions only.",
   "editions": [
     {

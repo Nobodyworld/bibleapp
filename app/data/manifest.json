@@ -346,6 +346,7 @@
     }
   },
   "generated_at": "2026-06-16T05:23:41.918Z",
+  "license_matrix": "data/license-matrix.json",
   "translations": [
     {
       "id": "bsb",

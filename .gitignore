@@ -3,8 +3,8 @@
 /.codex/
 /.edge-cdp-profile*/
 /.tmp*/
+/.vscode/
 
-/openbible-clean-app/
 /app/server.err.log
 /app/server.out.log
 /app/tmp-http-server.err.log

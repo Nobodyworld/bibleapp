@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-06-22",
+  "policy": {
+    "publish_public_repo": "Allowed only when every packaged dataset has public_redistribution set to allowed.",
+    "sell_or_bundle_commercially": "Allowed only when every packaged dataset has commercial_use and sale_with_app set to allowed.",
+    "private_use": "Allowed for private_only datasets only while the repository, deployed app, and artifacts remain private."
+  },
+  "packaged_datasets": [
+    {
+      "id": "translation-bsb",
+      "category": "translation",
+      "name": "Berean Study Bible",
+      "paths": ["data/verses/bsb"],
+      "license_status": "public_domain",
+      "source_url": "https://berean.bible/licensing.htm",
+      "public_redistribution": "allowed",
+      "commercial_use": "allowed",
+      "sale_with_app": "allowed",
+      "required_attribution": "none required by license notice; attribution retained for clarity",
+      "notes": "Berean Bible states the Berean Bible and Majority Bible texts were placed into the public domain as of 2023-04-30."
+    },
+    {
+      "id": "translation-web",
+      "category": "translation",
+      "name": "World English Bible",
+      "paths": ["data/verses/web"],
+      "license_status": "public_domain_with_trademark_notice",
+      "source_url": "https://ebible.org/eng-web/copyright.htm",
+      "public_redistribution": "allowed",
+      "commercial_use": "allowed",
+      "sale_with_app": "allowed",
+      "required_attribution": "none required by copyright notice; keep trademark/change notice",
+      "notes": "eBible states the WEB text is public domain and may be copied, distributed, and sold. Changed text should not be called World English Bible."
+    },
+    {
+      "id": "translation-kjv",
+      "category": "translation",
+      "name": "King James Version",
+      "paths": ["data/verses/kjv"],
+      "license_status": "public_domain_us_with_uk_restriction_note",
+      "source_url": null,
+      "public_redistribution": "allowed_us",
+      "commercial_use": "allowed_us",
+      "sale_with_app": "allowed_us",
+      "required_attribution": "none for United States public-domain use",
+      "notes": "Public domain in the United States. UK publication/distribution may be subject to Crown/prerogative restrictions and should be reviewed separately."
+    },
+    {
+      "id": "translation-asv",
+      "category": "translation",
+      "name": "American Standard Version",
+      "paths": ["data/verses/asv"],
+      "license_status": "public_domain_us",
+      "source_url": null,
+      "public_redistribution": "allowed_us",
+      "commercial_use": "allowed_us",
+      "sale_with_app": "allowed_us",
+      "required_attribution": "none for United States public-domain use",
+      "notes": "Historical 1901 English translation."
+    },
+    {
+      "id": "translation-erv",
+      "category": "translation",
+      "name": "English Revised Version",
+      "paths": ["data/verses/erv"],
+      "license_status": "public_domain_us",
+      "source_url": null,
+      "public_redistribution": "allowed_us",
+      "commercial_use": "allowed_us",
+      "sale_with_app": "allowed_us",
+      "required_attribution": "none for United States public-domain use",
+      "notes": "Historical 1881-1885 English translation."
+    },
+    {
+      "id": "translation-wbt",
+      "category": "translation",
+      "name": "Webster Bible Translation",
+      "paths": ["data/verses/wbt"],
+      "license_status": "public_domain_us",
+      "source_url": null,
+      "public_redistribution": "allowed_us",
+      "commercial_use": "allowed_us",
+      "sale_with_app": "allowed_us",
+      "required_attribution": "none for United States public-domain use",
+      "notes": "Historical 1833 English translation."
+    },
+    {
+      "id": "translation-dbt",
+      "category": "translation",
+      "name": "Darby Bible Translation",
+      "paths": ["data/verses/dbt"],
+      "license_status": "public_domain_us",
+      "source_url": null,
+      "public_redistribution": "allowed_us",
+      "commercial_use": "allowed_us",
+      "sale_with_app": "allowed_us",
+      "required_attribution": "none for United States public-domain use",
+      "notes": "Historical 1890 English translation."
+    },
+    {
+      "id": "translation-drb",
+      "category": "translation",
+      "name": "Douay-Rheims Bible",
+      "paths": ["data/verses/drb"],
+      "license_status": "public_domain_us",
+      "source_url": null,
+      "public_redistribution": "allowed_us",
+      "commercial_use": "allowed_us",
+      "sale_with_app": "allowed_us",
+      "required_attribution": "none for United States public-domain use",
+      "notes": "Historical English Catholic translation."
+    },
+    {
+      "id": "translation-slt",
+      "category": "translation",
+      "name": "Smith's Literal Translation",
+      "paths": ["data/verses/slt"],
+      "license_status": "public_domain_us",
+      "source_url": null,
+      "public_redistribution": "allowed_us",
+      "commercial_use": "allowed_us",
+      "sale_with_app": "allowed_us",
+      "required_attribution": "none for United States public-domain use",
+      "notes": "Historical 19th-century English translation."
+    },
+    {
+      "id": "translation-ylt",
+      "category": "translation",
+      "name": "Young's Literal Translation",
+      "paths": ["data/verses/ylt"],
+      "license_status": "public_domain_us",
+      "source_url": null,
+      "public_redistribution": "allowed_us",
+      "commercial_use": "allowed_us",
+      "sale_with_app": "allowed_us",
+      "required_attribution": "none for United States public-domain use",
+      "notes": "Historical 1862/1898 English translation."
+    }
+  ],
+  "not_packaged_categories": [
+    {
+      "category": "commentary",
+      "status": "not_packaged",
+      "restore_rule": "Add source-specific license row before restoring."
+    },
+    {
+      "category": "cross_references",
+      "status": "not_packaged",
+      "restore_rule": "Add source-specific license row before restoring."
+    },
+    {
+      "category": "footnotes",
+      "status": "not_packaged",
+      "restore_rule": "Add source-specific license row before restoring."
+    },
+    {
+      "category": "strongs_lexicon_interlinear_morphology",
+      "status": "not_packaged",
+      "restore_rule": "Add source-specific license row before restoring."
+    },
+    {
+      "category": "outlines",
+      "status": "not_packaged",
+      "restore_rule": "Add source-specific license row before restoring."
+    },
+    {
+      "category": "generated_analysis_search_performance_recovery_provenance",
+      "status": "not_packaged",
+      "restore_rule": "Regenerate only from retained/approved source datasets and record derived-data provenance."
+    }
+  ]
+}
