@@ -1,8 +1,9 @@
 import { fetchCommentaryAggregate, fetchCommentarySource } from "../data-service.js?v=clean-app-v1-sofit4";
-import { createDetailList, setDetail, setDetailMessage } from "../dom.js?v=clean-app-v1-detail-context2";
+import { createDetailList, setDetail, setDetailMessage } from "../dom.js?v=clean-app-v1-study-empty1";
 import { capabilityMessage } from "../capabilities.js?v=clean-app-v1-capabilities1";
 import { makeInternalLinksNavigable } from "../references.js?v=clean-app-v1-sofit4";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=clean-app-v1-contexttabs1";
+import { createStudyEmptyState } from "../study-empty-state.js";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=clean-app-v1-study-empty1";
 
 export function createCommentaryOutlineViews(ctx) {
   async function loadCommentaryAggregate() {
@@ -68,7 +69,12 @@ export function createCommentaryOutlineViews(ctx) {
 
   function showOutline() {
     if (!ctx.canUseCapability?.("outlines")) {
-      setDetailMessage("Outline", capabilityMessage(ctx.getCapabilityState?.("outlines")));
+      setDetail(
+        "Outline",
+        createStudyEmptyState(ctx, "outlines", {
+          capabilityIds: ["outlines"],
+        }),
+      );
       return;
     }
     const wrap = document.createElement("div");

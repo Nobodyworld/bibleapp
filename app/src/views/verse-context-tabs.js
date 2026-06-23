@@ -1,3 +1,5 @@
+import { studyUnavailableLabel } from "../study-empty-state.js";
+
 function getVerseText(ctx, verse) {
   return ctx.state.verseBook?.chapters?.[ctx.state.chapter]?.[verse] || "";
 }
@@ -32,6 +34,7 @@ export function createVerseContextTabs(ctx, reference, verse, active) {
       id: "refs",
       label: "Refs",
       disabled: !getCrossRecord(ctx, verse),
+      unavailableKey: "crossrefs",
       run: () =>
         ctx.detailViews.showCrossrefs(reference, getCrossRecord(ctx, verse), {
           history: "replace",
@@ -43,12 +46,14 @@ export function createVerseContextTabs(ctx, reference, verse, active) {
       id: "commentary",
       label: "Cmt",
       disabled: !ctx.canUseCapability?.("commentary"),
+      unavailableKey: "commentary",
       run: () => void ctx.detailViews.showCommentary(reference, verse, { history: "replace", lock: true }),
     },
     {
       id: "interlinear",
       label: "Int",
       disabled: !hasInterlinear(ctx, verse),
+      unavailableKey: "interlinear",
       run: () => void ctx.detailViews.showInterlinearVerse(reference, verse, { history: "replace", lock: true }),
     },
     {
@@ -64,6 +69,10 @@ export function createVerseContextTabs(ctx, reference, verse, active) {
     button.className = action.id === active ? "verse-context-tab active" : "verse-context-tab";
     button.textContent = action.label;
     button.disabled = Boolean(action.disabled);
+    if (action.disabled && action.unavailableKey) {
+      button.title = studyUnavailableLabel(action.unavailableKey);
+      button.setAttribute("aria-label", `${action.label}: ${button.title}`);
+    }
     button.setAttribute("aria-pressed", action.id === active ? "true" : "false");
     if (action.run) button.addEventListener("click", action.run);
     tabs.append(button);

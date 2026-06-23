@@ -1,0 +1,20 @@
+{
+  "counts": {
+    "book_files": 66,
+    "chapter_pages": 1189,
+    "missing_strong_number_records": 6038,
+    "token_records": 443625
+  },
+  "generated_at": "2026-06-13T03:21:14.978087+00:00",
+  "token_schema": [
+    "token_index",
+    "english",
+    "language",
+    "strong_code",
+    "strong_number",
+    "original",
+    "morphology",
+    "gloss"
+  ],
+  "provenance_note": "Restored from local private study-data backup; source rights are recorded as restricted in data/license-matrix.json."
+}

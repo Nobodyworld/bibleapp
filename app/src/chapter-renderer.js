@@ -1,8 +1,9 @@
-import { els, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=clean-app-v1-detail-context2";
-import { resolvePassageText } from "./data-service.js?v=clean-app-v1-sofit4";
+import { els, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=clean-app-v1-study-empty1";
+import { resolvePassageText } from "./data-service.js?v=clean-app-v1-strongs-restore1";
 import { referenceKey, refDomId, parseLocationFromHref } from "./references.js?v=clean-app-v1-sofit4";
 import { addRedLetterRange, ensureStores, getRedLetterRanges } from "./stores.js";
 import { mapStrongChapterRanges } from "./strongs.js";
+import { createStudyEmptyState, studyUnavailableLabel } from "./study-empty-state.js";
 
 export function createChapterRenderer(ctx) {
   let selectionMenu = null;
@@ -60,13 +61,24 @@ export function createChapterRenderer(ctx) {
   function showHoverStrongForElement(element) {
     const token = element?.__bibleAppStrongToken;
     if (!token) return;
-    ctx.detailViews.showStrong(token, { hover: true, history: "replace" });
+    ctx.highlightReaderContext?.({
+      verse: element.__bibleAppVerseContext?.verse,
+      wordElement: element,
+    });
+    ctx.detailViews.showStrong(token, {
+      hover: true,
+      history: "replace",
+      verseContext: element.__bibleAppVerseContext,
+    });
   }
 
-  els.content?.addEventListener("mouseover", (event) => {
+  const handleHoverStrong = (event) => {
     const token = event.target.closest?.(".strong-token");
     if (token && els.content.contains(token)) showHoverStrongForElement(token);
-  });
+  };
+
+  els.content?.addEventListener("mouseover", handleHoverStrong);
+  els.content?.addEventListener("pointerover", handleHoverStrong);
 
   els.content?.addEventListener("focusin", (event) => {
     const token = event.target.closest?.(".strong-token");
@@ -244,6 +256,8 @@ export function createChapterRenderer(ctx) {
       const showHoverStrong = () => ctx.detailViews.showStrong(tokenRange.token, { hover: true, history: "replace" });
       token.addEventListener("mouseenter", showHoverStrong);
       token.addEventListener("mouseover", showHoverStrong);
+      token.addEventListener("pointerenter", () => showHoverStrongForElement(token));
+      token.addEventListener("pointerover", () => showHoverStrongForElement(token));
       token.addEventListener("mouseleave", () => {
         delete token.dataset.suppressTooltip;
       });
@@ -406,8 +420,13 @@ export function createChapterRenderer(ctx) {
     const studyButton = document.createElement("button");
     studyButton.type = "button";
     studyButton.className = "verse-study-button";
-    studyButton.title = "Open verse study tabs";
-    studyButton.setAttribute("aria-label", `Open study tools for ${reference}`);
+    const hasStudyData = Boolean(crossRecord || hasInterlinear || hasCommentary);
+    studyButton.title = hasStudyData ? "Open verse study tabs" : studyUnavailableLabel("verseStudy");
+    studyButton.setAttribute(
+      "aria-label",
+      hasStudyData ? `Open study tools for ${reference}` : `${reference}: ${studyButton.title}`,
+    );
+    if (!hasStudyData) studyButton.dataset.unavailable = "true";
     studyButton.textContent = "⋯";
     studyButton.addEventListener("click", (event) => {
       event.stopPropagation();
@@ -418,9 +437,14 @@ export function createChapterRenderer(ctx) {
         void ctx.detailViews.showInterlinearVerse(reference, verse, { forceHistory: true });
       } else if (hasCommentary) {
         void ctx.detailViews.showCommentary(reference, verse, { forceHistory: true });
+      } else {
+        const empty = createStudyEmptyState(ctx, "verseStudy", {
+          reference,
+          capabilityIds: ["crossrefs", "commentary", "interlinear"],
+        });
+        ctx.detailViews.showStudyUnavailable?.("Study Tools", empty, { forceHistory: true });
       }
     });
-    studyButton.disabled = !crossRecord && !hasInterlinear && !hasCommentary;
     numberWrap.append(studyButton);
 
     body.addEventListener("mouseup", () => showSelectionMenuForVerse(reference, verse, verseText, body, key));

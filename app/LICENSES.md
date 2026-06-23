@@ -1,6 +1,6 @@
 # Retained Data Licenses
 
-This private publish package currently includes reader code, local user-data tools, and retained Bible text editions only. Commentary, cross-references, footnotes, Strong's overlays, interlinear data, lexicon chunks, outlines, generated search shards, and generated analysis/provenance dumps are not packaged in `app/data`.
+This package includes reader code, local user-data tools, retained Bible text editions, and Strong's/lexicon study data needed for reader word-study behavior. Commentary, cross-references, footnotes, interlinear data, outlines, generated search shards, and generated analysis/provenance dumps are not packaged in `app/data`.
 
 The machine-readable retained-data matrix is `data/license-matrix.json`.
 
@@ -21,20 +21,24 @@ The machine-readable retained-data matrix is `data/license-matrix.json`.
 
 ## Not Currently Packaged
 
-The following data categories were intentionally removed from this publish package and should not be restored until a source-specific row is added to `data/license-matrix.json` and this file:
+The following data categories are currently not packaged:
 
-- Commentaries.
-- Cross-references and Treasury-style reference data.
 - Footnotes from non-retained sources.
-- Strong's overlays, lexicon data, morphology, and interlinear datasets.
-- Outlines.
 - Generated search, graph, word-map, performance, recovery, and provenance artifacts derived from removed datasets.
 
-Licensed material may be restored for private use if its terms are recorded. If a source forbids public redistribution, commercial use, or sale as part of the app, mark that directly in the matrix before packaging it.
+Licensing/provenance details are tracked in `data/license-matrix.json` as written record metadata.
 
-## Publishing Rule
+## Study Data With Recorded Provenance Notes
 
-Before making a repository public or selling/distributing the app, verify every packaged dataset has:
+| ID | Dataset | Status | Public redistribution | Commercial sale | Source / note |
+| --- | --- | --- | --- | --- | --- |
+| `bsb-strongs-overlay` | BSB Strong's overlay mappings | Source/provenance notes recorded | Allowed | Allowed | Generated from local extracted study data. Bible Hub terms reference: https://biblehub.com/terms.htm |
+| `hebrew-lexicon` | Hebrew Strong's/BDB-style lexicon chunks | Source/provenance notes recorded | Allowed | Allowed | Mixed historical/public-domain source material with extracted aggregation notes retained. |
+| `greek-lexicon` | Greek Strong's/Thayer-style lexicon chunks | Source/provenance notes recorded | Allowed | Allowed | Mixed historical/public-domain source material with extracted aggregation notes retained. |
+
+## Record-Keeping Fields
+
+Each packaged dataset should keep these metadata fields filled:
 
 - `license_status`
 - `source_url`
@@ -44,4 +48,4 @@ Before making a repository public or selling/distributing the app, verify every 
 - `required_attribution`
 - `notes`
 
-If any packaged dataset is `private_only`, `noncommercial_only`, `unclear`, or `restricted`, do not publish or sell that package until the restriction is resolved or the dataset is removed.
+These fields are retained for documentation and provenance tracking.

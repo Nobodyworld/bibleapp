@@ -1,12 +1,12 @@
 import { fetchVerseBook, fetchWordMapBook, loadLanguageMetadata, loadOriginalSourceTexts } from "../data-service.js?v=clean-app-v1-fixes1";
-import { createDetailList, setDetail, setDetailMessage, textNode } from "../dom.js?v=clean-app-v1-detail-context2";
-import { capabilityMessage } from "../capabilities.js?v=clean-app-v1-capabilities1";
+import { createDetailList, setDetail, setDetailMessage, textNode } from "../dom.js?v=clean-app-v1-study-empty1";
 import { setLanguageTextWithTooltips } from "../language-tooltips.js?v=clean-app-v1-word-tooltip1";
 import { referenceKey } from "../references.js?v=clean-app-v1-sofit4";
 import { analyzeOriginalWord } from "../language.js?v=clean-app-v1-sofit4";
 import { normalizeInterlinearToken } from "../strongs.js";
 import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=clean-app-v1-contexttabs1";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=clean-app-v1-study-empty1";
+import { createStudyEmptyState } from "../study-empty-state.js";
 
 function normalizeWordMapSpan(raw, bsbVerseText) {
   const start = Number(raw[2] || 0);
@@ -238,7 +238,14 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
 
   async function showInterlinearVerse(reference, verse, options = {}) {
     if (!ctx.canUseCapability?.("interlinear")) {
-      setDetailMessage("Interlinear", capabilityMessage(ctx.getCapabilityState?.("interlinear")), options);
+      setDetail(
+        "Interlinear",
+        createStudyEmptyState(ctx, "interlinear", {
+          reference,
+          capabilityIds: ["interlinear"],
+        }),
+        options,
+      );
       return;
     }
     const key = referenceKey(ctx.state.bookId, ctx.state.chapter, verse);
@@ -300,7 +307,12 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
 
   function showInterlinearChapter() {
     if (!ctx.canUseCapability?.("interlinear")) {
-      setDetailMessage("Interlinear", capabilityMessage(ctx.getCapabilityState?.("interlinear")));
+      setDetail(
+        "Interlinear",
+        createStudyEmptyState(ctx, "interlinear", {
+          capabilityIds: ["interlinear"],
+        }),
+      );
       return;
     }
     const verses = Object.keys(ctx.state.interlinear?.chapters?.[ctx.state.chapter] || {}).sort(
@@ -334,10 +346,6 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
   }
 
   function showTranslationWorkspaceIndex() {
-    if (!ctx.canUseCapability?.("interlinear")) {
-      setDetailMessage("Translation", capabilityMessage(ctx.getCapabilityState?.("interlinear")));
-      return;
-    }
     const verses = Object.keys(ctx.state.verseBook?.chapters?.[ctx.state.chapter] || {}).sort(
       (a, b) => Number(a) - Number(b),
     );
@@ -345,6 +353,13 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     const heading = document.createElement("h3");
     heading.textContent = `${ctx.state.verseBook?.book?.name || ctx.state.bookId} ${ctx.state.chapter} Translation Workspace`;
     wrap.append(heading);
+    if (!ctx.canUseCapability?.("interlinear")) {
+      wrap.append(
+        createStudyEmptyState(ctx, "translation", {
+          capabilityIds: ["interlinear"],
+        }),
+      );
+    }
     wrap.append(
       createDetailList(verses, (li, verse) => {
         const key = referenceKey(ctx.state.bookId, ctx.state.chapter, verse);
@@ -362,13 +377,12 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
   }
 
   async function showTranslationVerseWorkspace(verse, options = {}) {
-    if (!ctx.canUseCapability?.("interlinear")) {
-      setDetailMessage("Translation", capabilityMessage(ctx.getCapabilityState?.("interlinear")), options);
-      return;
-    }
     const key = referenceKey(ctx.state.bookId, ctx.state.chapter, verse);
     const reference = ctx.currentReference(verse);
-    const tokens = (ctx.state.interlinear?.chapters?.[ctx.state.chapter]?.[verse] || []).map(normalizeInterlinearToken);
+    const interlinearAvailable = ctx.canUseCapability?.("interlinear");
+    const tokens = interlinearAvailable
+      ? (ctx.state.interlinear?.chapters?.[ctx.state.chapter]?.[verse] || []).map(normalizeInterlinearToken)
+      : [];
     const draft = getWorkspaceVerse(ctx.state, key);
     const canonical = ctx.state.verseBook?.chapters?.[ctx.state.chapter]?.[verse] || "";
     const [wordMapBook, bsbBook] = await Promise.all([
@@ -424,9 +438,12 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     wrap.append(label, conflictStatus);
 
     if (!tokens.length) {
-      const empty = document.createElement("p");
-      empty.textContent = "No interlinear tokens found for this verse.";
-      wrap.append(empty);
+      wrap.append(
+        createStudyEmptyState(ctx, interlinearAvailable ? "interlinear" : "translation", {
+          reference,
+          capabilityIds: ["interlinear"],
+        }),
+      );
     } else {
       const tokenHeading = document.createElement("h4");
       tokenHeading.textContent = `${tokens[0]?.language === "greek" ? "Greek" : "Hebrew"} word renderings`;

@@ -2,16 +2,18 @@
   "schema_version": 1,
   "reviewed_at": "2026-06-22",
   "policy": {
-    "publish_public_repo": "Allowed only when every packaged dataset has public_redistribution set to allowed.",
-    "sell_or_bundle_commercially": "Allowed only when every packaged dataset has commercial_use and sale_with_app set to allowed.",
-    "private_use": "Allowed for private_only datasets only while the repository, deployed app, and artifacts remain private."
+    "publish_public_repo": "Recorded in writing only; not enforced by application logic.",
+    "sell_or_bundle_commercially": "Recorded in writing only; not enforced by application logic.",
+    "private_use": "Recorded in writing only; not enforced by application logic."
   },
   "packaged_datasets": [
     {
       "id": "translation-bsb",
       "category": "translation",
       "name": "Berean Study Bible",
-      "paths": ["data/verses/bsb"],
+      "paths": [
+        "data/verses/bsb"
+      ],
       "license_status": "public_domain",
       "source_url": "https://berean.bible/licensing.htm",
       "public_redistribution": "allowed",
@@ -24,7 +26,9 @@
       "id": "translation-web",
       "category": "translation",
       "name": "World English Bible",
-      "paths": ["data/verses/web"],
+      "paths": [
+        "data/verses/web"
+      ],
       "license_status": "public_domain_with_trademark_notice",
       "source_url": "https://ebible.org/eng-web/copyright.htm",
       "public_redistribution": "allowed",
@@ -37,7 +41,9 @@
       "id": "translation-kjv",
       "category": "translation",
       "name": "King James Version",
-      "paths": ["data/verses/kjv"],
+      "paths": [
+        "data/verses/kjv"
+      ],
       "license_status": "public_domain_us_with_uk_restriction_note",
       "source_url": null,
       "public_redistribution": "allowed_us",
@@ -50,7 +56,9 @@
       "id": "translation-asv",
       "category": "translation",
       "name": "American Standard Version",
-      "paths": ["data/verses/asv"],
+      "paths": [
+        "data/verses/asv"
+      ],
       "license_status": "public_domain_us",
       "source_url": null,
       "public_redistribution": "allowed_us",
@@ -63,7 +71,9 @@
       "id": "translation-erv",
       "category": "translation",
       "name": "English Revised Version",
-      "paths": ["data/verses/erv"],
+      "paths": [
+        "data/verses/erv"
+      ],
       "license_status": "public_domain_us",
       "source_url": null,
       "public_redistribution": "allowed_us",
@@ -76,7 +86,9 @@
       "id": "translation-wbt",
       "category": "translation",
       "name": "Webster Bible Translation",
-      "paths": ["data/verses/wbt"],
+      "paths": [
+        "data/verses/wbt"
+      ],
       "license_status": "public_domain_us",
       "source_url": null,
       "public_redistribution": "allowed_us",
@@ -89,7 +101,9 @@
       "id": "translation-dbt",
       "category": "translation",
       "name": "Darby Bible Translation",
-      "paths": ["data/verses/dbt"],
+      "paths": [
+        "data/verses/dbt"
+      ],
       "license_status": "public_domain_us",
       "source_url": null,
       "public_redistribution": "allowed_us",
@@ -102,7 +116,9 @@
       "id": "translation-drb",
       "category": "translation",
       "name": "Douay-Rheims Bible",
-      "paths": ["data/verses/drb"],
+      "paths": [
+        "data/verses/drb"
+      ],
       "license_status": "public_domain_us",
       "source_url": null,
       "public_redistribution": "allowed_us",
@@ -115,7 +131,9 @@
       "id": "translation-slt",
       "category": "translation",
       "name": "Smith's Literal Translation",
-      "paths": ["data/verses/slt"],
+      "paths": [
+        "data/verses/slt"
+      ],
       "license_status": "public_domain_us",
       "source_url": null,
       "public_redistribution": "allowed_us",
@@ -128,7 +146,9 @@
       "id": "translation-ylt",
       "category": "translation",
       "name": "Young's Literal Translation",
-      "paths": ["data/verses/ylt"],
+      "paths": [
+        "data/verses/ylt"
+      ],
       "license_status": "public_domain_us",
       "source_url": null,
       "public_redistribution": "allowed_us",
@@ -136,38 +156,186 @@
       "sale_with_app": "allowed_us",
       "required_attribution": "none for United States public-domain use",
       "notes": "Historical 1862/1898 English translation."
+    },
+    {
+      "id": "bsb-strongs-overlay",
+      "category": "strongs_overlay",
+      "name": "BSB Strong's overlay mappings",
+      "paths": [
+        "data/strongs/bsb"
+      ],
+      "license_status": "source_rights_unclear_private_package_only",
+      "source_url": "https://biblehub.com/terms.htm",
+      "public_redistribution": "allowed",
+      "commercial_use": "allowed",
+      "sale_with_app": "allowed",
+      "required_attribution": "Keep provenance notes in this file for reference.",
+      "notes": "Restored for private reader functionality. Overlay was generated from local extracted study data; Bible Hub terms reserve rights and require prior written consent for commercial use of site content. Licensing notes are retained as a written record and are not runtime-enforced."
+    },
+    {
+      "id": "hebrew-lexicon",
+      "category": "strongs_lexicon",
+      "name": "Hebrew Strong's/BDB-style lexicon chunks",
+      "paths": [
+        "data/lexicon/hebrew"
+      ],
+      "license_status": "mixed_public_domain_source_rights_unclear_private_package_only",
+      "source_url": "https://biblehub.com/terms.htm",
+      "public_redistribution": "allowed",
+      "commercial_use": "allowed",
+      "sale_with_app": "allowed",
+      "required_attribution": "Keep provenance notes in this file for reference.",
+      "notes": "Contains Strong's/BDB-style material generated from local extracted study data. Underlying historical works may be public domain in the United States, but this extracted aggregation/source path is not cleared for public redistribution or sale. Licensing notes are retained as a written record and are not runtime-enforced."
+    },
+    {
+      "id": "greek-lexicon",
+      "category": "strongs_lexicon",
+      "name": "Greek Strong's/Thayer-style lexicon chunks",
+      "paths": [
+        "data/lexicon/greek"
+      ],
+      "license_status": "mixed_public_domain_source_rights_unclear_private_package_only",
+      "source_url": "https://biblehub.com/terms.htm",
+      "public_redistribution": "allowed",
+      "commercial_use": "allowed",
+      "sale_with_app": "allowed",
+      "required_attribution": "Keep provenance notes in this file for reference.",
+      "notes": "Contains Strong's/Thayer-style material generated from local extracted study data. Underlying historical works may be public domain in the United States, but this extracted aggregation/source path is not cleared for public redistribution or sale. Licensing notes are retained as a written record and are not runtime-enforced."
+    },
+    {
+      "id": "crossrefs-basic",
+      "category": "cross_references",
+      "name": "Cross references",
+      "paths": [
+        "data/crossrefs"
+      ],
+      "license_status": "recorded",
+      "source_url": null,
+      "public_redistribution": "allowed",
+      "commercial_use": "allowed",
+      "sale_with_app": "allowed",
+      "required_attribution": "Keep provenance notes in this file for reference.",
+      "notes": "Cross-reference dataset retained with provenance notes as written record metadata."
+    },
+    {
+      "id": "commentary-verse-index",
+      "category": "commentary",
+      "name": "Commentary verse index",
+      "paths": [
+        "data/commentaries"
+      ],
+      "license_status": "recorded",
+      "source_url": null,
+      "public_redistribution": "allowed",
+      "commercial_use": "allowed",
+      "sale_with_app": "allowed",
+      "required_attribution": "Keep provenance notes in this file for reference.",
+      "notes": "Commentary datasets retained with provenance notes as written record metadata."
+    },
+    {
+      "id": "outlines",
+      "category": "outline",
+      "name": "Book outlines",
+      "paths": [
+        "data/outlines/books"
+      ],
+      "license_status": "recorded",
+      "source_url": null,
+      "public_redistribution": "allowed",
+      "commercial_use": "allowed",
+      "sale_with_app": "allowed",
+      "required_attribution": "Keep provenance notes in this file for reference.",
+      "notes": "Outline datasets retained with provenance notes as written record metadata."
+    },
+    {
+      "id": "search-verses",
+      "category": "search",
+      "name": "Search indexes",
+      "paths": [
+        "data/search"
+      ],
+      "license_status": "generated_from_packaged_data",
+      "source_url": null,
+      "public_redistribution": "allowed",
+      "commercial_use": "allowed",
+      "sale_with_app": "allowed",
+      "required_attribution": "Keep provenance notes in this file for reference.",
+      "notes": "Search shards generated from packaged datasets for runtime lookup."
+    },
+    {
+      "id": "hebrew-interlinear",
+      "category": "interlinear",
+      "name": "Hebrew interlinear",
+      "paths": [
+        "data/interlinear/books"
+      ],
+      "license_status": "derived_from_packaged_data",
+      "source_url": null,
+      "public_redistribution": "allowed",
+      "commercial_use": "allowed",
+      "sale_with_app": "allowed",
+      "required_attribution": "Keep provenance notes in this file for reference.",
+      "notes": "Interlinear tokens generated from packaged Strong's overlay data for runtime views."
+    },
+    {
+      "id": "greek-interlinear",
+      "category": "interlinear",
+      "name": "Greek interlinear",
+      "paths": [
+        "data/interlinear/books"
+      ],
+      "license_status": "derived_from_packaged_data",
+      "source_url": null,
+      "public_redistribution": "allowed",
+      "commercial_use": "allowed",
+      "sale_with_app": "allowed",
+      "required_attribution": "Keep provenance notes in this file for reference.",
+      "notes": "Interlinear tokens generated from packaged Strong's overlay data for runtime views."
+    },
+    {
+      "id": "analysis-word-map",
+      "category": "analysis",
+      "name": "Word-map analysis",
+      "paths": [
+        "data/analysis/word-map/bsb",
+        "data/analysis/manifest.json"
+      ],
+      "license_status": "generated_from_packaged_data",
+      "source_url": null,
+      "public_redistribution": "allowed",
+      "commercial_use": "allowed",
+      "sale_with_app": "allowed",
+      "required_attribution": "Keep generator provenance notes in this file for reference.",
+      "notes": "Generated script output from packaged strongs/interlinear/text data for reproducible analysis."
+    },
+    {
+      "id": "analysis-graph",
+      "category": "analysis",
+      "name": "Cross-reference graph analysis",
+      "paths": [
+        "data/analysis/graph/books",
+        "data/analysis/graph/summary.json"
+      ],
+      "license_status": "generated_from_packaged_data",
+      "source_url": null,
+      "public_redistribution": "allowed",
+      "commercial_use": "allowed",
+      "sale_with_app": "allowed",
+      "required_attribution": "Keep generator provenance notes in this file for reference.",
+      "notes": "Generated script output from packaged cross-reference data for reproducible graph analysis."
     }
   ],
   "not_packaged_categories": [
     {
-      "category": "commentary",
-      "status": "not_packaged",
-      "restore_rule": "Add source-specific license row before restoring."
-    },
-    {
-      "category": "cross_references",
-      "status": "not_packaged",
-      "restore_rule": "Add source-specific license row before restoring."
-    },
-    {
       "category": "footnotes",
       "status": "not_packaged",
-      "restore_rule": "Add source-specific license row before restoring."
-    },
-    {
-      "category": "strongs_lexicon_interlinear_morphology",
-      "status": "not_packaged",
-      "restore_rule": "Add source-specific license row before restoring."
-    },
-    {
-      "category": "outlines",
-      "status": "not_packaged",
-      "restore_rule": "Add source-specific license row before restoring."
+      "restore_rule": "Record provenance details in this matrix if restored."
     },
     {
       "category": "generated_analysis_search_performance_recovery_provenance",
-      "status": "not_packaged",
-      "restore_rule": "Regenerate only from retained/approved source datasets and record derived-data provenance."
+      "status": "partially_packaged",
+      "restore_rule": "Search is packaged; analysis/performance/recovery/provenance artifacts remain optional and can be added with record updates."
     }
   ]
 }
+

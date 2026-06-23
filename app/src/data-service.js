@@ -3,6 +3,11 @@ import { DATA_ROOT } from "./config.js";
 const cache = new Map();
 const languageMetadataCache = new Map();
 const LANGUAGE_METADATA_VERSION = "clean-app-v1-sofit4";
+const STUDY_DATA_VERSION = "clean-app-v1-strongs-restore1";
+
+function versionedStudyPath(path) {
+  return `${path}?v=${STUDY_DATA_VERSION}`;
+}
 
 export async function fetchJson(path) {
   if (cache.has(path)) return cache.get(path);
@@ -32,9 +37,9 @@ export async function translationCanLoadBook(translationId, bookId) {
 export async function loadReaderBookData(translationId, bookId) {
   const verseBook = await fetchJson(`${DATA_ROOT}/verses/${translationId}/${bookId}.json`);
   const [crossrefs, outline, interlinear] = await Promise.all([
-    tryFetchJson(`${DATA_ROOT}/crossrefs/${bookId}.json`),
-    tryFetchJson(`${DATA_ROOT}/outlines/books/${bookId}.json`),
-    tryFetchJson(`${DATA_ROOT}/interlinear/books/${bookId}.json`),
+    tryFetchJson(versionedStudyPath(`${DATA_ROOT}/crossrefs/${bookId}.json`)),
+    tryFetchJson(versionedStudyPath(`${DATA_ROOT}/outlines/books/${bookId}.json`)),
+    tryFetchJson(versionedStudyPath(`${DATA_ROOT}/interlinear/books/${bookId}.json`)),
   ]);
 
   if (translationId !== "bsb") {
@@ -50,9 +55,9 @@ export async function loadReaderBookData(translationId, bookId) {
   }
 
   const [footnotes, presentation, strongs] = await Promise.all([
-    tryFetchJson(`${DATA_ROOT}/footnotes/bsb/${bookId}.json`),
-    tryFetchJson(`${DATA_ROOT}/presentation/bsb/books/${bookId}.json`),
-    tryFetchJson(`${DATA_ROOT}/strongs/bsb/books/${bookId}.json`),
+    tryFetchJson(versionedStudyPath(`${DATA_ROOT}/footnotes/bsb/${bookId}.json`)),
+    tryFetchJson(versionedStudyPath(`${DATA_ROOT}/presentation/bsb/books/${bookId}.json`)),
+    tryFetchJson(versionedStudyPath(`${DATA_ROOT}/strongs/bsb/books/${bookId}.json`)),
   ]);
 
   return {
@@ -67,11 +72,11 @@ export async function loadReaderBookData(translationId, bookId) {
 }
 
 export function fetchCommentaryAggregate(bookId) {
-  return tryFetchJson(`${DATA_ROOT}/commentaries/verses/${bookId}.json`);
+  return tryFetchJson(versionedStudyPath(`${DATA_ROOT}/commentaries/verses/${bookId}.json`));
 }
 
 export function fetchCommentarySource(sourceId, bookId) {
-  return tryFetchJson(`${DATA_ROOT}/commentaries/source/${sourceId}/${bookId}.json`);
+  return tryFetchJson(versionedStudyPath(`${DATA_ROOT}/commentaries/source/${sourceId}/${bookId}.json`));
 }
 
 export function fetchSearchManifest() {
@@ -87,7 +92,7 @@ export async function fetchVerseBook(translationId, bookId) {
 }
 
 export async function fetchWordMapBook(translationId, bookId) {
-  return tryFetchJson(`${DATA_ROOT}/analysis/word-map/${translationId}/${bookId}.json`);
+  return tryFetchJson(versionedStudyPath(`${DATA_ROOT}/analysis/word-map/${translationId}/${bookId}.json`));
 }
 
 function uniqueValues(values) {
@@ -154,7 +159,7 @@ export async function fetchLexiconEntry(strongCode) {
   const prefix = match[1].toUpperCase();
   const number = Number(match[2]);
   const language = prefix === "H" ? "hebrew" : "greek";
-  const chunk = await tryFetchJson(`${DATA_ROOT}/lexicon/${language}/${lexiconChunkId(number)}.json`);
+  const chunk = await tryFetchJson(versionedStudyPath(`${DATA_ROOT}/lexicon/${language}/${lexiconChunkId(number)}.json`));
   return chunk?.entries?.[`${prefix}${number}`] || null;
 }
 

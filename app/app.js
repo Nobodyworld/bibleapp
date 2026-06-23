@@ -1,8 +1,8 @@
 import { DEFAULT_ROUTE } from "./src/config.js";
-import { capabilityAvailable, resolveCapability } from "./src/capabilities.js?v=clean-app-v1-capabilities1";
-import { createChapterRenderer } from "./src/chapter-renderer.js?v=clean-app-v1-strong-tooltip1";
-import { loadManifest, loadReaderBookData, translationCanLoadBook } from "./src/data-service.js?v=clean-app-v1-fixes1";
-import { createDetailViews } from "./src/detail-views.js?v=clean-app-v1-strongs-bottom1";
+import { capabilityAvailable, resolveCapability } from "./src/capabilities.js?v=clean-app-v1-study-empty1";
+import { createChapterRenderer } from "./src/chapter-renderer.js?v=clean-app-v1-strongs-hover1";
+import { loadManifest, loadReaderBookData, translationCanLoadBook } from "./src/data-service.js?v=clean-app-v1-strongs-restore1";
+import { createDetailViews } from "./src/detail-views.js?v=clean-app-v1-study-empty1";
 import {
   els,
   goBackDetail,
@@ -12,10 +12,11 @@ import {
   setDetailHoverLocked,
   setStatus,
   sortedNumericKeys,
-} from "./src/dom.js?v=clean-app-v1-detail-context2";
+} from "./src/dom.js?v=clean-app-v1-study-empty1";
 import { createReferenceButton as makeReferenceButton, referenceKey, refDomId } from "./src/references.js?v=clean-app-v1-sofit4";
 import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js?v=clean-app-v1-home-strong2";
 import { initStores, listenForUserDataChanges } from "./src/stores.js";
+import { studyUnavailableLabel } from "./src/study-empty-state.js";
 
 const state = {
   manifest: null,
@@ -143,10 +144,21 @@ function syncChapterButtons() {
 }
 
 function syncToolButtons() {
-  els.showOutline.disabled = !canUseCapability("outlines") || !state.outline?.items?.length;
-  els.showInterlinear.disabled = !canUseCapability("interlinear") || !state.interlinear?.chapters?.[state.chapter];
-  els.showProverbs.disabled = !canUseCapability("interlinear") || !state.interlinear?.chapters?.[state.chapter];
-  els.showSearch.disabled = !canUseCapability("search");
+  const tools = [
+    [els.showSearch, "search", "Search this book"],
+    [els.showOutline, "outlines", "Book outline"],
+    [els.showInterlinear, "interlinear", "Interlinear words"],
+    [els.showProverbs, "translation", "Translation workspace"],
+  ];
+  tools.forEach(([button, key, fallbackTitle]) => {
+    if (!button) return;
+    button.disabled = false;
+    const capabilityId = key === "translation" ? "interlinear" : key;
+    const unavailable = !canUseCapability(capabilityId);
+    button.title = unavailable ? studyUnavailableLabel(key) : fallbackTitle;
+    button.setAttribute("aria-label", button.title);
+    button.dataset.unavailable = unavailable ? "true" : "false";
+  });
 }
 
 function writeHomeRoute(options = {}) {

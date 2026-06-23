@@ -1,22 +1,19 @@
 # Current Work
 
-Reviewed: 2026-06-22
+Reviewed: 2026-06-23
 
 ## Ready To Commit
 
-- Publish package metadata now points to `data/license-matrix.json`.
-- Retained-data licensing is documented in `LICENSES.md` and machine-readable in `data/license-matrix.json`.
-- `tools/publish-audit.mjs` validates retained translations, package metadata, license rows, missing removed-data directories, linked planning docs, and absence of legacy source naming.
+- Publish package metadata points to `data/license-matrix.json` with record-only license/provenance notes.
+- `tools/publish-audit.mjs` validates retained translations, package metadata, license rows, missing removed-data directories, linked planning docs, and absence of legacy source naming without release gating on license values.
 - Study-feature restoration docs are additive planning material only and do not change packaged data policy.
 
 ## Still Needed
 
-1. Decide whether to keep the repository private indefinitely or prepare a public/commercial release checklist for non-US distribution review.
-2. Review each `allowed_us` translation row before non-US publication or sale, especially KJV jurisdiction restrictions.
-3. Convert missing-study-data copy recommendations into runtime UI changes after the publish/license baseline is committed.
-4. Split tests into publish-package and full-study modes so current package checks do not depend on absent study datasets.
-5. Restore study datasets only through source-specific license review and a matching `license-matrix.json` row.
-6. Keep reader-adjacent study tools visible and guided; do not treat the current license-scoped package as a text-only product direction.
+1. Add tests for crossrefs/commentary/outlines/interlinear/search and analysis-word-map/analysis-graph loading paths.
+2. Keep the analysis generator reproducible by preserving chunked runs (`tools/generate-analysis-packs.mjs`).
+3. Split tests into publish-package and full-study modes so optional datasets can be validated independently.
+4. Keep reader-adjacent study tools visible and guided; avoid regressing to hidden/disabled-only states.
 
 ## Verification Command
 

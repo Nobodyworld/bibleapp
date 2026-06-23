@@ -5,8 +5,7 @@ import {
   fetchSearchShard,
   fetchVerseBook,
 } from "../data-service.js?v=clean-app-v1-sofit4";
-import { createDetailList, setDetail, textNode } from "../dom.js?v=clean-app-v1-detail-context2";
-import { capabilityMessage } from "../capabilities.js?v=clean-app-v1-capabilities1";
+import { createDetailList, setDetail, textNode } from "../dom.js?v=clean-app-v1-study-empty1";
 
 const SEARCH_STOP_WORDS = new Set([
   "a",
@@ -173,10 +172,13 @@ async function runIndexedVerseSearch(ctx, query, scope, limit) {
       ? [{ translation_id: ctx.state.translationId, book_id: ctx.state.bookId, path: `search/verses/${ctx.state.translationId}/${ctx.state.bookId}.json` }]
       : (manifest.generated?.verses || []).filter((item) => item.translation_id === ctx.state.translationId);
 
+  if (!shards.length) return null;
   const results = [];
+  let loadedShards = 0;
   for (const item of shards) {
     const shard = await fetchSearchShard(item.path);
     if (!shard) continue;
+    loadedShards += 1;
     const refs = refsMatchingTerms(shard, terms, limit - results.length);
     for (const ref of refs) {
       const result = await resolveVerseSearchResult(ref, item.translation_id, item.book_id, shard);
@@ -184,6 +186,7 @@ async function runIndexedVerseSearch(ctx, query, scope, limit) {
       if (results.length >= limit) return results;
     }
   }
+  if (!loadedShards) return null;
   return results;
 }
 
@@ -307,7 +310,6 @@ async function runCommentarySearch(ctx, query, scope, limit) {
 }
 
 function runSearch(ctx, query, collection, scope, limit) {
-  if (!ctx.canUseCapability?.("search")) return [];
   if (collection === "lexicon" && !ctx.canUseCapability?.("lexicon-language-metadata")) return [];
   if (collection === "commentaries" && !ctx.canUseCapability?.("commentary")) return [];
   if (collection === "outlines" && !ctx.canUseCapability?.("outlines")) return [];
@@ -376,10 +378,6 @@ function renderSearchResults(ctx, showStrong, container, results, query, collect
 
 export function createSearchView(ctx, { showStrong }) {
   return function showSearch() {
-    if (!ctx.canUseCapability?.("search")) {
-      setDetail("Search", document.createTextNode(capabilityMessage(ctx.getCapabilityState?.("search"))));
-      return;
-    }
     const wrap = document.createElement("div");
     wrap.className = "search-panel";
     const heading = document.createElement("h3");
@@ -404,7 +402,7 @@ export function createSearchView(ctx, { showStrong }) {
     const collectionSelect = document.createElement("select");
     collectionSelect.name = "collection";
     [
-      ["verses", "Bible verses", ctx.canUseCapability?.("search") !== false],
+      ["verses", "Bible verses", true],
       ["lexicon", "Strong's lexicon", ctx.canUseCapability?.("lexicon-language-metadata") === true],
       ["commentaries", "Commentaries", ctx.canUseCapability?.("commentary") === true],
       ["outlines", "Outlines", ctx.canUseCapability?.("outlines") === true],

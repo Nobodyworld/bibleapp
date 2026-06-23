@@ -26,7 +26,7 @@ export const CAPABILITY_REGISTRY = [
   {
     capability_id: "lexicon-language-metadata",
     label: "Lexicon and language metadata",
-    required_packs: ["hebrew-lexicon", "greek-lexicon", "hebrew-language-metadata", "greek-language-metadata"],
+    required_packs: ["hebrew-lexicon", "greek-lexicon"],
     optional_dependencies: ["search-lexicon"],
     routes: ["strongs", "language"],
   },
@@ -85,10 +85,10 @@ export function getCapabilityDefinition(capabilityId, registry = CAPABILITY_REGI
 
 export function getLogicalInstalledFeaturePackIds(packageManifest, packageStore = {}, options = {}) {
   const installed = unique(packageStore.installed_feature_pack_ids || []);
-  if (installed.length || options.assumeBundledFullAccess === false) return installed;
   if (packageStore.physical_data_mode === "bundled_static_data" || options.assumeBundledFullAccess) {
-    return packIdsFromManifest(packageManifest);
+    return unique([...installed, ...packIdsFromManifest(packageManifest)]);
   }
+  if (installed.length || options.assumeBundledFullAccess === false) return installed;
   return installed;
 }
 
@@ -134,10 +134,10 @@ export function resolveCapability(packageManifest, packageStore, capabilityId, o
   if (unknownPacks.length) {
     return {
       ...capability,
-      state: CAPABILITY_STATES.corrupt,
+      state: CAPABILITY_STATES.notInstalled,
       missing_packs: unknownPacks,
       disabled_packs: [],
-      optional_missing_packs: [],
+      optional_missing_packs: (capability.optional_dependencies || []).filter((id) => !installed.has(id)),
     };
   }
   if (missingPacks.length) {

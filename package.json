@@ -1,0 +1,32 @@
+{
+  "name": "bible-app",
+  "version": "1.0.0",
+  "description": "Browser-based Bible reader with study tools, interlinear views, commentary, and analysis.",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "audit": "node ./app/tools/publish-audit.mjs",
+    "audit:health": "node ./app/tools/integrity-check.mjs",
+    "analysis:generate": "node ./app/tools/generate-analysis-packs.mjs --chunk-size 22 --chunk-index 0 && node ./app/tools/generate-analysis-packs.mjs --chunk-size 22 --chunk-index 1 && node ./app/tools/generate-analysis-packs.mjs --chunk-size 22 --chunk-index 2",
+    "analysis:aggregate": "node ./app/tools/aggregate-analysis-manifest.mjs",
+    "test": "node ./tests/run.mjs",
+    "test:integrity": "node ./tests/integrity.mjs",
+    "test:capabilities": "node ./tests/capabilities.mjs",
+    "test:analysis": "node ./tests/analysis.mjs",
+    "serve": "python -m http.server 8000 --bind 127.0.0.1 --directory ./app",
+    "serve:publish": "python -m http.server 8000 --bind 127.0.0.1 --directory ./app"
+  },
+  "keywords": [
+    "bible",
+    "reader",
+    "study",
+    "interlinear",
+    "strong",
+    "commentary",
+    "analysis"
+  ],
+  "author": "",
+  "license": "MIT"
+}

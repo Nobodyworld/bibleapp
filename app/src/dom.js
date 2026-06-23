@@ -94,6 +94,14 @@ function setDetailContext(node) {
   els.detailContext.hidden = false;
 }
 
+function revealDetailOnMobile(options = {}) {
+  if (options.transient || options.history === "replace" || options.reveal === false || !els.detailPane) return;
+  if (window.innerWidth > 960) return;
+  window.requestAnimationFrame(() => {
+    els.detailPane.scrollIntoView({ block: "start", behavior: "auto" });
+  });
+}
+
 export function setDetail(title, node, options = {}) {
   const historyMode = options.history || "push";
   const sameTitle = els.detailTitle.textContent === title;
@@ -118,6 +126,7 @@ export function setDetail(title, node, options = {}) {
   els.detail.replaceChildren(node);
   currentDetailTransient = Boolean(options.transient);
   updateDetailHistoryButtons();
+  revealDetailOnMobile(options);
 }
 
 export function isDetailHoverLocked() {
