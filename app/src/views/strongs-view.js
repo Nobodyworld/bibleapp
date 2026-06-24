@@ -425,10 +425,6 @@ function compactDefinition(entry) {
   );
 }
 
-function joinSummaryParts(parts) {
-  return parts.filter(Boolean).join(" / ");
-}
-
 function setOptionalLine(node, value) {
   const text = String(value || "").trim();
   node.hidden = !text;
@@ -470,49 +466,52 @@ export function createStrongsView(ctx = null) {
 
     const overview = document.createElement("section");
     overview.className = "strong-overview";
-    const overviewLabel = document.createElement("div");
-    overviewLabel.className = "strong-overview-label";
-    overviewLabel.textContent = token.english ? "Selected span" : "Lexicon entry";
 
-    const code = document.createElement("p");
-    code.className = "strong-overview-code";
-    const codeText = document.createElement("span");
-    codeText.className = "strong-code";
-    codeText.textContent = token.strong_code || "No Strong's number";
-    code.append(codeText);
+    const primary = document.createElement("div");
+    primary.className = "strong-overview-primary";
 
     const sourceWordDisplay = document.createElement("p");
     sourceWordDisplay.className = "strong-source-word";
 
-    const original = document.createElement("p");
-    original.className = "strong-overview-original";
+    const translit = document.createElement("p");
+    translit.className = "strong-overview-translit";
+
+    primary.append(sourceWordDisplay, translit);
 
     const gloss = document.createElement("p");
     gloss.className = "strong-overview-gloss";
+
+    const meta = document.createElement("div");
+    meta.className = "strong-overview-meta";
+    const codeText = document.createElement("span");
+    codeText.className = "strong-code";
+    const pos = document.createElement("span");
+    pos.className = "strong-overview-pos";
+    const badge = document.createElement("span");
+    badge.className = "strong-overview-badge";
+    meta.append(codeText, pos, badge);
 
     function renderOverview(entry = null) {
       if (!token.english && entry) {
         heading.textContent = entry.summary || entry.title || token.strong_code || "Strong's entry";
       }
-      overviewLabel.textContent = token.english ? "Selected span" : "Lexicon entry";
+      badge.textContent = token.english ? "Selected span" : "Lexicon entry";
+      const language = token.language || entry?.language;
       const sourceWord = entry?.original_word || token.original || "";
       setOptionalLine(sourceWordDisplay, sourceWord);
       if (sourceWord) {
-        sourceWordDisplay.classList.toggle("rtl-text", (token.language || entry?.language) === "hebrew");
-        setLanguageTextWithTooltips(sourceWordDisplay, sourceWord, token.language || entry?.language);
+        sourceWordDisplay.classList.toggle("rtl-text", language === "hebrew");
+        setLanguageTextWithTooltips(sourceWordDisplay, sourceWord, language);
       }
-      const summaryText = joinSummaryParts([
-        sourceWord,
-        token.transliteration || entry?.transliteration,
-        token.morphology || entry?.part_of_speech,
-      ]);
-      setOptionalLine(original, summaryText);
-      if (summaryText && sourceWord) setLanguageTextWithTooltips(original, summaryText, token.language || entry?.language);
+      const translitText = token.transliteration || entry?.transliteration || "";
+      setOptionalLine(translit, translitText && translitText !== sourceWord ? translitText : "");
+      setOptionalLine(pos, token.morphology || entry?.part_of_speech || "");
+      codeText.textContent = token.strong_code || "No Strong's number";
       gloss.textContent = token.gloss || compactDefinition(entry) || (entry ? "No short definition available." : "Loading lexical summary...");
     }
 
     renderOverview();
-    overview.append(overviewLabel, sourceWordDisplay, code, original, gloss);
+    overview.append(primary, meta, gloss);
     wrap.append(heading);
     if (options.verseContext && !options.hover && ctx) {
       wrap.append(createVerseContextTabs(ctx, options.verseContext.reference, options.verseContext.verse, "strongs"));

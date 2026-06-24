@@ -186,7 +186,9 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
 
     const transliteration = document.createElement("div");
     transliteration.className = "token-translit";
-    transliteration.textContent = token.transliteration || "";
+    const translitText = token.transliteration || "";
+    transliteration.textContent = translitText && translitText !== (token.original || "") ? translitText : "";
+    transliteration.hidden = !transliteration.textContent;
 
     const meta = document.createElement("div");
     meta.className = "token-meta";
