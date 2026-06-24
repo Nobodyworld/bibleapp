@@ -351,8 +351,8 @@
     "outlines": true,
     "interlinear": true,
     "strongs": true,
-    "footnotes": false,
-    "presentation": false
+    "footnotes": true,
+    "presentation": true
   },
   "license_matrix": "data/license-matrix.json",
   "translations": [

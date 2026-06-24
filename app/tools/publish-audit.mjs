@@ -9,7 +9,6 @@ const appRoot = join(fileURLToPath(new URL("..", import.meta.url)));
 const dataRoot = join(appRoot, "data");
 
 const removedDataDirs = [
-  "footnotes",
   "lexicon",
   "performance",
   "provenance",
@@ -111,8 +110,8 @@ async function main() {
   removedDataDirs
     .filter((dir) => dir !== "lexicon" && dir !== "strongs")
     .forEach((dir) => {
-    assert(!existsSync(join(dataRoot, dir)), `removed or unlicensed study data directory is present: data/${dir}`);
-  });
+      assert(!existsSync(join(dataRoot, dir)), `removed or unlicensed study data directory is present: data/${dir}`);
+    });
 
   expectedPlanningDocs.forEach((relPath) => {
     assert(existsSync(join(appRoot, relPath)), `linked planning doc is missing: ${relPath}`);
