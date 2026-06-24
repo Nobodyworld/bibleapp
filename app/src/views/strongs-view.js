@@ -150,15 +150,24 @@ function createInternalStrongButton(item, label = item?.strong_code || item?.lab
 }
 
 function appendStrongNavigation(container, entry, openStrongCode) {
-  const navItems = [entry?.navigation?.previous, entry?.navigation?.next].filter(Boolean);
-  if (!navItems.length) return;
+  const previous = entry?.navigation?.previous;
+  const next = entry?.navigation?.next;
+  if (!previous && !next) return;
 
   const nav = document.createElement("div");
   nav.className = "strong-nav";
-  navItems.forEach((item, index) => {
-    const label = `${index === 0 ? "Previous" : "Next"} ${item.strong_code || item.label || ""}`.trim();
-    nav.append(createInternalStrongButton(item, label, openStrongCode));
-  });
+  if (previous) {
+    const label = `\u2039 Previous ${previous.strong_code || previous.label || ""}`.trim();
+    const button = createInternalStrongButton(previous, label, openStrongCode);
+    button.classList.add("strong-nav-prev");
+    nav.append(button);
+  }
+  if (next) {
+    const label = `Next ${next.strong_code || next.label || ""} \u203A`.trim();
+    const button = createInternalStrongButton(next, label, openStrongCode);
+    button.classList.add("strong-nav-next");
+    nav.append(button);
+  }
   container.append(nav);
 }
 
@@ -458,6 +467,7 @@ export function createStrongsView(ctx = null) {
     if (options.hover && !isDetailHoverLocked() && strongPinned) strongPinned = false;
     if (strongPinned && !options.pin && !options.force) return;
     if (options.pin) strongPinned = true;
+    const isLockedSpan = Boolean(options.pin && token.english);
 
     const wrap = document.createElement("div");
     wrap.className = "strong-detail";
@@ -495,7 +505,13 @@ export function createStrongsView(ctx = null) {
       if (!token.english && entry) {
         heading.textContent = entry.summary || entry.title || token.strong_code || "Strong's entry";
       }
-      badge.textContent = token.english ? "Selected span" : "Lexicon entry";
+      if (isLockedSpan) {
+        badge.textContent = "Selected span";
+        badge.hidden = false;
+      } else {
+        badge.textContent = "";
+        badge.hidden = true;
+      }
       const language = token.language || entry?.language;
       const sourceWord = entry?.original_word || token.original || "";
       setOptionalLine(sourceWordDisplay, sourceWord);
@@ -547,8 +563,8 @@ export function createStrongsView(ctx = null) {
         title.textContent = entry.summary || entry.title || token.strong_code;
         renderOverview(entry);
         extra.append(title);
-        appendStrongNavigation(extra, entry, openStrongCode);
         appendLexicalSummary(extra, entry, openStrongCode);
+        appendStrongNavigation(extra, entry, openStrongCode);
         if (!renderedTokenBreakdown && entry.original_word) {
           appendLanguageBreakdown(extra, { ...token, language: entry.language || token.language }, entry.original_word);
         }

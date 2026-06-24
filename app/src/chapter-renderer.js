@@ -1,4 +1,4 @@
-import { els, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js";
+import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js";
 import { resolvePassageText } from "./data-service.js";
 import { referenceKey, refDomId, parseLocationFromHref } from "./references.js";
 import { addRedLetterRange, ensureStores, getRedLetterRanges } from "./stores.js";
@@ -61,6 +61,7 @@ export function createChapterRenderer(ctx) {
   function showHoverStrongForElement(element) {
     const token = element?.__bibleAppStrongToken;
     if (!token) return;
+    if (isDetailHoverLocked()) return;
     ctx.highlightReaderContext?.({
       verse: element.__bibleAppVerseContext?.verse,
       wordElement: element,
@@ -446,13 +447,12 @@ export function createChapterRenderer(ctx) {
         ctx.detailViews.showStudyUnavailable?.("Study Tools", empty, { forceHistory: true });
       }
     });
-    numberWrap.append(studyButton);
 
     body.addEventListener("mouseup", () => showSelectionMenuForVerse(reference, verse, verseText, body, key));
     body.addEventListener("touchend", () => window.setTimeout(() => showSelectionMenuForVerse(reference, verse, verseText, body, key), 0));
     body.addEventListener("keyup", () => showSelectionMenuForVerse(reference, verse, verseText, body, key));
 
-    row.append(numberWrap, body);
+    row.append(numberWrap, body, studyButton);
     return row;
   }
 

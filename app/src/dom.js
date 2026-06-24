@@ -53,6 +53,7 @@ function updateDetailHistoryButtons() {
   if (els.detailBack) els.detailBack.disabled = detailHistory.length === 0;
   if (els.detailForward) els.detailForward.disabled = detailForwardHistory.length === 0;
   if (els.detailPane) els.detailPane.dataset.hoverLocked = detailHoverLocked ? "true" : "false";
+  document.body.classList.toggle("detail-locked", detailHoverLocked);
 }
 
 function isDefaultDetail() {
