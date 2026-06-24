@@ -346,6 +346,14 @@
     }
   },
   "generated_at": "2026-06-16T05:23:41.918Z",
+  "optional_datasets": {
+    "crossrefs": true,
+    "outlines": true,
+    "interlinear": true,
+    "strongs": true,
+    "footnotes": false,
+    "presentation": false
+  },
   "license_matrix": "data/license-matrix.json",
   "translations": [
     {

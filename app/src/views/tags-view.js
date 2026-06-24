@@ -1,7 +1,7 @@
-import { createDetailList, setDetail } from "../dom.js?v=clean-app-v1-detail-context2";
-import { referenceKey } from "../references.js?v=clean-app-v1-sofit4";
+import { createDetailList, setDetail } from "../dom.js";
+import { referenceKey } from "../references.js";
 import { createCustomTag, deleteCustomTag, getVerseTags, setVerseTag, updateCustomTag } from "../stores.js";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=clean-app-v1-contexttabs1";
+import { createVerseContextTabs } from "./verse-context-tabs.js";
 
 function tagIcon(tag) {
   return String(tag?.icon || tag?.label?.slice(0, 1) || "*").slice(0, 3);

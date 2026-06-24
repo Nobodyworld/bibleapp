@@ -1,4 +1,4 @@
-import { createDetailList, setDetail } from "../dom.js?v=clean-app-v1-detail-context2";
+import { createDetailList, setDetail } from "../dom.js";
 import { canRunJob, runJob } from "../job-processor.js";
 import { completeJob, getAllJobEvents, updateJobStatus } from "../stores.js";
 

@@ -30,16 +30,28 @@ export function loadManifest() {
   return fetchJson(`${DATA_ROOT}/manifest.json`);
 }
 
+async function datasetAvailable(key) {
+  const manifest = await tryFetchJson(`${DATA_ROOT}/manifest.json`);
+  const optional = manifest?.optional_datasets;
+  // Default to available unless the manifest explicitly marks the dataset as absent.
+  return optional?.[key] !== false;
+}
+
 export async function translationCanLoadBook(translationId, bookId) {
   return Boolean(await tryFetchJson(`${DATA_ROOT}/verses/${translationId}/${bookId}.json`));
 }
 
 export async function loadReaderBookData(translationId, bookId) {
   const verseBook = await fetchJson(`${DATA_ROOT}/verses/${translationId}/${bookId}.json`);
+  const [hasCrossrefs, hasOutlines, hasInterlinear] = await Promise.all([
+    datasetAvailable("crossrefs"),
+    datasetAvailable("outlines"),
+    datasetAvailable("interlinear"),
+  ]);
   const [crossrefs, outline, interlinear] = await Promise.all([
-    tryFetchJson(versionedStudyPath(`${DATA_ROOT}/crossrefs/${bookId}.json`)),
-    tryFetchJson(versionedStudyPath(`${DATA_ROOT}/outlines/books/${bookId}.json`)),
-    tryFetchJson(versionedStudyPath(`${DATA_ROOT}/interlinear/books/${bookId}.json`)),
+    hasCrossrefs ? tryFetchJson(versionedStudyPath(`${DATA_ROOT}/crossrefs/${bookId}.json`)) : null,
+    hasOutlines ? tryFetchJson(versionedStudyPath(`${DATA_ROOT}/outlines/books/${bookId}.json`)) : null,
+    hasInterlinear ? tryFetchJson(versionedStudyPath(`${DATA_ROOT}/interlinear/books/${bookId}.json`)) : null,
   ]);
 
   if (translationId !== "bsb") {
@@ -54,10 +66,15 @@ export async function loadReaderBookData(translationId, bookId) {
     };
   }
 
+  const [hasFootnotes, hasPresentation, hasStrongs] = await Promise.all([
+    datasetAvailable("footnotes"),
+    datasetAvailable("presentation"),
+    datasetAvailable("strongs"),
+  ]);
   const [footnotes, presentation, strongs] = await Promise.all([
-    tryFetchJson(versionedStudyPath(`${DATA_ROOT}/footnotes/bsb/${bookId}.json`)),
-    tryFetchJson(versionedStudyPath(`${DATA_ROOT}/presentation/bsb/books/${bookId}.json`)),
-    tryFetchJson(versionedStudyPath(`${DATA_ROOT}/strongs/bsb/books/${bookId}.json`)),
+    hasFootnotes ? tryFetchJson(versionedStudyPath(`${DATA_ROOT}/footnotes/bsb/${bookId}.json`)) : null,
+    hasPresentation ? tryFetchJson(versionedStudyPath(`${DATA_ROOT}/presentation/bsb/books/${bookId}.json`)) : null,
+    hasStrongs ? tryFetchJson(versionedStudyPath(`${DATA_ROOT}/strongs/bsb/books/${bookId}.json`)) : null,
   ]);
 
   return {

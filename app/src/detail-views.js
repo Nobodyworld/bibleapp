@@ -1,12 +1,12 @@
-import { createCommentaryOutlineViews } from "./views/commentary-outline-view.js?v=clean-app-v1-study-empty1";
-import { createInterlinearTranslationViews } from "./views/interlinear-translation-view.js?v=clean-app-v1-study-empty1";
-import { createJobsView } from "./views/jobs-view.js?v=clean-app-v1-runtime-boundary3";
-import { createReferenceViews } from "./views/reference-view.js?v=clean-app-v1-runtime-boundary3";
-import { createSearchView } from "./views/search-view.js?v=clean-app-v1-study-empty1";
-import { createStrongsView } from "./views/strongs-view.js?v=clean-app-v1-strongs-bottom1";
-import { createTagsView } from "./views/tags-view.js?v=clean-app-v1-runtime-boundary3";
-import { createUserDataView } from "./views/user-data-view.js?v=clean-app-v1-runtime-boundary3";
-import { setDetail } from "./dom.js?v=clean-app-v1-study-empty1";
+import { createCommentaryOutlineViews } from "./views/commentary-outline-view.js";
+import { createInterlinearTranslationViews } from "./views/interlinear-translation-view.js";
+import { createJobsView } from "./views/jobs-view.js";
+import { createReferenceViews } from "./views/reference-view.js";
+import { createSearchView } from "./views/search-view.js";
+import { createStrongsView } from "./views/strongs-view.js";
+import { createTagsView } from "./views/tags-view.js";
+import { createUserDataView } from "./views/user-data-view.js";
+import { setDetail } from "./dom.js";
 
 export function createDetailViews(ctx) {
   const strongsView = createStrongsView(ctx);

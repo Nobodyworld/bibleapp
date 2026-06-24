@@ -3,12 +3,12 @@ import {
   fetchVerseBook,
   fetchWordMapBook,
   loadLanguageMetadata,
-} from "../data-service.js?v=clean-app-v1-fixes1";
-import { isDetailHoverLocked, setDetail, textNode } from "../dom.js?v=clean-app-v1-detail-context2";
-import { capabilityMessage } from "../capabilities.js?v=clean-app-v1-capabilities1";
-import { languageUnitTooltip, setLanguageTextWithTooltips } from "../language-tooltips.js?v=clean-app-v1-word-tooltip1";
-import { analyzeOriginalWord, gematriaValueForUnit, wordHasLanguageScript } from "../language.js?v=clean-app-v1-sofit4";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=clean-app-v1-contexttabs1";
+} from "../data-service.js";
+import { isDetailHoverLocked, setDetail, textNode } from "../dom.js";
+import { capabilityMessage } from "../capabilities.js";
+import { languageUnitTooltip, setLanguageTextWithTooltips } from "../language-tooltips.js";
+import { analyzeOriginalWord, gematriaValueForUnit, wordHasLanguageScript } from "../language.js";
+import { createVerseContextTabs } from "./verse-context-tabs.js";
 
 function languageTitle(language) {
   return language === "hebrew" ? "Hebrew" : "Greek";

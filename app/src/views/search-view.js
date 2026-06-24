@@ -4,8 +4,8 @@ import {
   fetchSearchManifest,
   fetchSearchShard,
   fetchVerseBook,
-} from "../data-service.js?v=clean-app-v1-sofit4";
-import { createDetailList, setDetail, textNode } from "../dom.js?v=clean-app-v1-study-empty1";
+} from "../data-service.js";
+import { createDetailList, setDetail, textNode } from "../dom.js";
 
 const SEARCH_STOP_WORDS = new Set([
   "a",
@@ -428,19 +428,19 @@ export function createSearchView(ctx, { showStrong }) {
       const options =
         collectionSelect.value === "lexicon"
           ? [
-              ["all", "Hebrew and Greek"],
-              ["hebrew", "Hebrew"],
-              ["greek", "Greek"],
-            ]
+            ["all", "Hebrew and Greek"],
+            ["hebrew", "Hebrew"],
+            ["greek", "Greek"],
+          ]
           : collectionSelect.value === "verses"
             ? [
-                ["book", "Current book"],
-                ["translation", "Selected translation"],
-              ]
+              ["book", "Current book"],
+              ["translation", "Selected translation"],
+            ]
             : [
-                ["book", "Current book"],
-                ["all", "All books"],
-              ];
+              ["book", "Current book"],
+              ["all", "All books"],
+            ];
       options.forEach(([value, label]) => {
         const item = document.createElement("option");
         item.value = value;

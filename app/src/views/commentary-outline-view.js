@@ -1,9 +1,9 @@
-import { fetchCommentaryAggregate, fetchCommentarySource } from "../data-service.js?v=clean-app-v1-sofit4";
-import { createDetailList, setDetail, setDetailMessage } from "../dom.js?v=clean-app-v1-study-empty1";
-import { capabilityMessage } from "../capabilities.js?v=clean-app-v1-capabilities1";
-import { makeInternalLinksNavigable } from "../references.js?v=clean-app-v1-sofit4";
+import { fetchCommentaryAggregate, fetchCommentarySource } from "../data-service.js";
+import { createDetailList, setDetail, setDetailMessage } from "../dom.js";
+import { capabilityMessage } from "../capabilities.js";
+import { makeInternalLinksNavigable } from "../references.js";
 import { createStudyEmptyState } from "../study-empty-state.js";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=clean-app-v1-study-empty1";
+import { createVerseContextTabs } from "./verse-context-tabs.js";
 
 export function createCommentaryOutlineViews(ctx) {
   async function loadCommentaryAggregate() {

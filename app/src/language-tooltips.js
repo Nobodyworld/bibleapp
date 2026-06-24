@@ -1,5 +1,5 @@
-import { loadLanguageMetadata } from "./data-service.js?v=clean-app-v1-fixes1";
-import { analyzeOriginalWord, gematriaValueForUnit, wordHasLanguageScript } from "./language.js?v=clean-app-v1-sofit4";
+import { loadLanguageMetadata } from "./data-service.js";
+import { analyzeOriginalWord, gematriaValueForUnit, wordHasLanguageScript } from "./language.js";
 
 const HEBREW_RUN = /[\u0591-\u05c7\u05d0-\u05ea]+/gu;
 const GREEK_RUN = /[\u0300-\u036f\u0370-\u03ff\u1f00-\u1fff]+/gu;

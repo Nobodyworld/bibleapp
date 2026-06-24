@@ -1,8 +1,8 @@
 import { DEFAULT_ROUTE } from "./src/config.js";
-import { capabilityAvailable, resolveCapability } from "./src/capabilities.js?v=clean-app-v1-study-empty1";
-import { createChapterRenderer } from "./src/chapter-renderer.js?v=clean-app-v1-strongs-hover1";
-import { loadManifest, loadReaderBookData, translationCanLoadBook } from "./src/data-service.js?v=clean-app-v1-strongs-restore1";
-import { createDetailViews } from "./src/detail-views.js?v=clean-app-v1-study-empty1";
+import { capabilityAvailable, resolveCapability } from "./src/capabilities.js";
+import { createChapterRenderer } from "./src/chapter-renderer.js";
+import { loadManifest, loadReaderBookData, translationCanLoadBook } from "./src/data-service.js";
+import { createDetailViews } from "./src/detail-views.js";
 import {
   els,
   goBackDetail,
@@ -12,9 +12,9 @@ import {
   setDetailHoverLocked,
   setStatus,
   sortedNumericKeys,
-} from "./src/dom.js?v=clean-app-v1-study-empty1";
-import { createReferenceButton as makeReferenceButton, referenceKey, refDomId } from "./src/references.js?v=clean-app-v1-sofit4";
-import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js?v=clean-app-v1-home-strong2";
+} from "./src/dom.js";
+import { createReferenceButton as makeReferenceButton, referenceKey, refDomId } from "./src/references.js";
+import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js";
 import { initStores, listenForUserDataChanges } from "./src/stores.js";
 import { studyUnavailableLabel } from "./src/study-empty-state.js";
 

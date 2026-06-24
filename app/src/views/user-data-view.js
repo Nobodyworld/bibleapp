@@ -1,15 +1,14 @@
 import { createUserDataExport, getUserDataSummary, importUserData, setPackageStore } from "../stores.js";
-import { setDetail } from "../dom.js?v=clean-app-v1-detail-context2";
-import { resolveCapabilities } from "../capabilities.js?v=clean-app-v1-capabilities1";
+import { setDetail } from "../dom.js";
+import { resolveCapabilities } from "../capabilities.js";
 import { setCapabilityDisabled } from "../package-state.js";
 
 function renderUserDataSummary(summary) {
   const wrap = document.createElement("div");
   const health = document.createElement("p");
   health.className = "storage-health-status";
-  health.textContent = `Storage authority: ${summary.user_store_authority || summary.user_store_backend}; migration: ${summary.user_store_migration}${
-    summary.user_store_failure ? `; fallback reason: ${summary.user_store_failure}` : ""
-  }. Browser storage is local to this browser and is not a backed-up account. Use JSON export for recovery.`;
+  health.textContent = `Storage authority: ${summary.user_store_authority || summary.user_store_backend}; migration: ${summary.user_store_migration}${summary.user_store_failure ? `; fallback reason: ${summary.user_store_failure}` : ""
+    }. Browser storage is local to this browser and is not a backed-up account. Use JSON export for recovery.`;
   wrap.append(health);
 
   const grid = document.createElement("div");

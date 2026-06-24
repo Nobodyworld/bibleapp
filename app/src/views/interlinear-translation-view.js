@@ -1,11 +1,11 @@
-import { fetchVerseBook, fetchWordMapBook, loadLanguageMetadata, loadOriginalSourceTexts } from "../data-service.js?v=clean-app-v1-fixes1";
-import { createDetailList, setDetail, setDetailMessage, textNode } from "../dom.js?v=clean-app-v1-study-empty1";
-import { setLanguageTextWithTooltips } from "../language-tooltips.js?v=clean-app-v1-word-tooltip1";
-import { referenceKey } from "../references.js?v=clean-app-v1-sofit4";
-import { analyzeOriginalWord } from "../language.js?v=clean-app-v1-sofit4";
+import { fetchVerseBook, fetchWordMapBook, loadLanguageMetadata, loadOriginalSourceTexts } from "../data-service.js";
+import { createDetailList, setDetail, setDetailMessage, textNode } from "../dom.js";
+import { setLanguageTextWithTooltips } from "../language-tooltips.js";
+import { referenceKey } from "../references.js";
+import { analyzeOriginalWord } from "../language.js";
 import { normalizeInterlinearToken } from "../strongs.js";
 import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=clean-app-v1-study-empty1";
+import { createVerseContextTabs } from "./verse-context-tabs.js";
 import { createStudyEmptyState } from "../study-empty-state.js";
 
 function normalizeWordMapSpan(raw, bsbVerseText) {

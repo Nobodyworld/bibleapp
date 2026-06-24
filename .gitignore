@@ -12,3 +12,5 @@
 /app/scripts/
 /app/scripts/__pycache__/
 *.pyc
+
+.playwright-mcp/

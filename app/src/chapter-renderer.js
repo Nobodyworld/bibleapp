@@ -1,6 +1,6 @@
-import { els, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=clean-app-v1-study-empty1";
-import { resolvePassageText } from "./data-service.js?v=clean-app-v1-strongs-restore1";
-import { referenceKey, refDomId, parseLocationFromHref } from "./references.js?v=clean-app-v1-sofit4";
+import { els, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js";
+import { resolvePassageText } from "./data-service.js";
+import { referenceKey, refDomId, parseLocationFromHref } from "./references.js";
 import { addRedLetterRange, ensureStores, getRedLetterRanges } from "./stores.js";
 import { mapStrongChapterRanges } from "./strongs.js";
 import { createStudyEmptyState, studyUnavailableLabel } from "./study-empty-state.js";

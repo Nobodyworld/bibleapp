@@ -1,6 +1,6 @@
-import { fetchVerseBook, resolvePassageText } from "../data-service.js?v=clean-app-v1-sofit4";
-import { createDetailList, setDetail, setDetailMessage } from "../dom.js?v=clean-app-v1-detail-context2";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=clean-app-v1-contexttabs1";
+import { fetchVerseBook, resolvePassageText } from "../data-service.js";
+import { createDetailList, setDetail, setDetailMessage } from "../dom.js";
+import { createVerseContextTabs } from "./verse-context-tabs.js";
 
 export function createReferenceViews(ctx) {
   function appendPassageText(container, text) {
