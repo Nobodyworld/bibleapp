@@ -951,7 +951,7 @@ button:disabled {
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 0.72em;
   font-weight: 800;
-  line-height: 0;
+  line-height: 1;
   vertical-align: sub;
 }
 

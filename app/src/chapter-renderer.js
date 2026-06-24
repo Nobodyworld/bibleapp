@@ -106,6 +106,7 @@ export function createChapterRenderer(ctx) {
       if (!selectionMenu || selectionMenu.hidden) return;
       if (event.target.closest?.(".selection-action-menu, .verse-body")) return;
       selectionMenu.hidden = true;
+      document.activeElement?.blur?.();
     });
     return selectionMenu;
   }
