@@ -58,18 +58,19 @@ export function createReferenceViews(ctx) {
     setDetail("Footnote", wrap, { forceHistory: true });
   }
 
-  async function showParallelVerse(reference, verse, verseText) {
-    setDetailMessage("Parallel", "Loading parallel translations...", { forceHistory: true });
+  async function showParallelVerse(reference, verse, verseText, options = {}) {
+    setDetailMessage("Parallel", "Loading parallel translations...", { forceHistory: true, ...options });
     const wrap = document.createElement("div");
     wrap.className = "parallel-panel";
     const heading = document.createElement("h3");
     heading.textContent = reference;
+    const tabs = createVerseContextTabs(ctx, reference, verse, "par");
     const intro = document.createElement("p");
     intro.textContent = verseText;
     const list = document.createElement("div");
     list.className = "parallel-list";
-    wrap.append(heading, intro, list);
-    setDetail("Parallel", wrap, { history: "replace" });
+    wrap.append(heading, tabs, intro, list);
+    setDetail("Parallel", wrap, { history: "replace", ...options, verse });
 
     const rows = await Promise.all(
       (ctx.state.manifest?.translations || []).map(async (translation) => {

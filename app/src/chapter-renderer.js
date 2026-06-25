@@ -357,7 +357,7 @@ export function createChapterRenderer(ctx) {
     number.title = "Show parallel translations";
     number.addEventListener("click", () => {
       ctx.highlightReaderContext?.({ verse });
-      void ctx.detailViews.showParallelVerse(reference, verse, verseText);
+      void ctx.detailViews.showParallelVerse(reference, verse, verseText, { history: "replace", lock: true, verse });
     });
 
     const numberWrap = document.createElement("div");
@@ -473,8 +473,7 @@ export function createChapterRenderer(ctx) {
     els.content.replaceChildren();
 
     const verses = sortedNumericKeys(chapterVerses);
-    const strongRangesByVerse =
-      ctx.state.translationId === "bsb" ? mapStrongChapterRanges(chapterVerses, strongs) : {};
+    const strongRangesByVerse = mapStrongChapterRanges(chapterVerses, strongs);
     Object.entries(strongRangesByVerse).forEach(([verse, ranges]) => {
       const reference = ctx.currentReference(verse);
       ranges.forEach((range) => {

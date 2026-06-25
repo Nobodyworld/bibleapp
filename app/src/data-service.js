@@ -5,6 +5,9 @@ const languageMetadataCache = new Map();
 const LANGUAGE_METADATA_VERSION = "clean-app-v1-sofit4";
 const STUDY_DATA_VERSION = "clean-app-v1-strongs-restore1";
 
+// Translations that ship a Strong's overlay (word-to-word tagging) like BSB.
+const STRONGS_OVERLAY_TRANSLATIONS = new Set(["bsb", "kjv", "ylt"]);
+
 function versionedStudyPath(path) {
   return `${path}?v=${STUDY_DATA_VERSION}`;
 }
@@ -55,6 +58,10 @@ export async function loadReaderBookData(translationId, bookId) {
   ]);
 
   if (translationId !== "bsb") {
+    const hasOverlay = STRONGS_OVERLAY_TRANSLATIONS.has(translationId) && (await datasetAvailable("strongs"));
+    const strongs = hasOverlay
+      ? await tryFetchJson(versionedStudyPath(`${DATA_ROOT}/strongs/${translationId}/books/${bookId}.json`))
+      : null;
     return {
       verseBook,
       crossrefs,
@@ -62,7 +69,7 @@ export async function loadReaderBookData(translationId, bookId) {
       interlinear,
       footnotes: null,
       presentation: null,
-      strongs: null,
+      strongs,
     };
   }
 

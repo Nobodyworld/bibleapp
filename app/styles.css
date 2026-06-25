@@ -979,10 +979,10 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   margin-right: 0.28em;
   color: var(--muted);
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  font-size: 0.72em;
+  font-size: 0.62em;
   font-weight: 800;
   line-height: 1;
-  vertical-align: sub;
+  vertical-align: super;
 }
 
 .parallel-panel {
@@ -1235,11 +1235,23 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   gap: 6px;
 }
 
+.strong-sticky-summary {
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  display: grid;
+  gap: 6px;
+  margin: -18px -18px 0;
+  padding: 18px 18px 10px;
+  border-bottom: 1px solid rgba(216, 216, 209, 0.82);
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 8px 18px rgba(33, 36, 38, 0.06);
+  backdrop-filter: blur(8px);
+}
+
 .strong-overview {
   display: grid;
   gap: 8px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--line);
 }
 
 .strong-overview p {
@@ -1254,6 +1266,11 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   min-width: 0;
 }
 
+.strong-overview.hebrew .strong-overview-primary {
+  justify-content: flex-end;
+  text-align: right;
+}
+
 .strong-source-word {
   min-width: 0;
   color: var(--accent-dark);
@@ -1264,11 +1281,37 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   overflow-wrap: anywhere;
 }
 
+.strong-overview.hebrew .strong-source-word {
+  margin-left: auto;
+}
+
 .strong-overview-translit {
   color: var(--muted);
   font-size: 15px;
   font-style: italic;
   font-weight: 600;
+}
+
+.hebrew-rtl-note {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 21px;
+  height: 21px;
+  min-width: 21px;
+  min-height: 21px;
+  padding: 0;
+  border-color: rgba(37, 99, 95, 0.32);
+  border-radius: 999px;
+  background: #f0f7f5;
+  color: var(--accent-dark);
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.hebrew-rtl-note[hidden] {
+  display: none;
 }
 
 .strong-overview-gloss {
@@ -1496,6 +1539,43 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 .language-breakdown.hebrew .letter-breakdown {
   direction: rtl;
   justify-content: flex-end;
+}
+
+.mark-study {
+  display: grid;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid rgba(37, 99, 95, 0.2);
+  border-radius: 6px;
+  background: #f8fbfa;
+}
+
+.mark-study-word {
+  color: var(--accent-dark);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(28px, 7vw, 38px);
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: right;
+}
+
+.language-breakdown.hebrew .mark-list {
+  direction: rtl;
+  justify-content: flex-end;
+}
+
+.language-breakdown.hebrew .mark-pill {
+  min-height: 34px;
+  gap: 7px;
+  padding: 4px 9px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.language-breakdown.hebrew .mark-glyph {
+  min-width: 28px;
+  font-size: 28px;
+  line-height: 1.1;
 }
 
 .letter-unit {

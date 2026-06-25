@@ -97,10 +97,24 @@ function renderWordBreakdown(analysis, wordInfo = null) {
   if (markRecords.length) {
     const marksTitle = document.createElement("h5");
     marksTitle.textContent = `${languageTitle(analysis.language)} marks / symbols`;
-    const marks = document.createElement("div");
-    marks.className = "mark-list";
-    markRecords.forEach((record) => marks.append(renderMarkPill(record)));
-    section.append(marksTitle, marks);
+    if (analysis.language === "hebrew") {
+      const markStudy = document.createElement("div");
+      markStudy.className = "mark-study";
+      const markWord = document.createElement("div");
+      markWord.className = "mark-study-word rtl-text";
+      setLanguageTextWithTooltips(markWord, analysis.word, analysis.language, { wordInfo });
+      markStudy.append(markWord);
+      const marks = document.createElement("div");
+      marks.className = "mark-list";
+      markRecords.forEach((record) => marks.append(renderMarkPill(record)));
+      markStudy.append(marks);
+      section.append(marksTitle, markStudy);
+    } else {
+      const marks = document.createElement("div");
+      marks.className = "mark-list";
+      markRecords.forEach((record) => marks.append(renderMarkPill(record)));
+      section.append(marksTitle, marks);
+    }
   }
 
   if (analysis.unknown_marks.length) {
@@ -313,34 +327,37 @@ function appendTranslationRenderings(container, token, options = {}, viewCtx = n
   section.append(heading, status, list);
   container.append(section);
 
-  Promise.all([fetchVerseBook("bsb", bookId), fetchWordMapBook("bsb", bookId)])
-    .then(async ([bsbBook, wordMapBook]) => {
+  const priorityTranslationIds = ["bsb", "kjv", "ylt"];
+  const translationById = new Map((viewCtx.state.manifest?.translations || []).map((translation) => [translation.id, translation]));
+
+  Promise.all(
+    priorityTranslationIds.map(async (translationId) => {
+      const translation = translationById.get(translationId);
+      if (!translation) return null;
+      const [book, wordMapBook] = await Promise.all([fetchVerseBook(translationId, bookId), fetchWordMapBook(translationId, bookId)]);
+      const text = verseTextFromBook(book, chapter, verse);
+      if (!text) return null;
+      const span = wordMapBook ? findWordMapSpan(wordMapBook, chapter, verse, token, text) : null;
+      return {
+        label: translation.code || translation.id.toUpperCase(),
+        value: span?.text || text,
+        note: span?.text ? "Exact mapped word or phrase span" : "Verse context; no exact word-map span found for this token",
+        exact: Boolean(span?.text),
+      };
+    }),
+  )
+    .then(async (priorityRows) => {
       if (!section.isConnected) return;
       list.replaceChildren();
-      const bsbVerse = verseTextFromBook(bsbBook, chapter, verse);
-      const bsbSpan = findWordMapSpan(wordMapBook, chapter, verse, token, bsbVerse);
 
-      if (bsbSpan?.text) {
-        appendRenderingRow(list, {
-          label: "BSB",
-          value: bsbSpan.text,
-          note: "Exact mapped word or phrase span",
-          exact: true,
-        });
-      } else {
-        appendRenderingRow(list, {
-          label: "BSB",
-          value: bsbVerse,
-          note: "Verse context; no exact BSB word-map span found for this token",
-        });
-      }
+      priorityRows.filter(Boolean).forEach((row) => appendRenderingRow(list, row));
 
-      const translations = (viewCtx.state.manifest?.translations || [])
-        .filter((translation) => translation?.id && !["bsb", "wlc", "wlco", "nestle", "tr94"].includes(translation.id))
+      const otherTranslations = (viewCtx.state.manifest?.translations || [])
+        .filter((translation) => translation?.id && !priorityTranslationIds.includes(translation.id) && !["wlc", "wlco", "nestle", "tr94"].includes(translation.id))
         .slice(0, 24);
 
       const loadedRows = await Promise.all(
-        translations.map(async (translation) => {
+        otherTranslations.map(async (translation) => {
           const book = await fetchVerseBook(translation.id, bookId);
           const text = verseTextFromBook(book, chapter, verse);
           if (!text) return null;
@@ -353,9 +370,7 @@ function appendTranslationRenderings(container, token, options = {}, viewCtx = n
       );
 
       loadedRows.filter(Boolean).forEach((row) => appendRenderingRow(list, row));
-      status.textContent = bsbSpan?.text
-        ? "Exact spans are shown where generated word maps exist; other translations show verse context until their word maps are built."
-        : "Other translations show verse context until their word maps are built.";
+      status.textContent = "BSB, KJV, and YLT show exact spans where generated word maps exist; other translations show verse context until their word maps are built.";
     })
     .catch(() => {
       if (section.isConnected) status.textContent = "Translation renderings could not be loaded.";
@@ -474,6 +489,9 @@ export function createStrongsView(ctx = null) {
     const heading = document.createElement("h3");
     heading.textContent = token.english || token.original || token.strong_code || "Strong's entry";
 
+    const stickySummary = document.createElement("div");
+    stickySummary.className = "strong-sticky-summary";
+
     const overview = document.createElement("section");
     overview.className = "strong-overview";
 
@@ -486,7 +504,15 @@ export function createStrongsView(ctx = null) {
     const translit = document.createElement("p");
     translit.className = "strong-overview-translit";
 
-    primary.append(sourceWordDisplay, translit);
+    const rtlNote = document.createElement("button");
+    rtlNote.type = "button";
+    rtlNote.className = "hebrew-rtl-note";
+    rtlNote.textContent = "!";
+    rtlNote.title = "Hebrew words are read and presented from right to left.";
+    rtlNote.setAttribute("aria-label", rtlNote.title);
+    rtlNote.hidden = true;
+
+    primary.append(rtlNote, sourceWordDisplay, translit);
 
     const gloss = document.createElement("p");
     gloss.className = "strong-overview-gloss";
@@ -514,9 +540,12 @@ export function createStrongsView(ctx = null) {
       }
       const language = token.language || entry?.language;
       const sourceWord = entry?.original_word || token.original || "";
+      const isHebrew = language === "hebrew";
+      overview.classList.toggle("hebrew", isHebrew);
+      rtlNote.hidden = !isHebrew || !sourceWord;
       setOptionalLine(sourceWordDisplay, sourceWord);
       if (sourceWord) {
-        sourceWordDisplay.classList.toggle("rtl-text", language === "hebrew");
+        sourceWordDisplay.classList.toggle("rtl-text", isHebrew);
         setLanguageTextWithTooltips(sourceWordDisplay, sourceWord, language);
       }
       const translitText = token.transliteration || entry?.transliteration || "";
@@ -528,11 +557,11 @@ export function createStrongsView(ctx = null) {
 
     renderOverview();
     overview.append(primary, meta, gloss);
-    wrap.append(heading);
+    stickySummary.append(heading, overview);
+    wrap.append(stickySummary);
     if (options.verseContext && !options.hover && ctx) {
       wrap.append(createVerseContextTabs(ctx, options.verseContext.reference, options.verseContext.verse, "strongs"));
     }
-    wrap.append(overview);
     const renderedTokenBreakdown = appendLanguageBreakdown(wrap, token);
     setDetail("Strong's", wrap, {
       history: options.hover ? "replace" : "push",

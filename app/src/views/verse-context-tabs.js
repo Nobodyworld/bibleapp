@@ -31,6 +31,11 @@ export function createVerseContextTabs(ctx, reference, verse, active) {
 
   actions.push(
     {
+      id: "par",
+      label: "Par",
+      run: () => void ctx.detailViews.showParallelVerse(reference, verse, getVerseText(ctx, verse), { history: "replace", lock: true, verse }),
+    },
+    {
       id: "refs",
       label: "Refs",
       disabled: !getCrossRecord(ctx, verse),
