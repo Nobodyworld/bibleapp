@@ -41,6 +41,10 @@ export function createReferenceButton(label, location, goToLocation) {
   button.type = "button";
   button.className = "link-button";
   button.textContent = label;
+  // Store location data for hover highlighting
+  button.dataset.bookId = location.book_id;
+  button.dataset.chapter = location.chapter;
+  button.dataset.verse = location.verse_start || location.verse || 1;
   button.addEventListener("click", () => {
     void goToLocation(location.book_id, location.chapter, location.verse_start || location.verse || 1);
   });

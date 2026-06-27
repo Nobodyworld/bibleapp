@@ -411,6 +411,28 @@ function bindEvents() {
     clearReaderHighlight();
     resetDetail();
   });
+
+  // Add hover highlighting for reference buttons and outline items in detail panel
+  els.detailContent?.addEventListener("mouseenter", (event) => {
+    const referenceButton = event.target.closest?.(".link-button[data-verse]");
+    if (!referenceButton) return;
+
+    const bookId = referenceButton.dataset.bookId;
+    const chapter = referenceButton.dataset.chapter;
+    const verse = referenceButton.dataset.verse;
+
+    // Only highlight if it's the current book and chapter
+    if (bookId === state.bookId && chapter == state.chapter) {
+      highlightReaderContext({ verse });
+    }
+  }, true);
+
+  els.detailContent?.addEventListener("mouseleave", (event) => {
+    const referenceButton = event.target.closest?.(".link-button[data-verse]");
+    if (!referenceButton) return;
+    clearReaderHighlight();
+  }, true);
+
   document.addEventListener("pointerdown", maybeDisengageLockedDetail, true);
 
   // Keyboard shortcuts
