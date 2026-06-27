@@ -1523,7 +1523,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 
 .strong-detail {
   display: grid;
-  gap: 6px;
+  gap: 12px;
 }
 
 .strong-sticky-summary {
@@ -1543,7 +1543,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 
 .strong-overview {
   display: grid;
-  gap: 8px;
+  gap: 12px;
 }
 
 .strong-overview p {
@@ -1553,8 +1553,8 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 .strong-overview-primary {
   display: flex;
   flex-wrap: wrap;
-  align-items: baseline;
-  gap: 2px 12px;
+  align-items: center;
+  gap: 8px 12px;
   min-width: 0;
 }
 
@@ -1597,19 +1597,25 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
-  min-width: 16px;
-  min-height: 16px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
   padding: 0;
-  border-color: rgba(37, 99, 95, 0.32);
+  border: 2px solid rgba(37, 99, 95, 0.32);
   border-radius: 999px;
   background: #f0f7f5;
   color: var(--accent-dark);
   cursor: help;
-  font-size: 11px;
+  font-size: 9px;
   font-weight: 900;
   line-height: 1;
+  transition: all 150ms ease;
+}
+
+.hebrew-rtl-note:hover {
+  background: #ddf3f1;
+  border-color: rgba(37, 99, 95, 0.5);
 }
 
 .hebrew-rtl-note[hidden] {
@@ -1675,8 +1681,10 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
-  margin: 10px 0 2px;
+  gap: 10px;
+  margin: 14px 0 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-subtle);
 }
 
 .strong-nav-prev {
@@ -1691,15 +1699,25 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 .strong-inline-link {
   appearance: none;
   background: transparent;
-  border: 0;
+  border: 2px solid rgba(37, 99, 95, 0.3);
+  border-radius: 4px;
   color: var(--accent-dark);
   cursor: pointer;
   font: inherit;
   font-size: 12px;
   font-weight: 800;
-  padding: 0;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  padding: 6px 10px;
+  min-height: 24px;
+  transition: all 150ms ease;
+}
+
+.strong-inline-link:hover {
+  background: rgba(37, 99, 95, 0.08);
+  border-color: rgba(37, 99, 95, 0.5);
+}
+
+.strong-inline-link:active {
+  background: rgba(37, 99, 95, 0.12);
 }
 
 .detail-content a.mini-button {
@@ -1836,7 +1854,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 .mark-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 12px 16px;
 }
 
 .language-breakdown.hebrew .letter-breakdown {
@@ -1846,39 +1864,49 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 
 .mark-study {
   display: grid;
-  gap: 8px;
-  padding: 9px;
+  gap: 14px;
+  padding: 14px;
   border: 1px solid rgba(37, 99, 95, 0.2);
   border-radius: 6px;
   background: #f8fbfa;
+  direction: rtl;
 }
 
 .mark-study-word {
   color: var(--accent-dark);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(28px, 7vw, 38px);
+  font-size: clamp(32px, 8vw, 44px);
   font-weight: 700;
   line-height: 1.35;
   text-align: right;
+  padding: 0;
+  margin: 0;
 }
 
 .language-breakdown.hebrew .mark-list {
   direction: rtl;
   justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px 16px;
 }
 
 .language-breakdown.hebrew .mark-pill {
-  min-height: 34px;
-  gap: 7px;
-  padding: 4px 9px;
+  min-height: 44px;
+  gap: 10px;
+  padding: 8px 12px;
   border-radius: 6px;
+  border: 2px solid rgba(37, 99, 95, 0.3);
   font-size: 13px;
+  font-weight: 600;
+  align-items: center;
+  display: flex;
 }
 
 .language-breakdown.hebrew .mark-glyph {
-  min-width: 28px;
-  font-size: 28px;
-  line-height: 1.1;
+  min-width: 36px;
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 700;
 }
 
 .letter-unit {
@@ -1955,23 +1983,31 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 .mark-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  min-height: 22px;
-  border: 1px solid rgba(37, 99, 95, 0.25);
+  gap: 8px;
+  min-height: 28px;
+  border: 2px solid rgba(37, 99, 95, 0.3);
   border-radius: 999px;
-  padding: 2px 7px;
+  padding: 4px 11px;
   color: var(--accent-dark);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
+  transition: all 150ms ease;
+}
+
+.mark-pill:hover {
+  background: rgba(37, 99, 95, 0.08);
+  border-color: rgba(37, 99, 95, 0.5);
 }
 
 .mark-glyph {
-  min-width: 16px;
+  min-width: 32px;
   color: var(--text);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 16px;
+  font-size: 36px;
   line-height: 1;
   text-align: center;
+  font-weight: 700;
+  flex-shrink: 0;
 }
 
 .mark-pill.unknown-mark,
