@@ -254,29 +254,29 @@ export function trackReaderLocation(location) {
 
   // Only track if location has actually changed
   if (locationKey !== lastKey && lastTrackedLocation) {
-}
+  }
 
-export function textNode(text) {
-  return document.createTextNode(text);
-}
+  export function textNode(text) {
+    return document.createTextNode(text);
+  }
 
-export function createDetailList(items, renderItem) {
-  const list = document.createElement("ul");
-  list.className = "detail-list";
-  items.forEach((item) => {
-    const li = document.createElement("li");
-    renderItem(li, item);
-    list.append(li);
-  });
-  return list;
-}
+  export function createDetailList(items, renderItem) {
+    const list = document.createElement("ul");
+    list.className = "detail-list";
+    items.forEach((item) => {
+      const li = document.createElement("li");
+      renderItem(li, item);
+      list.append(li);
+    });
+    return list;
+  }
 
-export function addToolButton(parent, label, title, handler) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "mini-button";
-  button.textContent = label;
-  button.title = title;
-  button.addEventListener("click", handler);
-  parent.append(button);
-}
+  export function addToolButton(parent, label, title, handler) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "mini-button";
+    button.textContent = label;
+    button.title = title;
+    button.addEventListener("click", handler);
+    parent.append(button);
+  }
