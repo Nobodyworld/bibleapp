@@ -50,6 +50,11 @@ let currentDetailTransient = false;
 let transientBase = null;
 let detailHoverLocked = false;
 
+// Reader location history for tracking book/chapter/verse navigation
+let readerLocationHistory = [];
+let readerLocationForwardHistory = [];
+let lastTrackedLocation = null;
+
 function updateDetailHistoryButtons() {
   if (els.detailBack) els.detailBack.disabled = detailHistory.length === 0;
   if (els.detailForward) els.detailForward.disabled = detailForwardHistory.length === 0;
@@ -147,48 +152,91 @@ export function setDetailMessage(title, message, options = {}) {
 }
 
 export function goBackDetail() {
-  const previous = detailHistory.pop();
-  if (!previous) {
+  const previousDetail = detailHistory.pop();
+  const previousLocation = readerLocationHistory.pop();
+
+  if (!previousDetail && !previousLocation) {
     updateDetailHistoryButtons();
     return;
   }
+
+  // Store current state in forward history
   if (canStoreCurrentDetail()) detailForwardHistory.push(snapshotDetail());
+  if (lastTrackedLocation) readerLocationForwardHistory.push(lastTrackedLocation);
+
   transientBase = null;
   currentDetailTransient = false;
   detailHoverLocked = true;
-  els.detailTitle.textContent = previous.title;
-  setDetailContext(null);
-  if (els.detailContext) {
-    els.detailContext.replaceChildren(...(previous.contextNodes || []));
-    els.detailContext.hidden = Boolean(previous.contextHidden);
+
+  // If we have a location to restore, return it via callback
+  // The app.js will handle the actual navigation
+  if (previousLocation) {
+    if (previousDetail) {
+      detailHistory.push(previousDetail);
+    }
+    // Signal to app.js to restore location via goToLocation
+    updateDetailHistoryButtons();
+    return previousLocation;
   }
-  els.detail.replaceChildren(...previous.nodes);
+
+  // Otherwise just restore the detail panel
+  if (previousDetail) {
+    els.detailTitle.textContent = previousDetail.title;
+    setDetailContext(null);
+    if (els.detailContext) {
+      els.detailContext.replaceChildren(...(previousDetail.contextNodes || []));
+      els.detailContext.hidden = Boolean(previousDetail.contextHidden);
+    }
+    els.detail.replaceChildren(...previousDetail.nodes);
+  }
   updateDetailHistoryButtons();
 }
 
 export function goForwardDetail() {
-  const next = detailForwardHistory.pop();
-  if (!next) {
+  const nextDetail = detailForwardHistory.pop();
+  const nextLocation = readerLocationForwardHistory.pop();
+
+  if (!nextDetail && !nextLocation) {
     updateDetailHistoryButtons();
     return;
   }
+
+  // Store current state in back history
   if (canStoreCurrentDetail()) detailHistory.push(snapshotDetail());
+  if (lastTrackedLocation) readerLocationHistory.push(lastTrackedLocation);
+
   transientBase = null;
   currentDetailTransient = false;
   detailHoverLocked = true;
-  els.detailTitle.textContent = next.title;
-  setDetailContext(null);
-  if (els.detailContext) {
-    els.detailContext.replaceChildren(...(next.contextNodes || []));
-    els.detailContext.hidden = Boolean(next.contextHidden);
+
+  // If we have a location to restore, return it via callback
+  if (nextLocation) {
+    if (nextDetail) {
+      detailForwardHistory.push(nextDetail);
+    }
+    updateDetailHistoryButtons();
+    return nextLocation;
   }
-  els.detail.replaceChildren(...next.nodes);
+
+  // Otherwise just restore the detail panel
+  if (nextDetail) {
+    els.detailTitle.textContent = nextDetail.title;
+    setDetailContext(null);
+    if (els.detailContext) {
+      els.detailContext.replaceChildren(...(nextDetail.contextNodes || []));
+      els.detailContext.hidden = Boolean(nextDetail.contextHidden);
+    }
+    els.detail.replaceChildren(...nextDetail.nodes);
+  }
   updateDetailHistoryButtons();
 }
 
 export function resetDetail(title = "Details", message = defaultDetailText) {
   detailHistory.length = 0;
   detailForwardHistory.length = 0;
+  readerLocationHistory.length = 0;
+  readerLocationForwardHistory.length = 0;
+  lastTrackedLocation = null;
   transientBase = null;
   currentDetailTransient = false;
   detailHoverLocked = false;
@@ -196,6 +244,16 @@ export function resetDetail(title = "Details", message = defaultDetailText) {
   setDetailContext(null);
   els.detail.textContent = message;
   updateDetailHistoryButtons();
+}
+
+// Track reader location changes for back/forward navigation
+export function trackReaderLocation(location) {
+  if (!location) return;
+  const locationKey = `${location.bookId}:${location.chapter}:${location.verse || ''}`;
+  const lastKey = lastTrackedLocation ? `${lastTrackedLocation.bookId}:${lastTrackedLocation.chapter}:${lastTrackedLocation.verse || ''}` : null;
+
+  // Only track if location has actually changed
+  if (locationKey !== lastKey && lastTrackedLocation) {
 }
 
 export function textNode(text) {

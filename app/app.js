@@ -12,6 +12,7 @@ import {
   setDetailHoverLocked,
   setStatus,
   sortedNumericKeys,
+  trackReaderLocation,
 } from "./src/dom.js";
 import { createReferenceButton as makeReferenceButton, referenceKey, refDomId } from "./src/references.js";
 import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js";
@@ -276,6 +277,13 @@ async function navigateToRoute(route, options = {}) {
   }
 
   await loadBookData();
+
+  // Track this location in reader history
+  trackReaderLocation({
+    bookId: next.bookId,
+    chapter: next.chapter,
+    verse: next.verse || null,
+  });
 }
 
 async function goToLocation(bookId, chapter, verse) {
@@ -400,11 +408,17 @@ function bindEvents() {
   els.showProverbs.addEventListener("click", clearStudyContextAndCall(detailViews.showTranslationWorkspaceIndex));
   els.detailBack.addEventListener("click", () => {
     detailViews.clearStrongPin();
-    goBackDetail();
+    const restoredLocation = goBackDetail();
+    if (restoredLocation) {
+      void goToLocation(restoredLocation.bookId, restoredLocation.chapter, restoredLocation.verse);
+    }
   });
   els.detailForward.addEventListener("click", () => {
     detailViews.clearStrongPin();
-    goForwardDetail();
+    const restoredLocation = goForwardDetail();
+    if (restoredLocation) {
+      void goToLocation(restoredLocation.bookId, restoredLocation.chapter, restoredLocation.verse);
+    }
   });
   els.clearDetail.addEventListener("click", () => {
     detailViews.clearStrongPin();

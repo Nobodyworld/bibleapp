@@ -3090,15 +3090,24 @@ button {
 }
 
 /* Dark mode button styling - only for main buttons, exclude small inline buttons */
-:root[data-theme="dark"] button:not(.verse-study-button):not(.verse-number):not(.verse-number-menu):not(.link-button):not(.compact-link) {
+:root[data-theme="dark"]
+  button:not(.verse-study-button):not(.verse-number):not(
+    .verse-number-menu
+  ):not(.link-button):not(.compact-link) {
   background: var(--bg-elevated) !important;
   color: var(--text) !important;
   border-color: var(--accent) !important;
   border-width: 2px !important;
 }
 
-:root[data-theme="dark"] button:not(.verse-study-button):not(.verse-number):not(.verse-number-menu):not(.link-button):not(.compact-link):hover,
-:root[data-theme="dark"] button:not(.verse-study-button):not(.verse-number):not(.verse-number-menu):not(.link-button):not(.compact-link):focus-visible {
+:root[data-theme="dark"]
+  button:not(.verse-study-button):not(.verse-number):not(
+    .verse-number-menu
+  ):not(.link-button):not(.compact-link):hover,
+:root[data-theme="dark"]
+  button:not(.verse-study-button):not(.verse-number):not(
+    .verse-number-menu
+  ):not(.link-button):not(.compact-link):focus-visible {
   background: var(--panel) !important;
   border-color: var(--accent) !important;
   color: var(--text) !important;
@@ -3170,15 +3179,24 @@ html[data-theme="light"] .app-header {
   color: var(--text) !important;
 }
 
-html[data-theme="light"] button:not(.verse-study-button):not(.verse-number):not(.verse-number-menu):not(.link-button):not(.compact-link) {
+html[data-theme="light"]
+  button:not(.verse-study-button):not(.verse-number):not(
+    .verse-number-menu
+  ):not(.link-button):not(.compact-link) {
   background: var(--panel) !important;
   color: var(--text) !important;
   border-color: var(--line) !important;
   border-width: 2px !important;
 }
 
-html[data-theme="light"] button:not(.verse-study-button):not(.verse-number):not(.verse-number-menu):not(.link-button):not(.compact-link):hover,
-html[data-theme="light"] button:not(.verse-study-button):not(.verse-number):not(.verse-number-menu):not(.link-button):not(.compact-link):focus-visible {
+html[data-theme="light"]
+  button:not(.verse-study-button):not(.verse-number):not(
+    .verse-number-menu
+  ):not(.link-button):not(.compact-link):hover,
+html[data-theme="light"]
+  button:not(.verse-study-button):not(.verse-number):not(
+    .verse-number-menu
+  ):not(.link-button):not(.compact-link):focus-visible {
   background: var(--bg-elevated) !important;
   border-color: var(--accent) !important;
   color: var(--text) !important;
