@@ -40,7 +40,7 @@ export function createCommentaryOutlineViews(ctx) {
       heading.textContent = reference;
       const message = document.createElement("p");
       message.textContent = `No commentary entries found for ${reference}.`;
-      empty.append(heading, createVerseContextTabs(ctx, reference, verse, "commentary"), message);
+      empty.append(heading, createVerseContextTabs(ctx, reference, verse, "commentary", ctx.studyContext?.strong), message);
       setDetail("Commentary", empty, options);
       return;
     }
@@ -48,7 +48,7 @@ export function createCommentaryOutlineViews(ctx) {
     const wrap = document.createElement("div");
     const heading = document.createElement("h3");
     heading.textContent = reference;
-    wrap.append(heading, createVerseContextTabs(ctx, reference, verse, "commentary"));
+    wrap.append(heading, createVerseContextTabs(ctx, reference, verse, "commentary", ctx.studyContext?.strong));
 
     for (const entry of entries.slice(0, 8)) {
       const resolved = await resolveCommentaryEntry(entry);

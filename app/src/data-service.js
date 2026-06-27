@@ -188,7 +188,9 @@ export async function fetchLexiconEntry(strongCode) {
 }
 
 export async function loadOriginalSourceTexts({ manifest, bookId, chapter }, language, verse) {
-  const sourceIds = language === "greek" ? ["nestle", "tr94"] : ["wlc", "wlco"];
+  const candidateIds = language === "greek" ? ["nestle", "tr94"] : ["wlc", "wlco"];
+  const availableTranslationIds = new Set((manifest?.translations || []).map((item) => item.id));
+  const sourceIds = candidateIds.filter((sourceId) => availableTranslationIds.has(sourceId));
   const results = [];
   for (const sourceId of sourceIds) {
     const book = await tryFetchJson(`${DATA_ROOT}/verses/${sourceId}/${bookId}.json`);

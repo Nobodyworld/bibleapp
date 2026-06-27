@@ -14,7 +14,7 @@ function hasInterlinear(ctx, verse) {
   return Boolean(ctx.state.interlinear?.chapters?.[ctx.state.chapter]?.[verse]?.length);
 }
 
-export function createVerseContextTabs(ctx, reference, verse, active) {
+export function createVerseContextTabs(ctx, reference, verse, active, strongsContext = null) {
   const tabs = document.createElement("div");
   tabs.className = "verse-context-tabs";
   tabs.setAttribute("aria-label", `Study tools for ${reference}`);
@@ -26,6 +26,19 @@ export function createVerseContextTabs(ctx, reference, verse, active) {
       id: "strongs",
       label: "Word",
       disabled: true,
+    });
+  } else if (strongsContext?.token && strongsContext?.options) {
+    // If not on Word tab but there's a stored Strong's context, show Word as clickable
+    actions.push({
+      id: "strongs",
+      label: "Word",
+      disabled: false,
+      run: () => {
+        ctx.detailViews.showStrong(strongsContext.token, {
+          ...strongsContext.options,
+          history: "replace",
+        });
+      },
     });
   }
 
@@ -74,10 +87,20 @@ export function createVerseContextTabs(ctx, reference, verse, active) {
     button.className = action.id === active ? "verse-context-tab active" : "verse-context-tab";
     button.textContent = action.label;
     button.disabled = Boolean(action.disabled);
+
+    // Improved ARIA labels for unavailable features
     if (action.disabled && action.unavailableKey) {
-      button.title = studyUnavailableLabel(action.unavailableKey);
-      button.setAttribute("aria-label", `${action.label}: ${button.title}`);
+      const unavailableMessage = studyUnavailableLabel(action.unavailableKey);
+      button.title = unavailableMessage;
+      button.setAttribute("aria-label", `${action.label}: ${unavailableMessage}`);
+      button.setAttribute("aria-disabled", "true");
+    } else if (action.disabled) {
+      button.setAttribute("aria-label", `${action.label}: Data not available for this verse`);
+      button.setAttribute("aria-disabled", "true");
+    } else {
+      button.setAttribute("aria-label", `${action.label}: Study tools for ${reference}`);
     }
+
     button.setAttribute("aria-pressed", action.id === active ? "true" : "false");
     if (action.run) button.addEventListener("click", action.run);
     tabs.append(button);

@@ -24,6 +24,7 @@ export const els = {
   showJobs: document.querySelector("#showJobs"),
   showUserData: document.querySelector("#showUserData"),
   showProverbs: document.querySelector("#showProverbs"),
+  themeToggle: document.querySelector("#themeToggle"),
 };
 
 export function option(value, label) {

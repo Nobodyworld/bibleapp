@@ -104,6 +104,7 @@ const ctx = {
   renderChapter: () => renderer.renderChapter(),
   syncChapterButtons,
   syncToolButtons,
+  studyContext: {}, // Stores current Strong's word context for tab switching
 };
 
 const detailViews = createDetailViews(ctx);
@@ -242,6 +243,7 @@ async function navigateToRoute(route, options = {}) {
       fillTranslationOptions();
       fillBookOptions();
     }
+    ctx.studyContext = {}; // Clear study context when going home
     showHomePage(options);
     return;
   }
@@ -252,6 +254,14 @@ async function navigateToRoute(route, options = {}) {
     ...normalized,
     translationId: canLoad ? normalized.translationId : DEFAULT_ROUTE.translationId,
   };
+
+  // Clear study context when navigating to a different location
+  if (
+    next.bookId !== state.bookId ||
+    next.chapter !== state.chapter
+  ) {
+    ctx.studyContext = {};
+  }
 
   state.translationId = next.translationId;
   state.bookId = next.bookId;
@@ -333,13 +343,61 @@ function bindEvents() {
   els.prevFloat?.addEventListener("click", () => void goToChapter(-1));
   els.nextFloat?.addEventListener("click", () => void goToChapter(1));
   els.homeButton?.addEventListener("click", () => void navigateToRoute({ home: true }, { writeUrl: true }));
-  els.showOutline.addEventListener("click", detailViews.showOutline);
-  els.showInterlinear.addEventListener("click", detailViews.showInterlinearChapter);
-  els.showSearch.addEventListener("click", detailViews.showSearch);
-  els.showTags.addEventListener("click", detailViews.showTagIndex);
-  els.showJobs.addEventListener("click", detailViews.showJobs);
-  els.showUserData.addEventListener("click", detailViews.showUserData);
-  els.showProverbs.addEventListener("click", detailViews.showTranslationWorkspaceIndex);
+
+  // Theme toggle functionality
+  function initializeTheme() {
+    const savedTheme = localStorage.getItem("bibleAppTheme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+
+    if (savedTheme) {
+      document.documentElement.setAttribute("data-theme", savedTheme);
+    } else if (prefersDark) {
+      document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+
+    updateThemeIcon();
+  }
+
+  function updateThemeIcon() {
+    const theme = document.documentElement.getAttribute("data-theme") ||
+      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const iconEl = els.themeToggle?.querySelector(".theme-icon");
+    if (iconEl) {
+      iconEl.textContent = theme === "dark" ? "☀️" : "🌙";
+    }
+  }
+
+  function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute("data-theme") ||
+      (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const newTheme = currentTheme === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", newTheme);
+    localStorage.setItem("bibleAppTheme", newTheme);
+    updateThemeIcon();
+  }
+
+  els.themeToggle?.addEventListener("click", toggleTheme);
+
+  // Initialize theme on page load
+  initializeTheme();
+
+  // Clear study context when opening non-study views
+  const clearStudyContextAndCall = (fn) => {
+    return () => {
+      ctx.studyContext = {};
+      fn();
+    };
+  };
+
+  els.showOutline.addEventListener("click", clearStudyContextAndCall(detailViews.showOutline));
+  els.showInterlinear.addEventListener("click", clearStudyContextAndCall(detailViews.showInterlinearChapter));
+  els.showSearch.addEventListener("click", clearStudyContextAndCall(detailViews.showSearch));
+  els.showTags.addEventListener("click", clearStudyContextAndCall(detailViews.showTagIndex));
+  els.showJobs.addEventListener("click", clearStudyContextAndCall(detailViews.showJobs));
+  els.showUserData.addEventListener("click", clearStudyContextAndCall(detailViews.showUserData));
+  els.showProverbs.addEventListener("click", clearStudyContextAndCall(detailViews.showTranslationWorkspaceIndex));
   els.detailBack.addEventListener("click", () => {
     detailViews.clearStrongPin();
     goBackDetail();
@@ -354,6 +412,116 @@ function bindEvents() {
     resetDetail();
   });
   document.addEventListener("pointerdown", maybeDisengageLockedDetail, true);
+
+  // Keyboard shortcuts
+  document.addEventListener("keydown", (event) => {
+    // Ctrl+K or Cmd+K to open search
+    if ((event.ctrlKey || event.metaKey) && event.key === "k") {
+      event.preventDefault();
+      ctx.studyContext = {};
+      detailViews.showSearch();
+    }
+
+    // Ctrl+G or Cmd+G to open verse lookup
+    if ((event.ctrlKey || event.metaKey) && event.key === "g") {
+      event.preventDefault();
+      ctx.studyContext = {};
+      const query = prompt("Jump to verse (e.g., Genesis 1:1, John 3:16, or Psalm 23):");
+      if (!query) return;
+
+      // Parse verse reference like "Genesis 1:1" or "Gen 1:1" or "John 3:16"
+      const parts = query.trim().split(/[\s:]+/);
+      if (parts.length < 2) return;
+
+      const bookName = parts.slice(0, -2).join(" ").trim();
+      const chapter = parts[parts.length - 2];
+      const verse = parts[parts.length - 1];
+
+      if (!bookName || !chapter) return;
+
+      // Find matching book
+      const matchingBook = state.manifest?.books?.find(
+        (book) =>
+          book.name.toLowerCase().startsWith(bookName.toLowerCase()) ||
+          book.id.toLowerCase().startsWith(bookName.toLowerCase())
+      );
+
+      if (!matchingBook) {
+        alert(`Book not found: ${bookName}`);
+        return;
+      }
+
+      void goToLocation(matchingBook.id, chapter, verse || 1);
+    }
+
+    // Escape to close detail pane (on mobile)
+    if (event.key === "Escape") {
+      event.preventDefault();
+      const detailPane = document.querySelector(".detail-pane");
+      if (detailPane?.classList.contains("visible")) {
+        detailPane.classList.remove("visible");
+      } else {
+        resetDetail();
+        clearReaderHighlight();
+      }
+    }
+  });
+
+  // Interlinear hover interaction - link Bible words to detail panel tokens
+  function setupInterlinearInteraction() {
+    const readerPane = document.querySelector(".reader-pane");
+    const detailPane = document.querySelector(".detail-pane");
+    const detailContent = document.querySelector(".detail-content");
+
+    // Listen for hover over Strong's tokens in the reader pane
+    document.addEventListener(
+      "mouseover",
+      (event) => {
+        const strongToken = event.target.closest(".strong-token[data-tooltip]");
+        if (!strongToken || !detailPane) return;
+
+        // Check if interlinear view is currently visible
+        const interlinearTokens = detailPane.querySelectorAll(".interlinear-token");
+        if (!interlinearTokens.length) return; // Not on interlinear view
+
+        // Get the tooltip (Strong's code) from the token
+        const tooltip = strongToken.getAttribute("data-tooltip");
+        if (!tooltip) return;
+
+        // Find the corresponding token in the interlinear panel
+        const matchingToken = Array.from(interlinearTokens).find(
+          (token) => token.dataset.strongCode && tooltip.includes(token.dataset.strongCode)
+        );
+
+        if (!matchingToken) return;
+
+        // Remove previous highlight
+        interlinearTokens.forEach((t) => t.classList.remove("interlinear-hover"));
+
+        // Highlight the matching token
+        matchingToken.classList.add("interlinear-hover");
+
+        // Auto-scroll to show the token
+        matchingToken.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      },
+      true
+    );
+
+    // Remove highlight when leaving the strong token
+    document.addEventListener(
+      "mouseout",
+      (event) => {
+        const strongToken = event.target.closest(".strong-token[data-tooltip]");
+        if (!strongToken || !detailPane) return;
+
+        const interlinearTokens = detailPane.querySelectorAll(".interlinear-token");
+        interlinearTokens.forEach((t) => t.classList.remove("interlinear-hover"));
+      },
+      true
+    );
+  }
+
+  setupInterlinearInteraction();
 
   const handleRouteChange = () => {
     const route = parseReaderRoute();

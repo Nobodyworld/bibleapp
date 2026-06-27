@@ -560,7 +560,14 @@ export function createStrongsView(ctx = null) {
     stickySummary.append(heading, overview);
     wrap.append(stickySummary);
     if (options.verseContext && !options.hover && ctx) {
-      wrap.append(createVerseContextTabs(ctx, options.verseContext.reference, options.verseContext.verse, "strongs"));
+      // Store Strong's context for tab switching
+      if (ctx.studyContext) {
+        ctx.studyContext.strong = {
+          token,
+          options: { ...options, forceHistory: false },
+        };
+      }
+      wrap.append(createVerseContextTabs(ctx, options.verseContext.reference, options.verseContext.verse, "strongs", null));
     }
     const renderedTokenBreakdown = appendLanguageBreakdown(wrap, token);
     setDetail("Strong's", wrap, {

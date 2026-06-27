@@ -179,6 +179,8 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
   function createInterlinearTokenCard(token, options = {}) {
     const card = document.createElement("div");
     card.className = "interlinear-token";
+    card.dataset.tokenIndex = String(token.token_index ?? "");
+    card.dataset.strongCode = token.strong_code || "";
 
     const original = document.createElement("div");
     original.className = token.language === "hebrew" ? "token-original rtl-token" : "token-original";
@@ -258,7 +260,7 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
       heading.textContent = reference;
       const message = document.createElement("p");
       message.textContent = `No interlinear data found for ${reference}.`;
-      empty.append(heading, createVerseContextTabs(ctx, reference, verse, "interlinear"), message);
+      empty.append(heading, createVerseContextTabs(ctx, reference, verse, "interlinear", ctx.studyContext?.strong), message);
       setDetail("Interlinear", empty, options);
       return;
     }
@@ -268,7 +270,7 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     heading.textContent = reference;
     const verseContext = { reference, verse };
     const wordInfoLookup = createOriginalWordInfoLookup(tokens);
-    wrap.append(heading, createVerseContextTabs(ctx, reference, verse, "interlinear"));
+    wrap.append(heading, createVerseContextTabs(ctx, reference, verse, "interlinear", ctx.studyContext?.strong));
 
     const sourceTexts = await loadOriginalSourceTexts(ctx.state, tokens[0].language, verse);
     if (sourceTexts.length) {
