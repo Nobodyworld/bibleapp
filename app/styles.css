@@ -3084,16 +3084,21 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   color: var(--accent-dark) !important;
 }
 
-/* Dark mode button styling */
-:root[data-theme="dark"] button {
+/* Ensure box-sizing for all buttons to prevent border overflow */
+button {
+  box-sizing: border-box;
+}
+
+/* Dark mode button styling - only for main buttons, exclude small inline buttons */
+:root[data-theme="dark"] button:not(.verse-study-button):not(.verse-number):not(.verse-number-menu):not(.link-button):not(.compact-link) {
   background: var(--bg-elevated) !important;
   color: var(--text) !important;
   border-color: var(--accent) !important;
   border-width: 2px !important;
 }
 
-:root[data-theme="dark"] button:hover,
-:root[data-theme="dark"] button:focus-visible {
+:root[data-theme="dark"] button:not(.verse-study-button):not(.verse-number):not(.verse-number-menu):not(.link-button):not(.compact-link):hover,
+:root[data-theme="dark"] button:not(.verse-study-button):not(.verse-number):not(.verse-number-menu):not(.link-button):not(.compact-link):focus-visible {
   background: var(--panel) !important;
   border-color: var(--accent) !important;
   color: var(--text) !important;
@@ -3103,6 +3108,12 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 :root[data-theme="dark"] button:disabled {
   opacity: 0.45 !important;
   cursor: not-allowed !important;
+}
+
+/* Small button overrides for dark mode */
+:root[data-theme="dark"] .verse-study-button,
+:root[data-theme="dark"] .verse-number {
+  border-width: 1px !important;
 }
 
 /* Dark mode link-button and context highlighting */
@@ -3118,7 +3129,9 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 
 :root[data-theme="dark"] .reader-context-verse {
   background: rgba(78, 205, 193, 0.15) !important;
-  box-shadow: inset 3px 0 0 var(--accent), 0 0 0 2px rgba(78, 205, 193, 0.2) !important;
+  box-shadow:
+    inset 3px 0 0 var(--accent),
+    0 0 0 2px rgba(78, 205, 193, 0.2) !important;
 }
 
 :root[data-theme="dark"] .reader-context-word {
@@ -3157,19 +3170,25 @@ html[data-theme="light"] .app-header {
   color: var(--text) !important;
 }
 
-html[data-theme="light"] button {
+html[data-theme="light"] button:not(.verse-study-button):not(.verse-number):not(.verse-number-menu):not(.link-button):not(.compact-link) {
   background: var(--panel) !important;
   color: var(--text) !important;
   border-color: var(--line) !important;
   border-width: 2px !important;
 }
 
-html[data-theme="light"] button:hover,
-html[data-theme="light"] button:focus-visible {
+html[data-theme="light"] button:not(.verse-study-button):not(.verse-number):not(.verse-number-menu):not(.link-button):not(.compact-link):hover,
+html[data-theme="light"] button:not(.verse-study-button):not(.verse-number):not(.verse-number-menu):not(.link-button):not(.compact-link):focus-visible {
   background: var(--bg-elevated) !important;
   border-color: var(--accent) !important;
   color: var(--text) !important;
   box-shadow: 0 0 0 3px rgba(37, 99, 95, 0.15) !important;
+}
+
+/* Small button overrides for light mode */
+html[data-theme="light"] .verse-study-button,
+html[data-theme="light"] .verse-number {
+  border-width: 1px !important;
 }
 
 html[data-theme="light"] input[type="text"],
