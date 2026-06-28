@@ -1,0 +1,109 @@
+export const CONTROL_STATES = Object.freeze({
+  enabled: "enabled",
+  capabilityUnavailable: "capability_unavailable",
+  dataUnavailable: "data_unavailable",
+});
+
+export const PANEL_MODES = Object.freeze({
+  follow: "follow",
+  locked: "locked",
+});
+
+export const PANEL_EVENTS = Object.freeze({
+  activate: "activate",
+  disengage: "disengage",
+  reset: "reset",
+  hover: "hover",
+});
+
+export const STUDY_CONTROL_SCHEMA = Object.freeze({
+  toolbarSearch: {
+    capabilityId: "search",
+    dataScope: "package",
+    action: "showSearch",
+    lockOnActivate: true,
+  },
+  toolbarOutline: {
+    capabilityId: "outlines",
+    dataScope: "book",
+    action: "showOutline",
+    lockOnActivate: true,
+  },
+  toolbarInterlinear: {
+    capabilityId: "interlinear",
+    dataScope: "chapter",
+    action: "showInterlinearChapter",
+    lockOnActivate: true,
+  },
+  toolbarTranslation: {
+    capabilityId: "interlinear",
+    dataScope: "chapter",
+    action: "showTranslationWorkspaceIndex",
+    lockOnActivate: true,
+  },
+  verseParallel: {
+    capabilityId: null,
+    dataScope: "verse",
+    action: "showParallelVerse",
+    lockOnActivate: true,
+  },
+  verseReferences: {
+    capabilityId: "crossrefs",
+    dataScope: "verse",
+    action: "showCrossrefs",
+    lockOnActivate: true,
+  },
+  verseCommentary: {
+    capabilityId: "commentary",
+    dataScope: "package",
+    action: "showCommentary",
+    lockOnActivate: true,
+  },
+  verseInterlinear: {
+    capabilityId: "interlinear",
+    dataScope: "verse",
+    action: "showInterlinearVerse",
+    lockOnActivate: true,
+  },
+  verseTags: {
+    capabilityId: null,
+    dataScope: "verse",
+    action: "showTagEditor",
+    lockOnActivate: true,
+  },
+});
+
+export function resolveControlState({ capabilityAvailable = true, dataAvailable = true } = {}) {
+  if (!capabilityAvailable) {
+    return {
+      state: CONTROL_STATES.capabilityUnavailable,
+      disabled: true,
+      available: false,
+    };
+  }
+  if (!dataAvailable) {
+    return {
+      state: CONTROL_STATES.dataUnavailable,
+      disabled: true,
+      available: false,
+    };
+  }
+  return {
+    state: CONTROL_STATES.enabled,
+    disabled: false,
+    available: true,
+  };
+}
+
+export function transitionPanelMode(mode, event) {
+  if (event === PANEL_EVENTS.activate) return PANEL_MODES.locked;
+  if (event === PANEL_EVENTS.disengage || event === PANEL_EVENTS.reset) return PANEL_MODES.follow;
+  return mode === PANEL_MODES.locked ? PANEL_MODES.locked : PANEL_MODES.follow;
+}
+
+export function interlinearTokenIdentity({ verse, tokenIndex, strongCode } = {}) {
+  const normalizedVerse = String(verse || "");
+  const normalizedIndex = String(tokenIndex ?? "");
+  if (normalizedVerse && normalizedIndex) return `verse:${normalizedVerse}:token:${normalizedIndex}`;
+  return strongCode ? `strong:${String(strongCode)}` : "";
+}

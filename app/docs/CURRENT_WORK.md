@@ -1,22 +1,24 @@
 # Current Work
 
-Reviewed: 2026-06-23
+Reviewed: 2026-06-28
 
-## Ready To Commit
+## Current Verification
 
-- Publish package metadata points to `data/license-matrix.json` with record-only license/provenance notes.
-- `tools/publish-audit.mjs` validates retained translations, package metadata, license rows, missing removed-data directories, linked planning docs, and absence of legacy source naming without release gating on license values.
-- Study-feature restoration docs are additive planning material only and do not change packaged data policy.
+- `npm test` validates JavaScript syntax, all packaged JSON, declared npm-script paths, retained datasets, capability paths and dependencies, all analysis book files, accessibility contracts, documentation consistency, and 24 desktop / 25 mobile browser interactions.
+- `npm run audit` validates package structure and explicitly does not claim runtime or legal release readiness.
+- The browser suite starts an isolated local server and temporary Edge profile, so it does not depend on a separately running development server or retained browser state.
 
 ## Still Needed
 
-1. Add tests for crossrefs/commentary/outlines/interlinear/search and analysis-word-map/analysis-graph loading paths.
-2. Keep the analysis generator reproducible by preserving chunked runs (`tools/generate-analysis-packs.mjs`).
-3. Split tests into publish-package and full-study modes so optional datasets can be validated independently.
-4. Keep reader-adjacent study tools visible and guided; avoid regressing to hidden/disabled-only states.
+1. Keep the analysis generator reproducible through chunked runs (`tools/generate-analysis-packs.mjs`).
+2. Keep reader-adjacent study tools visible and provide actionable empty states.
+3. Add screenshot-diff baselines only when the visual design becomes stable enough to avoid high-churn snapshots.
 
 ## Verification Command
 
 ```powershell
-node .\app\tools\publish-audit.mjs
+npm test
+npm run audit
 ```
+
+Use `npm run verify` to run both commands as the release-validation entry point.

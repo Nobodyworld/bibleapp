@@ -123,12 +123,13 @@ async function main() {
     JSON.stringify(
       {
         status: "ok",
+        scope: "package_structure",
         translations: translationIds.length,
         feature_packs: packageManifest.feature_packs.length,
         license_rows: licenseMatrix.packaged_datasets.length,
-        public_release_ready: true,
-        sale_ready: true,
-        note: "license matrix is retained as a written record only; no release gating is enforced by this audit",
+        license_review_required: true,
+        runtime_readiness_checked: false,
+        note: "This audit validates package structure only. Runtime readiness and legal approval for redistribution or sale require separate checks.",
       },
       null,
       2,

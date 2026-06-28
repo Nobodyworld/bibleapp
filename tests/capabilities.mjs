@@ -15,6 +15,9 @@ function readJson(path) {
 
 function resolveCapabilities(packageManifest) {
   const installedPacks = packageManifest.packages[0]?.feature_pack_ids || [];
+  const packDefinitions = new Map(
+    (packageManifest.feature_packs || []).map((pack) => [pack.id, pack]),
+  );
   const capabilities = [];
 
   const capabilityDefs = [
@@ -61,12 +64,34 @@ function resolveCapabilities(packageManifest) {
   ];
 
   for (const cap of capabilityDefs) {
-    const satisfied = cap.requires.every((pack) => installedPacks.includes(pack));
+    const issues = [];
+    const checked = new Set();
+
+    function validatePack(packId) {
+      if (checked.has(packId)) return;
+      checked.add(packId);
+      if (!installedPacks.includes(packId)) {
+        issues.push(`not installed: ${packId}`);
+        return;
+      }
+      const definition = packDefinitions.get(packId);
+      if (!definition) {
+        issues.push(`missing definition: ${packId}`);
+        return;
+      }
+      for (const path of definition.paths || []) {
+        if (!existsSync(join(appRoot, path))) issues.push(`missing path: ${path}`);
+      }
+      for (const dependency of definition.dependencies || []) validatePack(dependency);
+    }
+
+    cap.requires.forEach(validatePack);
     capabilities.push({
       id: cap.id,
       name: cap.name,
-      available: satisfied,
+      available: issues.length === 0,
       requires: cap.requires,
+      issues,
     });
   }
 
@@ -74,6 +99,9 @@ function resolveCapabilities(packageManifest) {
 }
 
 const packageManifest = readJson(join(dataRoot, "package-manifest.json"));
+if (!packageManifest?.packages?.length || !Array.isArray(packageManifest.feature_packs)) {
+  throw new Error("package-manifest.json is missing packages or feature_packs");
+}
 const capabilities = resolveCapabilities(packageManifest);
 
 const results = {

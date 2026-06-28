@@ -26,65 +26,124 @@ const results = {
   },
   issues: [],
 };
+const validWordMapBooks = new Set();
+const validGraphBooks = new Set();
 
-// Check word-maps
 const wordMapRoot = join(dataRoot, "analysis", "word-map", "bsb");
 if (existsSync(wordMapRoot)) {
   const wordMapBooks = readdirSync(wordMapRoot).filter((f) => f.endsWith(".json"));
-  results.summary.word_maps_valid = wordMapBooks.length;
-
-  // Spot-check 3 random books
-  const sampled = wordMapBooks.slice(0, 3);
-  for (const book of sampled) {
-    const data = readJson(join(wordMapRoot, book));
-    if (!data || typeof data !== "object") {
+  for (const file of wordMapBooks) {
+    const bookId = file.slice(0, -5);
+    let data;
+    try {
+      data = readJson(join(wordMapRoot, file));
+    } catch (error) {
       results.summary.word_maps_invalid += 1;
-      results.issues.push(`Word-map ${book} is invalid JSON`);
-    } else if (!data.book || !data.chapters || typeof data.chapters !== "object") {
-      results.issues.push(`Word-map ${book} missing book metadata or chapters object`);
-    } else {
-      let spanCount = 0;
-      for (const chapterNum in data.chapters) {
-        const chapter = data.chapters[chapterNum];
-        if (chapter && typeof chapter === "object") {
-          for (const verseNum in chapter) {
-            const verse = chapter[verseNum];
-            if (Array.isArray(verse)) {
-              spanCount += verse.length;
-            }
-          }
+      results.issues.push(`Word-map ${file} is invalid JSON: ${error.message}`);
+      continue;
+    }
+
+    let valid = Boolean(
+      data &&
+      typeof data === "object" &&
+      data.book?.id === bookId &&
+      data.chapters &&
+      typeof data.chapters === "object" &&
+      !Array.isArray(data.chapters),
+    );
+    let spanCount = 0;
+
+    if (valid) {
+      for (const chapter of Object.values(data.chapters)) {
+        if (!chapter || typeof chapter !== "object" || Array.isArray(chapter)) {
+          valid = false;
+          break;
         }
+        for (const spans of Object.values(chapter)) {
+          if (!Array.isArray(spans)) {
+            valid = false;
+            break;
+          }
+          for (const span of spans) {
+            if (
+              !Array.isArray(span) ||
+              span.length < 6 ||
+              !Number.isInteger(span[2]) ||
+              !Number.isInteger(span[3]) ||
+              span[2] < 0 ||
+              span[3] < span[2] ||
+              !["hebrew", "greek"].includes(span[5])
+            ) {
+              valid = false;
+              break;
+            }
+            spanCount += 1;
+          }
+          if (!valid) break;
+        }
+        if (!valid) break;
       }
-      if (spanCount === 0) {
-        results.issues.push(`Word-map ${book} has chapters but no span data`);
-      }
+    }
+
+    valid = valid && spanCount > 0;
+    if (valid) {
+      results.summary.word_maps_valid += 1;
+      validWordMapBooks.add(bookId);
+    } else {
+      results.summary.word_maps_invalid += 1;
+      results.issues.push(`Word-map ${file} has invalid metadata, chapter data, or spans`);
     }
   }
 }
 
-// Check graphs
 const graphRoot = join(dataRoot, "analysis", "graph", "books");
 if (existsSync(graphRoot)) {
   const graphBooks = readdirSync(graphRoot).filter((f) => f.endsWith(".json"));
-  results.summary.graphs_valid = graphBooks.length;
-
-  // Spot-check 3 random books
-  const sampled = graphBooks.slice(0, 3);
-  for (const book of sampled) {
-    const data = readJson(join(graphRoot, book));
-    if (!data || typeof data !== "object") {
+  const knownBooks = new Set(books);
+  for (const file of graphBooks) {
+    const bookId = file.slice(0, -5);
+    let data;
+    try {
+      data = readJson(join(graphRoot, file));
+    } catch (error) {
       results.summary.graphs_invalid += 1;
-      results.issues.push(`Graph ${book} is invalid JSON`);
-    } else if (!data.book) {
-      results.issues.push(`Graph ${book} missing book metadata`);
-    } else if (!Array.isArray(data.outbound_edges)) {
-      results.issues.push(`Graph ${book} missing outbound_edges array`);
-    } else if (data.outbound_edges.length === 0 && books.length > 0) {
-      // Check if it's expected (some books may have no crossrefs)
-      results.issues.push(`Graph ${book} has no edges (expected for some books)`);
+      results.issues.push(`Graph ${file} is invalid JSON: ${error.message}`);
+      continue;
+    }
+
+    const edgesValid =
+      Array.isArray(data?.outbound_edges) &&
+      data.outbound_edges.every(
+        (edge) =>
+          knownBooks.has(edge?.target_book_id) &&
+          Number.isInteger(edge?.count) &&
+          edge.count >= 0,
+      );
+    const edgeTotal = Array.isArray(data?.outbound_edges)
+      ? data.outbound_edges.reduce((total, edge) => total + (edge.count || 0), 0)
+      : -1;
+    const valid =
+      data?.book?.id === bookId &&
+      Number.isInteger(data?.verse_count) &&
+      data.verse_count > 0 &&
+      Number.isInteger(data?.edge_count) &&
+      data.edge_count >= 0 &&
+      edgesValid &&
+      edgeTotal === data.edge_count;
+
+    if (valid) {
+      results.summary.graphs_valid += 1;
+      validGraphBooks.add(bookId);
+    } else {
+      results.summary.graphs_invalid += 1;
+      results.issues.push(`Graph ${file} has invalid metadata, counts, or outbound edges`);
     }
   }
 }
+
+results.summary.books_with_data = books.filter(
+  (bookId) => validWordMapBooks.has(bookId) && validGraphBooks.has(bookId),
+).length;
 
 console.log(JSON.stringify(results, null, 2));
 

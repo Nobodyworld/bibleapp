@@ -1,8 +1,8 @@
 import { DEFAULT_ROUTE } from "./src/config.js";
 import { capabilityAvailable, resolveCapability } from "./src/capabilities.js";
-import { createChapterRenderer } from "./src/chapter-renderer.js";
+import { createChapterRenderer } from "./src/chapter-renderer.js?v=interaction-qa-20260628";
 import { loadManifest, loadReaderBookData, translationCanLoadBook } from "./src/data-service.js";
-import { createDetailViews } from "./src/detail-views.js";
+import { createDetailViews } from "./src/detail-views.js?v=interaction-qa-20260628";
 import {
   els,
   goBackDetail,
@@ -13,11 +13,12 @@ import {
   setStatus,
   sortedNumericKeys,
   trackReaderLocation,
-} from "./src/dom.js";
+} from "./src/dom.js?v=interaction-qa-20260628";
 import { createReferenceButton as makeReferenceButton, referenceKey, refDomId } from "./src/references.js";
 import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js";
 import { initStores, listenForUserDataChanges } from "./src/stores.js";
 import { studyUnavailableLabel } from "./src/study-empty-state.js";
+import { CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js";
 
 const state = {
   manifest: null,
@@ -147,19 +148,46 @@ function syncChapterButtons() {
 
 function syncToolButtons() {
   const tools = [
-    [els.showSearch, "search", "Search this book"],
-    [els.showOutline, "outlines", "Book outline"],
-    [els.showInterlinear, "interlinear", "Interlinear words"],
-    [els.showProverbs, "translation", "Translation workspace"],
+    [els.showSearch, "search", "Search this book", true],
+    [els.showOutline, "outlines", "Book outline", Boolean(state.outline)],
+    [
+      els.showInterlinear,
+      "interlinear",
+      "Interlinear words",
+      Object.values(state.interlinear?.chapters?.[state.chapter] || {}).some(
+        (tokens) => Array.isArray(tokens) && tokens.length > 0,
+      ),
+    ],
+    [
+      els.showProverbs,
+      "translation",
+      "Translation workspace",
+      Object.values(state.interlinear?.chapters?.[state.chapter] || {}).some(
+        (tokens) => Array.isArray(tokens) && tokens.length > 0,
+      ),
+    ],
   ];
-  tools.forEach(([button, key, fallbackTitle]) => {
+  tools.forEach(([button, key, fallbackTitle, dataAvailable]) => {
     if (!button) return;
-    button.disabled = false;
     const capabilityId = key === "translation" ? "interlinear" : key;
-    const unavailable = !canUseCapability(capabilityId);
-    button.title = unavailable ? studyUnavailableLabel(key) : fallbackTitle;
+    const control = resolveControlState({
+      capabilityAvailable: canUseCapability(capabilityId),
+      dataAvailable,
+    });
+    button.disabled = control.disabled;
+    if (control.state === CONTROL_STATES.capabilityUnavailable) {
+      button.title = studyUnavailableLabel(key);
+    } else if (control.state === CONTROL_STATES.dataUnavailable) {
+      button.title =
+        key === "outlines"
+          ? "Outline data is not available for this book."
+          : "Interlinear data is not available for this chapter.";
+    } else {
+      button.title = fallbackTitle;
+    }
     button.setAttribute("aria-label", button.title);
-    button.dataset.unavailable = unavailable ? "true" : "false";
+    button.dataset.unavailable = control.disabled ? "true" : "false";
+    button.dataset.controlState = control.state;
   });
 }
 
@@ -258,10 +286,13 @@ async function navigateToRoute(route, options = {}) {
 
   // Clear study context when navigating to a different location
   if (
+    next.translationId !== state.translationId ||
     next.bookId !== state.bookId ||
     next.chapter !== state.chapter
   ) {
     ctx.studyContext = {};
+    setDetailHoverLocked(false);
+    detailViews.clearStrongPin();
   }
 
   state.translationId = next.translationId;
@@ -291,7 +322,7 @@ async function goToLocation(bookId, chapter, verse) {
     translationId: state.translationId,
     bookId,
     chapter: String(chapter || 1),
-    verse: String(verse || 1),
+    verse: verse == null ? null : String(verse),
   });
 }
 
@@ -466,12 +497,13 @@ function bindEvents() {
       if (!query) return;
 
       // Parse verse reference like "Genesis 1:1" or "Gen 1:1" or "John 3:16"
-      const parts = query.trim().split(/[\s:]+/);
-      if (parts.length < 2) return;
+      const match = query.trim().match(/^(.+?)\s+(\d+)(?::(\d+))?$/);
+      if (!match) {
+        alert(`Could not parse reference: ${query}`);
+        return;
+      }
 
-      const bookName = parts.slice(0, -2).join(" ").trim();
-      const chapter = parts[parts.length - 2];
-      const verse = parts[parts.length - 1];
+      const [, bookName, chapter, verse = "1"] = match;
 
       if (!bookName || !chapter) return;
 
@@ -487,7 +519,7 @@ function bindEvents() {
         return;
       }
 
-      void goToLocation(matchingBook.id, chapter, verse || 1);
+      void goToLocation(matchingBook.id, chapter, verse);
     }
 
     // Escape to close detail pane (on mobile)
@@ -505,56 +537,66 @@ function bindEvents() {
 
   // Interlinear hover interaction - link Bible words to detail panel tokens
   function setupInterlinearInteraction() {
-    const readerPane = document.querySelector(".reader-pane");
     const detailPane = document.querySelector(".detail-pane");
     const detailContent = document.querySelector(".detail-content");
 
-    // Listen for hover over Strong's tokens in the reader pane
-    document.addEventListener(
-      "mouseover",
-      (event) => {
-        const strongToken = event.target.closest(".strong-token[data-tooltip]");
-        if (!strongToken || !detailPane) return;
+    const panelTokens = () => [...(detailPane?.querySelectorAll(".interlinear-token") || [])];
+    const readerTokens = () => [...(els.content?.querySelectorAll(".strong-token") || [])];
+    const clearPanelTokenHighlight = () => {
+      panelTokens().forEach((token) => token.classList.remove("interlinear-hover"));
+    };
+    const findExactMatch = (nodes, source) => {
+      const key = source?.dataset.interlinearKey;
+      if (key) {
+        const exact = nodes.find((node) => node.dataset.interlinearKey === key);
+        if (exact) return exact;
+      }
+      const strongCode = source?.dataset.strongCode;
+      if (!strongCode) return null;
+      const candidates = nodes.filter((node) => node.dataset.strongCode === strongCode);
+      return candidates.length === 1 ? candidates[0] : null;
+    };
 
-        // Check if interlinear view is currently visible
-        const interlinearTokens = detailPane.querySelectorAll(".interlinear-token");
-        if (!interlinearTokens.length) return; // Not on interlinear view
+    els.content?.addEventListener("mouseover", (event) => {
+      const readerToken = event.target.closest?.(".strong-token");
+      if (!readerToken || readerToken.contains(event.relatedTarget)) return;
+      const cards = panelTokens();
+      if (!cards.length) return;
+      const panelToken = findExactMatch(cards, readerToken);
+      if (!panelToken) return;
+      clearPanelTokenHighlight();
+      panelToken.classList.add("interlinear-hover");
+      highlightReaderContext({
+        verse: readerToken.dataset.verse,
+        wordElement: readerToken,
+      });
+    });
 
-        // Get the tooltip (Strong's code) from the token
-        const tooltip = strongToken.getAttribute("data-tooltip");
-        if (!tooltip) return;
+    els.content?.addEventListener("mouseout", (event) => {
+      const readerToken = event.target.closest?.(".strong-token");
+      if (!readerToken || readerToken.contains(event.relatedTarget)) return;
+      clearPanelTokenHighlight();
+      clearReaderHighlight();
+    });
 
-        // Find the corresponding token in the interlinear panel
-        const matchingToken = Array.from(interlinearTokens).find(
-          (token) => token.dataset.strongCode && tooltip.includes(token.dataset.strongCode)
-        );
+    detailContent?.addEventListener("mouseover", (event) => {
+      const panelToken = event.target.closest?.(".interlinear-token");
+      if (!panelToken || panelToken.contains(event.relatedTarget)) return;
+      const readerToken = findExactMatch(readerTokens(), panelToken);
+      clearPanelTokenHighlight();
+      panelToken.classList.add("interlinear-hover");
+      highlightReaderContext({
+        verse: panelToken.dataset.verse,
+        wordElement: readerToken,
+      });
+    });
 
-        if (!matchingToken) return;
-
-        // Remove previous highlight
-        interlinearTokens.forEach((t) => t.classList.remove("interlinear-hover"));
-
-        // Highlight the matching token
-        matchingToken.classList.add("interlinear-hover");
-
-        // Auto-scroll to show the token
-        matchingToken.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      },
-      true
-    );
-
-    // Remove highlight when leaving the strong token
-    document.addEventListener(
-      "mouseout",
-      (event) => {
-        const strongToken = event.target.closest(".strong-token[data-tooltip]");
-        if (!strongToken || !detailPane) return;
-
-        const interlinearTokens = detailPane.querySelectorAll(".interlinear-token");
-        interlinearTokens.forEach((t) => t.classList.remove("interlinear-hover"));
-      },
-      true
-    );
+    detailContent?.addEventListener("mouseout", (event) => {
+      const panelToken = event.target.closest?.(".interlinear-token");
+      if (!panelToken || panelToken.contains(event.relatedTarget)) return;
+      clearPanelTokenHighlight();
+      clearReaderHighlight();
+    });
   }
 
   setupInterlinearInteraction();

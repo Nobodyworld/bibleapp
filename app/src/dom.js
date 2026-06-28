@@ -1,3 +1,5 @@
+import { PANEL_EVENTS, PANEL_MODES, transitionPanelMode } from "./ui-contracts.js";
+
 export const els = {
   homeButton: document.querySelector("#homeButton"),
   status: document.querySelector("#statusText"),
@@ -48,7 +50,7 @@ const detailHistory = [];
 const detailForwardHistory = [];
 let currentDetailTransient = false;
 let transientBase = null;
-let detailHoverLocked = false;
+let detailPanelMode = PANEL_MODES.follow;
 
 // Reader location history for tracking book/chapter/verse navigation
 let readerLocationHistory = [];
@@ -56,10 +58,18 @@ let readerLocationForwardHistory = [];
 let lastTrackedLocation = null;
 
 function updateDetailHistoryButtons() {
-  if (els.detailBack) els.detailBack.disabled = detailHistory.length === 0;
-  if (els.detailForward) els.detailForward.disabled = detailForwardHistory.length === 0;
-  if (els.detailPane) els.detailPane.dataset.hoverLocked = detailHoverLocked ? "true" : "false";
-  document.body.classList.toggle("detail-locked", detailHoverLocked);
+  if (els.detailBack) {
+    els.detailBack.disabled = detailHistory.length === 0 && readerLocationHistory.length === 0;
+  }
+  if (els.detailForward) {
+    els.detailForward.disabled = detailForwardHistory.length === 0 && readerLocationForwardHistory.length === 0;
+  }
+  const locked = detailPanelMode === PANEL_MODES.locked;
+  if (els.detailPane) {
+    els.detailPane.dataset.hoverLocked = locked ? "true" : "false";
+    els.detailPane.dataset.panelMode = detailPanelMode;
+  }
+  document.body.classList.toggle("detail-locked", locked);
 }
 
 function isDefaultDetail() {
@@ -105,7 +115,7 @@ function revealDetailOnMobile(options = {}) {
   if (options.transient || options.history === "replace" || options.reveal === false || !els.detailPane) return;
   if (window.innerWidth > 960) return;
   window.requestAnimationFrame(() => {
-    els.detailPane.scrollIntoView({ block: "start", behavior: "auto" });
+    els.detailPane.classList.add("visible");
   });
 }
 
@@ -118,9 +128,9 @@ export function setDetail(title, node, options = {}) {
     detailForwardHistory.length = 0;
   }
   if (options.lock === true || (!options.transient && historyMode === "push")) {
-    detailHoverLocked = true;
+    detailPanelMode = transitionPanelMode(detailPanelMode, PANEL_EVENTS.activate);
   } else if (options.lock === false) {
-    detailHoverLocked = false;
+    detailPanelMode = transitionPanelMode(detailPanelMode, PANEL_EVENTS.disengage);
   }
   if (options.transient && !currentDetailTransient) {
     transientBase = canStoreCurrentDetail() ? snapshotDetail() : null;
@@ -137,11 +147,14 @@ export function setDetail(title, node, options = {}) {
 }
 
 export function isDetailHoverLocked() {
-  return detailHoverLocked;
+  return detailPanelMode === PANEL_MODES.locked;
 }
 
 export function setDetailHoverLocked(locked) {
-  detailHoverLocked = Boolean(locked);
+  detailPanelMode = transitionPanelMode(
+    detailPanelMode,
+    locked ? PANEL_EVENTS.activate : PANEL_EVENTS.disengage,
+  );
   updateDetailHistoryButtons();
 }
 
@@ -162,11 +175,11 @@ export function goBackDetail() {
 
   // Store current state in forward history
   if (canStoreCurrentDetail()) detailForwardHistory.push(snapshotDetail());
-  if (lastTrackedLocation) readerLocationForwardHistory.push(lastTrackedLocation);
+  if (previousLocation && lastTrackedLocation) readerLocationForwardHistory.push(lastTrackedLocation);
 
   transientBase = null;
   currentDetailTransient = false;
-  detailHoverLocked = true;
+  detailPanelMode = transitionPanelMode(detailPanelMode, PANEL_EVENTS.activate);
 
   // If we have a location to restore, return it via callback
   // The app.js will handle the actual navigation
@@ -174,7 +187,7 @@ export function goBackDetail() {
     if (previousDetail) {
       detailHistory.push(previousDetail);
     }
-    // Signal to app.js to restore location via goToLocation
+    lastTrackedLocation = { ...previousLocation };
     updateDetailHistoryButtons();
     return previousLocation;
   }
@@ -203,17 +216,18 @@ export function goForwardDetail() {
 
   // Store current state in back history
   if (canStoreCurrentDetail()) detailHistory.push(snapshotDetail());
-  if (lastTrackedLocation) readerLocationHistory.push(lastTrackedLocation);
+  if (nextLocation && lastTrackedLocation) readerLocationHistory.push(lastTrackedLocation);
 
   transientBase = null;
   currentDetailTransient = false;
-  detailHoverLocked = true;
+  detailPanelMode = transitionPanelMode(detailPanelMode, PANEL_EVENTS.activate);
 
   // If we have a location to restore, return it via callback
   if (nextLocation) {
     if (nextDetail) {
       detailForwardHistory.push(nextDetail);
     }
+    lastTrackedLocation = { ...nextLocation };
     updateDetailHistoryButtons();
     return nextLocation;
   }
@@ -239,10 +253,11 @@ export function resetDetail(title = "Details", message = defaultDetailText) {
   lastTrackedLocation = null;
   transientBase = null;
   currentDetailTransient = false;
-  detailHoverLocked = false;
+  detailPanelMode = transitionPanelMode(detailPanelMode, PANEL_EVENTS.reset);
   els.detailTitle.textContent = title;
   setDetailContext(null);
   els.detail.textContent = message;
+  els.detailPane?.classList.remove("visible");
   updateDetailHistoryButtons();
 }
 
@@ -252,31 +267,35 @@ export function trackReaderLocation(location) {
   const locationKey = `${location.bookId}:${location.chapter}:${location.verse || ''}`;
   const lastKey = lastTrackedLocation ? `${lastTrackedLocation.bookId}:${lastTrackedLocation.chapter}:${lastTrackedLocation.verse || ''}` : null;
 
-  // Only track if location has actually changed
   if (locationKey !== lastKey && lastTrackedLocation) {
+    readerLocationHistory.push({ ...lastTrackedLocation });
+    readerLocationForwardHistory.length = 0;
   }
+  lastTrackedLocation = { ...location };
+  updateDetailHistoryButtons();
+}
 
-  export function textNode(text) {
-    return document.createTextNode(text);
-  }
+export function textNode(text) {
+  return document.createTextNode(text);
+}
 
-  export function createDetailList(items, renderItem) {
-    const list = document.createElement("ul");
-    list.className = "detail-list";
-    items.forEach((item) => {
-      const li = document.createElement("li");
-      renderItem(li, item);
-      list.append(li);
-    });
-    return list;
-  }
+export function createDetailList(items, renderItem) {
+  const list = document.createElement("ul");
+  list.className = "detail-list";
+  items.forEach((item) => {
+    const li = document.createElement("li");
+    renderItem(li, item);
+    list.append(li);
+  });
+  return list;
+}
 
-  export function addToolButton(parent, label, title, handler) {
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "mini-button";
-    button.textContent = label;
-    button.title = title;
-    button.addEventListener("click", handler);
-    parent.append(button);
-  }
+export function addToolButton(parent, label, title, handler) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "mini-button";
+  button.textContent = label;
+  button.title = title;
+  button.addEventListener("click", handler);
+  parent.append(button);
+}

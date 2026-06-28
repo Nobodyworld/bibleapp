@@ -1,12 +1,19 @@
-import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js";
+import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=interaction-qa-20260628";
 import { resolvePassageText } from "./data-service.js";
 import { referenceKey, refDomId, parseLocationFromHref } from "./references.js";
 import { addRedLetterRange, ensureStores, getRedLetterRanges } from "./stores.js";
 import { mapStrongChapterRanges } from "./strongs.js";
 import { createStudyEmptyState, studyUnavailableLabel } from "./study-empty-state.js";
+import { interlinearTokenIdentity } from "./ui-contracts.js";
 
 export function createChapterRenderer(ctx) {
   let selectionMenu = null;
+  let referenceHoverTooltipLayer = null;
+  let activeReferenceHoverTarget = null;
+
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
 
   function eventKey(event, index) {
     return `${event.type}:${event.offset}:${event.marker || event.text || index}`;
@@ -112,6 +119,83 @@ export function createChapterRenderer(ctx) {
     return selectionMenu;
   }
 
+  function ensureReferenceHoverTooltipLayer() {
+    if (referenceHoverTooltipLayer) return referenceHoverTooltipLayer;
+    referenceHoverTooltipLayer = document.createElement("div");
+    referenceHoverTooltipLayer.className = "reference-hover-tooltip-layer";
+    referenceHoverTooltipLayer.setAttribute("role", "tooltip");
+    referenceHoverTooltipLayer.hidden = true;
+    document.body.append(referenceHoverTooltipLayer);
+    return referenceHoverTooltipLayer;
+  }
+
+  function positionReferenceHoverTooltip(target) {
+    const layer = ensureReferenceHoverTooltipLayer();
+    if (!target || layer.hidden) return;
+    const targetRect = target.getBoundingClientRect();
+    const layerRect = layer.getBoundingClientRect();
+    const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+    const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const margin = 10;
+    const offset = 8;
+    const centerX = targetRect.left + targetRect.width / 2;
+    const preferredTop = targetRect.top - layerRect.height - offset;
+    const fallbackTop = targetRect.bottom + offset;
+    const top =
+      preferredTop >= margin
+        ? preferredTop
+        : Math.min(fallbackTop, viewportHeight - layerRect.height - margin);
+    const left = clamp(centerX - layerRect.width / 2, margin, viewportWidth - layerRect.width - margin);
+    layer.style.left = `${left}px`;
+    layer.style.top = `${clamp(top, margin, viewportHeight - layerRect.height - margin)}px`;
+  }
+
+  function hideReferenceHoverTooltip(target = null) {
+    if (target && activeReferenceHoverTarget !== target) return;
+    const layer = ensureReferenceHoverTooltipLayer();
+    activeReferenceHoverTarget = null;
+    layer.hidden = true;
+    layer.textContent = "";
+  }
+
+  function refreshReferenceHoverTooltip(target) {
+    if (!target || activeReferenceHoverTarget !== target) return;
+    const text = target.dataset.tooltip || "";
+    const layer = ensureReferenceHoverTooltipLayer();
+    layer.textContent = text;
+    layer.hidden = !text;
+    if (!layer.hidden) positionReferenceHoverTooltip(target);
+  }
+
+  function showReferenceHoverTooltip(target) {
+    const text = target?.dataset?.tooltip || "";
+    if (!text) {
+      hideReferenceHoverTooltip(target);
+      return;
+    }
+    const layer = ensureReferenceHoverTooltipLayer();
+    activeReferenceHoverTarget = target;
+    layer.textContent = text;
+    layer.hidden = false;
+    layer.style.left = "0px";
+    layer.style.top = "0px";
+    positionReferenceHoverTooltip(target);
+  }
+
+  window.addEventListener("scroll", () => {
+    if (!activeReferenceHoverTarget) return;
+    if (!activeReferenceHoverTarget.isConnected) {
+      hideReferenceHoverTooltip();
+      return;
+    }
+    positionReferenceHoverTooltip(activeReferenceHoverTarget);
+  }, true);
+
+  window.addEventListener("resize", () => {
+    if (!activeReferenceHoverTarget) return;
+    positionReferenceHoverTooltip(activeReferenceHoverTarget);
+  });
+
   function placeSelectionMenu(menu, selection) {
     const range = selection?.rangeCount ? selection.getRangeAt(0) : null;
     const rect = range?.getBoundingClientRect();
@@ -125,6 +209,19 @@ export function createChapterRenderer(ctx) {
     const top = Math.max(10, rect.top - menuRect.height - 10);
     menu.style.left = `${left}px`;
     menu.style.top = `${top}px`;
+  }
+
+  function renderReferenceLabel(button, label) {
+    const text = String(label || "");
+    const match = text.match(/^(.*?\b\d+:)(\d+(?:-\d+)?)$/);
+    if (!match) {
+      button.textContent = text;
+      return;
+    }
+    const prefix = document.createTextNode(match[1]);
+    const superscript = document.createElement("sup");
+    superscript.textContent = match[2];
+    button.replaceChildren(prefix, superscript);
   }
 
   function showSelectionMenuForVerse(reference, verse, verseText, body, key) {
@@ -169,16 +266,19 @@ export function createChapterRenderer(ctx) {
   function hydrateReferencePreview(button, location) {
     if (!location || button.dataset.previewLoaded === "true") return;
     button.dataset.tooltip = "Loading passage...";
+    refreshReferenceHoverTooltip(button);
     resolvePassageText(ctx.state.translationId, location)
       .then((passage) => {
         if (!button.isConnected) return;
         button.dataset.previewLoaded = "true";
         button.dataset.tooltip = passage?.text || "Referenced passage could not be loaded.";
+        refreshReferenceHoverTooltip(button);
       })
       .catch(() => {
         if (!button.isConnected) return;
         button.dataset.previewLoaded = "true";
         button.dataset.tooltip = "Referenced passage could not be loaded.";
+        refreshReferenceHoverTooltip(button);
       });
   }
 
@@ -251,6 +351,14 @@ export function createChapterRenderer(ctx) {
       token.textContent = text;
       token.title = `${tokenRange.token.strong_code || ""} ${tokenRange.token.original || ""}`.trim();
       token.dataset.tooltip = strongTooltip(tokenRange.token);
+      token.dataset.tokenIndex = String(tokenRange.token.token_index ?? "");
+      token.dataset.strongCode = tokenRange.token.strong_code || "";
+      token.dataset.verse = String(tokenRange.verseContext?.verse || "");
+      token.dataset.interlinearKey = interlinearTokenIdentity({
+        verse: token.dataset.verse,
+        tokenIndex: token.dataset.tokenIndex,
+        strongCode: token.dataset.strongCode,
+      });
       token.__bibleAppStrongToken = tokenRange.token;
       token.__bibleAppVerseContext = tokenRange.verseContext;
       token.setAttribute("aria-label", `Open Strong's details for ${text.trim()}: ${token.dataset.tooltip}`);
@@ -285,7 +393,7 @@ export function createChapterRenderer(ctx) {
   function renderPresentationBlock(block, headingNotes, reference) {
     const node = document.createElement("div");
     node.className = `presentation-block ${block.kind || ""}`;
-    const label = document.createElement("div");
+    const label = document.createElement("span");
     label.textContent = block.text;
     node.append(label);
 
@@ -312,17 +420,24 @@ export function createChapterRenderer(ctx) {
         const button = document.createElement("button");
         button.type = "button";
         button.className = "mini-button reference-hover";
-        button.textContent = ref.label;
+        renderReferenceLabel(button, ref.label);
         const location = locationWithLabelRange(parseLocationFromHref(ref.href, ctx.findBook), ref.label);
         if (location) {
           button.dataset.tooltip = "Hover preview";
-          button.addEventListener("mouseenter", () => hydrateReferencePreview(button, location));
-          button.addEventListener("mouseover", () => hydrateReferencePreview(button, location));
-          button.addEventListener("pointerenter", () => hydrateReferencePreview(button, location));
-          button.addEventListener("focus", () => hydrateReferencePreview(button, location));
+          const showPreview = () => {
+            hydrateReferencePreview(button, location);
+            showReferenceHoverTooltip(button);
+          };
+          button.addEventListener("mouseenter", showPreview);
+          button.addEventListener("mouseover", showPreview);
+          button.addEventListener("pointerenter", showPreview);
+          button.addEventListener("focus", showPreview);
+          button.addEventListener("mouseleave", () => hideReferenceHoverTooltip(button));
+          button.addEventListener("blur", () => hideReferenceHoverTooltip(button));
           window.setTimeout(() => hydrateReferencePreview(button, location), 0);
         }
         button.addEventListener("click", () => {
+          hideReferenceHoverTooltip(button);
           if (location) {
             void ctx.goToLocation(location.book_id, location.chapter, location.verse_start);
             return;

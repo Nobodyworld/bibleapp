@@ -1,4 +1,6 @@
 import { studyUnavailableLabel } from "../study-empty-state.js";
+import { CONTROL_STATES, resolveControlState } from "../ui-contracts.js";
+import { resolveInterlinearVerseTokens } from "../strongs.js?v=interaction-qa-20260628";
 
 function getVerseText(ctx, verse) {
   return ctx.state.verseBook?.chapters?.[ctx.state.chapter]?.[verse] || "";
@@ -11,7 +13,15 @@ function getCrossRecord(ctx, verse) {
 
 function hasInterlinear(ctx, verse) {
   if (!ctx.canUseCapability?.("interlinear")) return false;
-  return Boolean(ctx.state.interlinear?.chapters?.[ctx.state.chapter]?.[verse]?.length);
+  return Boolean(
+    resolveInterlinearVerseTokens({
+      rawInterlinearByVerse: ctx.state.interlinear?.chapters?.[ctx.state.chapter],
+      rawStrongByVerse: ctx.state.strongs?.chapters?.[ctx.state.chapter],
+      chapterVerses: ctx.state.verseBook?.chapters?.[ctx.state.chapter],
+      targetVerse: verse,
+      reference: { bookId: ctx.state.bookId, chapter: ctx.state.chapter },
+    }).length,
+  );
 }
 
 export function createVerseContextTabs(ctx, reference, verse, active, strongsContext = null) {
@@ -46,13 +56,17 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
     {
       id: "par",
       label: "Par",
+      capabilityAvailable: true,
+      dataAvailable: Boolean(getVerseText(ctx, verse)),
       run: () => void ctx.detailViews.showParallelVerse(reference, verse, getVerseText(ctx, verse), { history: "replace", lock: true, verse }),
     },
     {
       id: "refs",
       label: "Refs",
-      disabled: !getCrossRecord(ctx, verse),
+      capabilityAvailable: ctx.canUseCapability?.("crossrefs") === true,
+      dataAvailable: Boolean(getCrossRecord(ctx, verse)),
       unavailableKey: "crossrefs",
+      dataUnavailableMessage: `Cross-reference data is not available for ${reference}.`,
       run: () =>
         ctx.detailViews.showCrossrefs(reference, getCrossRecord(ctx, verse), {
           history: "replace",
@@ -63,39 +77,57 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
     {
       id: "commentary",
       label: "Cmt",
-      disabled: !ctx.canUseCapability?.("commentary"),
+      capabilityAvailable: ctx.canUseCapability?.("commentary") === true,
+      dataAvailable: true,
       unavailableKey: "commentary",
       run: () => void ctx.detailViews.showCommentary(reference, verse, { history: "replace", lock: true }),
     },
     {
       id: "interlinear",
       label: "Int",
-      disabled: !hasInterlinear(ctx, verse),
+      capabilityAvailable: ctx.canUseCapability?.("interlinear") === true,
+      dataAvailable: hasInterlinear(ctx, verse),
       unavailableKey: "interlinear",
+      dataUnavailableMessage: `Interlinear data is not available for ${reference}.`,
       run: () => void ctx.detailViews.showInterlinearVerse(reference, verse, { history: "replace", lock: true }),
     },
     {
       id: "tags",
       label: "Tags",
+      capabilityAvailable: true,
+      dataAvailable: Boolean(getVerseText(ctx, verse)),
       run: () => ctx.detailViews.showTagEditor(reference, verse, getVerseText(ctx, verse), { history: "replace", lock: true }),
     },
   );
 
   actions.forEach((action) => {
+    const control =
+      typeof action.disabled === "boolean"
+        ? {
+            state: action.disabled ? CONTROL_STATES.dataUnavailable : CONTROL_STATES.enabled,
+            disabled: action.disabled,
+          }
+        : resolveControlState({
+            capabilityAvailable: action.capabilityAvailable !== false,
+            dataAvailable: action.dataAvailable !== false,
+          });
     const button = document.createElement("button");
     button.type = "button";
     button.className = action.id === active ? "verse-context-tab active" : "verse-context-tab";
     button.textContent = action.label;
-    button.disabled = Boolean(action.disabled);
+    button.disabled = control.disabled;
+    button.dataset.controlState = control.state;
+    button.dataset.unavailable = control.disabled ? "true" : "false";
 
-    // Improved ARIA labels for unavailable features
-    if (action.disabled && action.unavailableKey) {
+    if (control.state === CONTROL_STATES.capabilityUnavailable && action.unavailableKey) {
       const unavailableMessage = studyUnavailableLabel(action.unavailableKey);
       button.title = unavailableMessage;
       button.setAttribute("aria-label", `${action.label}: ${unavailableMessage}`);
       button.setAttribute("aria-disabled", "true");
-    } else if (action.disabled) {
-      button.setAttribute("aria-label", `${action.label}: Data not available for this verse`);
+    } else if (control.state === CONTROL_STATES.dataUnavailable) {
+      const unavailableMessage = action.dataUnavailableMessage || `Data is not available for ${reference}.`;
+      button.title = unavailableMessage;
+      button.setAttribute("aria-label", `${action.label}: ${unavailableMessage}`);
       button.setAttribute("aria-disabled", "true");
     } else {
       button.setAttribute("aria-label", `${action.label}: Study tools for ${reference}`);

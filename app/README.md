@@ -13,7 +13,6 @@ Static local Bible reader with license/provenance records kept in-repo.
 ## What Was Removed
 
 - Backup archives and historical extraction folders are outside this app and ignored from publishing.
-- Some generated and auxiliary datasets remain excluded: analysis graphs, performance reports, recovery reports, and source-provenance dumps.
 - Stale local QA reports, generated caches, bytecode, runtime logs, and old extraction docs were removed or ignored.
 
 ## Data Licensing
@@ -35,33 +34,33 @@ Reader-adjacent study tools remain part of the product model, with restoration t
 
 ## Run Locally
 
-From this folder:
+From the repository root:
 
 ```powershell
-python -m http.server 8765 --bind 127.0.0.1
+npm run serve
 ```
 
 Open:
 
 ```text
-http://127.0.0.1:8765/
+http://127.0.0.1:8000/
 ```
 
 Routes are hash-based:
 
 ```text
-http://127.0.0.1:8765/#/read/bsb/psalms/23
+http://127.0.0.1:8000/#/read/bsb/psalms/23
 ```
 
-## Publish Audit
+## Verification
 
 From the repository root:
 
 ```powershell
-node .\app\tools\publish-audit.mjs
+npm run verify
 ```
 
-This verifies the retained translation directories, package metadata, license matrix rows, absence of removed study-data directories, and absence of legacy source naming in publishable app files.
+This runs static integrity, accessibility, documentation, desktop browser, mobile browser, and structural package checks. Browser tests use an isolated local server and temporary Edge profile.
 
 ## Generate Analysis Packs
 

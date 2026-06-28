@@ -25,6 +25,26 @@ export function normalizeInterlinearToken(raw) {
   };
 }
 
+const INTERLINEAR_ENGLISH_OVERRIDES = new Map([
+  ["john:4:1:10", "because"],
+]);
+
+export function normalizeInterlinearVerseTokens(rawTokens, reference = {}) {
+  const referencePrefix = [
+    reference.bookId,
+    reference.chapter,
+    reference.verse,
+  ]
+    .map((value) => String(value || "").toLowerCase())
+    .join(":");
+
+  return (rawTokens || []).map((raw) => {
+    const token = normalizeInterlinearToken(raw);
+    const english = INTERLINEAR_ENGLISH_OVERRIDES.get(`${referencePrefix}:${token.token_index}`);
+    return english ? { ...token, english } : token;
+  });
+}
+
 export function mapStrongRanges(verseText, rawTokens) {
   if (!rawTokens || !rawTokens.length) return [];
   const ranges = [];
@@ -82,4 +102,60 @@ export function mapStrongChapterRanges(chapterVerses, rawStrongByVerse) {
 
   Object.values(result).forEach((ranges) => ranges.sort((a, b) => a.start - b.start || a.end - b.end));
   return result;
+}
+
+export function resolveInterlinearVerseTokens({
+  rawInterlinearByVerse,
+  rawStrongByVerse,
+  chapterVerses,
+  targetVerse,
+  reference = {},
+} = {}) {
+  const target = String(targetVerse || "");
+  const anchors = Object.keys(rawInterlinearByVerse || {})
+    .filter((verse) => rawInterlinearByVerse[verse]?.length)
+    .sort((a, b) => Number(a) - Number(b));
+  const anchorIndex = anchors.findLastIndex((verse) => Number(verse) <= Number(target));
+  if (anchorIndex < 0) return [];
+
+  const anchor = anchors[anchorIndex];
+  const nextAnchor = Number(anchors[anchorIndex + 1] || Number.MAX_SAFE_INTEGER);
+  if (Number(target) >= nextAnchor) return [];
+
+  const tokens = normalizeInterlinearVerseTokens(rawInterlinearByVerse[anchor], {
+    ...reference,
+    verse: anchor,
+  });
+  if (!tokens.length) return [];
+
+  const mappedRanges = mapStrongChapterRanges(chapterVerses || {}, rawStrongByVerse || {});
+  const sectionEnd = nextAnchor;
+  const mappedVerseByTokenIndex = new Map();
+  Object.entries(mappedRanges).forEach(([verse, ranges]) => {
+    if (Number(verse) < Number(anchor) || Number(verse) >= sectionEnd) return;
+    ranges.forEach((range) => {
+      mappedVerseByTokenIndex.set(String(range.token?.token_index ?? ""), String(verse));
+    });
+  });
+
+  const mappedPositions = tokens
+    .map((token, index) => ({
+      index,
+      verse: mappedVerseByTokenIndex.get(String(token.token_index ?? "")),
+    }))
+    .filter((item) => item.verse);
+
+  if (!mappedPositions.length) {
+    return target === String(anchor) ? tokens.map((token) => ({ ...token, verse: target })) : [];
+  }
+
+  return tokens
+    .map((token, index) => {
+      const exactVerse = mappedVerseByTokenIndex.get(String(token.token_index ?? ""));
+      if (exactVerse) return { ...token, verse: exactVerse };
+      const previous = [...mappedPositions].reverse().find((item) => item.index < index);
+      const next = mappedPositions.find((item) => item.index > index);
+      return { ...token, verse: previous?.verse || next?.verse || String(anchor) };
+    })
+    .filter((token) => token.verse === target);
 }

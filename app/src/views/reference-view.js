@@ -1,6 +1,6 @@
 import { fetchVerseBook, resolvePassageText } from "../data-service.js";
-import { createDetailList, setDetail, setDetailMessage } from "../dom.js";
-import { createVerseContextTabs } from "./verse-context-tabs.js";
+import { createDetailList, setDetail, setDetailMessage } from "../dom.js?v=interaction-qa-20260628";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=interaction-qa-20260628";
 
 export function createReferenceViews(ctx) {
   function appendPassageText(container, text) {

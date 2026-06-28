@@ -10,6 +10,11 @@
 /app/tmp-http-server.err.log
 /app/tmp-http-server.log
 /app/scripts/
+!/app/scripts/
+/app/scripts/*
+!/app/scripts/accessibility-test.mjs
+!/app/scripts/doc-consistency-test.mjs
+!/app/scripts/interaction-test.mjs
 /app/scripts/__pycache__/
 *.pyc
 

@@ -10,21 +10,21 @@ The active app is in `app/`. The `backup/` directory is local reference/archive 
 - Retained Bible text editions under `app/data/verses/`.
 - Machine-readable data licensing in `app/data/license-matrix.json`.
 - Human-readable licensing notes in `app/LICENSES.md`.
-- Study restoration planning docs in `app/docs/`.
+- Retained cross-reference, commentary, outline, interlinear, lexicon, search, word-map, and graph datasets.
+- Current engineering and UI contracts in `app/docs/`.
 
-The current package is license-scoped. Study features remain part of the product direction, but study datasets are restored only after source-specific licensing and redistribution terms are recorded.
+The package retains licensing and provenance notes as records. Runtime availability does not imply legal approval for public redistribution or commercial sale.
 
 ## Run
 
 ```powershell
-cd app
-python -m http.server 8765 --bind 127.0.0.1
+npm run serve
 ```
 
 Open:
 
 ```text
-http://127.0.0.1:8765/
+http://127.0.0.1:8000/
 ```
 
 ## Audit
@@ -32,5 +32,7 @@ http://127.0.0.1:8765/
 From the repository root:
 
 ```powershell
-node .\app\tools\publish-audit.mjs
+npm run verify
 ```
+
+This runs syntax/data validation, accessibility and documentation checks, desktop and mobile browser regression suites, and the structural publish audit.

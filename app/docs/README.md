@@ -8,5 +8,6 @@ These docs are planning references for the current license-scoped publish packag
 - `STUDY_DATA_LICENSE_CANDIDATES.md`: source-review questions for restoring study datasets.
 - `TEST_MODE_SPLIT_RECOMMENDATION.md`: publish-package and full-study validation modes.
 - `CURRENT_WORK.md`: current publish/readiness status and remaining work.
+- `UI_FUNCTIONALITY_SCHEMA.md`: executable availability, locking, and interlinear synchronization contract.
 
 Official publish/license policy remains in `../LICENSES.md` and `../data/license-matrix.json`.

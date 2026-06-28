@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Bible App Reader</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231d4ed8'/%3E%3Ctext x='8' y='12' font-size='10' font-family='sans-serif' fill='white' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="./styles.css?v=reader-history" />
+    <link rel="stylesheet" href="./styles.css?v=qa-fixes-20260628-3" />
   </head>
   <body>
     <header class="app-header">
@@ -13,7 +13,7 @@
         <span class="brand-mark">BA</span>
         <div>
           <h1>Bible App Reader</h1>
-          <p id="statusText">Loading data...</p>
+          <p id="statusText" role="status" aria-live="polite">Loading data...</p>
         </div>
       </button>
       <nav class="reader-controls" aria-label="Reader controls">
@@ -119,6 +119,6 @@
       </aside>
     </main>
 
-    <script type="module" src="./app.js?v=clean-app-v1-uipolish1"></script>
+    <script type="module" src="./app.js?v=interaction-qa-20260628"></script>
   </body>
 </html>

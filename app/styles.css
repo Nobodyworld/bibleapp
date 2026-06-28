@@ -154,9 +154,14 @@
   box-sizing: border-box;
 }
 
+html {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: hidden;
   background: var(--bg);
   color: var(--text);
   font-family:
@@ -386,6 +391,14 @@ button:disabled {
   border: 1px solid var(--line);
   border-radius: 8px;
   box-shadow: var(--shadow);
+}
+
+.detail-pane {
+  position: sticky;
+  top: 16px;
+  align-self: start;
+  max-height: calc(100vh - 32px);
+  overflow: auto;
 }
 
 .reader-pane {
@@ -688,6 +701,18 @@ button:disabled {
   text-transform: none;
 }
 
+.presentation-block .cross-links .reference-hover {
+  font-size: 12px;
+}
+
+.presentation-block .cross-links .reference-hover:hover,
+.presentation-block .cross-links .reference-hover:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+  outline: none;
+  box-shadow: none;
+}
+
 .verse-row {
   position: relative;
   display: grid;
@@ -980,8 +1005,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 }
 
 .fn-marker[data-tooltip]::after,
-.strong-token[data-tooltip]::after,
-.reference-hover[data-tooltip]::after {
+.strong-token[data-tooltip]::after {
   display: none;
   position: absolute;
   z-index: 30;
@@ -1017,20 +1041,35 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   position: relative;
 }
 
-.reference-hover[data-tooltip]::after {
-  max-width: min(360px, calc(100vw - 28px));
-  white-space: normal;
+.reference-hover sup {
+  font-size: 0.72em;
+  line-height: 0;
+  vertical-align: super;
 }
 
 .fn-marker[data-tooltip]:hover::after,
 .fn-marker[data-tooltip]:focus-visible::after,
 .strong-token[data-tooltip]:hover::after,
-.strong-token[data-tooltip]:focus-visible::after,
-.reference-hover[data-tooltip]:hover::after,
-.reference-hover[data-tooltip]:focus-visible::after {
+.strong-token[data-tooltip]:focus-visible::after {
   display: block;
   opacity: 1;
   transform: translate(-50%, 0);
+}
+
+.reference-hover-tooltip-layer {
+  position: fixed;
+  z-index: 30;
+  max-width: min(360px, calc(100vw - 20px));
+  padding: 7px 9px;
+  border-radius: 5px;
+  background: rgba(24, 28, 33, 0.96);
+  color: #fff;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.35;
+  pointer-events: none;
+  white-space: normal;
 }
 
 .strong-token[data-tooltip][data-suppress-tooltip]::after,
@@ -1081,7 +1120,8 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   position: sticky;
   top: 86px;
   max-height: calc(100vh - 102px);
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
   transition: transform 300ms ease;
 }
 
@@ -1117,10 +1157,12 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 
   .interlinear-token > .token-translit {
     grid-column: 1;
+    grid-row: auto;
   }
 
   .interlinear-token > .token-meta {
     grid-column: 1;
+    grid-row: auto;
   }
 
   .interlinear-token > .token-english {
@@ -2065,6 +2107,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 .interlinear-token {
   display: grid;
   grid-template-columns: 1fr 1.2fr;
+  grid-template-rows: auto auto auto;
   gap: 12px;
   min-width: 0;
   padding: 12px;
@@ -2080,7 +2123,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 
 .interlinear-token > .token-original {
   grid-column: 1;
-  grid-row: 1 / 4;
+  grid-row: 1;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -2093,14 +2136,14 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 
 .interlinear-token > .token-translit {
   grid-column: 1;
-  grid-row: auto;
+  grid-row: 2;
   border: none;
   background: transparent;
 }
 
 .interlinear-token > .token-meta {
   grid-column: 1;
-  grid-row: auto;
+  grid-row: 3;
   border: none;
   background: transparent;
 }
@@ -2112,7 +2155,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 
 .interlinear-token > .token-gloss {
   grid-column: 2;
-  grid-row: 2 / -1;
+  grid-row: 2 / span 2;
 }
 
 .interlinear-token.interlinear-hover {
@@ -2125,10 +2168,10 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   min-width: 0;
   color: var(--text);
   font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(20px, 5vw, 28px);
+  font-size: clamp(18px, 1.8vw, 22px);
   line-height: 1.2;
   overflow-wrap: anywhere;
-  word-break: break-word;
+  word-break: normal;
   font-weight: 700;
 }
 
