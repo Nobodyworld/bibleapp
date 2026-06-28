@@ -1,8 +1,8 @@
 import { fetchVerseBook, fetchWordMapBook, loadLanguageMetadata, loadOriginalSourceTexts } from "../data-service.js";
-import { createDetailList, setDetail, setDetailMessage, textNode } from "../dom.js?v=interaction-qa-20260628";
+import { createDetailList, els, setDetail, setDetailMessage, textNode } from "../dom.js?v=interaction-qa-20260628";
 import { setLanguageTextWithTooltips } from "../language-tooltips.js";
 import { referenceKey } from "../references.js";
-import { analyzeOriginalWord } from "../language.js";
+import { analyzeOriginalWord, summarizeHebrewGematriaTokens, wordHasLanguageScript } from "../language.js";
 import { resolveInterlinearVerseTokens } from "../strongs.js?v=interaction-qa-20260628";
 import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js";
 import { createVerseContextTabs } from "./verse-context-tabs.js?v=interaction-qa-20260628";
@@ -165,18 +165,35 @@ function createVerseGematriaSummary(total, tokens) {
 }
 
 async function calculateHebrewVerseGematria(tokens) {
-  const hebrewTokens = tokens.filter((token) => token.language === "hebrew" && token.original);
-  if (!hebrewTokens.length) return null;
-  const metadata = await loadLanguageMetadata("hebrew");
-  if (!metadata) return null;
-  const total = hebrewTokens.reduce((sum, token) => {
-    const analysis = analyzeOriginalWord(token.original, "hebrew", metadata);
-    return sum + Number(analysis.gematria_total || 0);
-  }, 0);
-  return { total, tokens: hebrewTokens };
+  const hasHebrewScript = tokens.some(
+    (token) =>
+      token.language === "hebrew" &&
+      token.original &&
+      wordHasLanguageScript(token.original, "hebrew"),
+  );
+  if (!hasHebrewScript) return null;
+  return summarizeHebrewGematriaTokens(tokens, await loadLanguageMetadata("hebrew"));
 }
 
 export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown, showStrong }) {
+  let stopInterlinearLazyLoad = () => {};
+
+  function interlinearTokensForVerse(verse) {
+    return resolveInterlinearVerseTokens({
+      rawInterlinearByVerse: ctx.state.interlinear?.chapters?.[ctx.state.chapter],
+      rawStrongByVerse: ctx.state.strongs?.chapters?.[ctx.state.chapter],
+      chapterVerses: ctx.state.verseBook?.chapters?.[ctx.state.chapter],
+      targetVerse: verse,
+      reference: { bookId: ctx.state.bookId, chapter: ctx.state.chapter },
+    });
+  }
+
+  function interlinearVerses() {
+    return Object.keys(ctx.state.verseBook?.chapters?.[ctx.state.chapter] || {})
+      .filter((verse) => interlinearTokensForVerse(verse).length)
+      .sort((a, b) => Number(a) - Number(b));
+  }
+
   function createInterlinearTokenCard(token, options = {}) {
     const card = document.createElement("div");
     card.className = "interlinear-token";
@@ -210,6 +227,7 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
       strong.addEventListener("click", (event) => {
         if (!ctx.canUseCapability?.("strongs-overlay")) return;
         event.stopPropagation();
+        stopInterlinearLazyLoad();
         const tokenVerseContext = {
           ...options.verseContext,
           verse: card.dataset.verse,
@@ -252,43 +270,20 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     return card;
   }
 
-  async function showInterlinearVerse(reference, verse, options = {}) {
-    if (!ctx.canUseCapability?.("interlinear")) {
-      setDetail(
-        "Interlinear",
-        createStudyEmptyState(ctx, "interlinear", {
-          reference,
-          capabilityIds: ["interlinear"],
-        }),
-        options,
-      );
-      return;
-    }
-    const key = referenceKey(ctx.state.bookId, ctx.state.chapter, verse);
-    const tokens = resolveInterlinearVerseTokens({
-      rawInterlinearByVerse: ctx.state.interlinear?.chapters?.[ctx.state.chapter],
-      rawStrongByVerse: ctx.state.strongs?.chapters?.[ctx.state.chapter],
-      chapterVerses: ctx.state.verseBook?.chapters?.[ctx.state.chapter],
-      targetVerse: verse,
-      reference: { bookId: ctx.state.bookId, chapter: ctx.state.chapter },
-    });
-    if (!tokens.length) {
-      const empty = document.createElement("div");
-      const heading = document.createElement("h3");
-      heading.textContent = reference;
-      const message = document.createElement("p");
-      message.textContent = `No interlinear data found for ${reference}.`;
-      empty.append(heading, createVerseContextTabs(ctx, reference, verse, "interlinear", ctx.studyContext?.strong), message);
-      setDetail("Interlinear", empty, options);
-      return;
-    }
+  async function createInterlinearVerseSection(verse) {
+    const reference = ctx.currentReference(verse);
+    const tokens = interlinearTokensForVerse(verse);
+    if (!tokens.length) return null;
 
-    const wrap = document.createElement("div");
+    const section = document.createElement("section");
+    section.className = "interlinear-verse-section";
+    section.dataset.verse = String(verse);
     const heading = document.createElement("h3");
     heading.textContent = reference;
+    const key = referenceKey(ctx.state.bookId, ctx.state.chapter, verse);
     const verseContext = { reference, verse };
     const wordInfoLookup = createOriginalWordInfoLookup(tokens);
-    wrap.append(heading, createVerseContextTabs(ctx, reference, verse, "interlinear", ctx.studyContext?.strong));
+    section.append(heading);
 
     const sourceTexts = await loadOriginalSourceTexts(ctx.state, tokens[0].language, verse);
     if (sourceTexts.length) {
@@ -305,7 +300,7 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
         item.append(label, text);
         sourceList.append(item);
       });
-      wrap.append(sourceList);
+      section.append(sourceList);
     }
 
     const tokenList = document.createElement("div");
@@ -319,15 +314,96 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
         }),
       );
     });
-    wrap.append(tokenList);
+    section.append(tokenList);
     const verseGematria = await calculateHebrewVerseGematria(tokens);
-    if (verseGematria) {
-      wrap.append(createVerseGematriaSummary(verseGematria.total, verseGematria.tokens));
+    if (verseGematria) section.append(createVerseGematriaSummary(verseGematria.total, verseGematria.tokens));
+    return section;
+  }
+
+  async function showInterlinearVerse(reference, verse, options = {}) {
+    stopInterlinearLazyLoad();
+    if (!ctx.canUseCapability?.("interlinear")) {
+      setDetail(
+        "Interlinear",
+        createStudyEmptyState(ctx, "interlinear", {
+          reference,
+          capabilityIds: ["interlinear"],
+        }),
+        options,
+      );
+      return;
     }
+    const initialSection = await createInterlinearVerseSection(verse);
+    if (!initialSection) {
+      const empty = document.createElement("div");
+      const heading = document.createElement("h3");
+      heading.textContent = reference;
+      const message = document.createElement("p");
+      message.textContent = `No interlinear data found for ${reference}.`;
+      empty.append(heading, createVerseContextTabs(ctx, reference, verse, "interlinear", ctx.studyContext?.strong), message);
+      setDetail("Interlinear", empty, options);
+      return;
+    }
+
+    const wrap = document.createElement("div");
+    wrap.className = "interlinear-lazy-reader";
+    wrap.append(createVerseContextTabs(ctx, reference, verse, "interlinear", ctx.studyContext?.strong), initialSection);
+    const status = document.createElement("p");
+    status.className = "interlinear-lazy-status";
+    status.setAttribute("role", "status");
+    wrap.append(status);
     setDetail("Interlinear", wrap, options);
+
+    const verses = interlinearVerses();
+    let currentIndex = verses.indexOf(String(verse));
+    let loading = false;
+    const pane = els.detailPane;
+    const updateStatus = () => {
+      const nextVerse = verses[currentIndex + 1];
+      status.textContent = nextVerse ? `Scroll to load ${ctx.currentReference(nextVerse)}.` : "End of chapter.";
+    };
+    const stop = () => {
+      pane?.removeEventListener("scroll", onScroll);
+      if (stopInterlinearLazyLoad === stop) stopInterlinearLazyLoad = () => {};
+    };
+    const loadNext = async () => {
+      if (loading || !wrap.isConnected) {
+        if (!wrap.isConnected) stop();
+        return;
+      }
+      const nextVerse = verses[currentIndex + 1];
+      if (!nextVerse) {
+        updateStatus();
+        stop();
+        return;
+      }
+      loading = true;
+      status.textContent = `Loading ${ctx.currentReference(nextVerse)}…`;
+      const section = await createInterlinearVerseSection(nextVerse);
+      if (section && wrap.isConnected) {
+        wrap.insertBefore(section, status);
+        currentIndex += 1;
+      }
+      loading = false;
+      updateStatus();
+      if (nearBottom()) window.requestAnimationFrame(maybeLoadNext);
+    };
+    const nearBottom = () =>
+      pane && pane.scrollHeight - pane.scrollTop - pane.clientHeight <= 160;
+    const maybeLoadNext = () => {
+      if (nearBottom()) void loadNext();
+    };
+    function onScroll() {
+      maybeLoadNext();
+    }
+    stopInterlinearLazyLoad = stop;
+    pane?.addEventListener("scroll", onScroll, { passive: true });
+    updateStatus();
+    window.requestAnimationFrame(maybeLoadNext);
   }
 
   function showInterlinearChapter() {
+    stopInterlinearLazyLoad();
     if (!ctx.canUseCapability?.("interlinear")) {
       setDetail(
         "Interlinear",
@@ -337,18 +413,7 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
       );
       return;
     }
-    const verses = Object.keys(ctx.state.verseBook?.chapters?.[ctx.state.chapter] || {})
-      .filter(
-        (verse) =>
-          resolveInterlinearVerseTokens({
-            rawInterlinearByVerse: ctx.state.interlinear?.chapters?.[ctx.state.chapter],
-            rawStrongByVerse: ctx.state.strongs?.chapters?.[ctx.state.chapter],
-            chapterVerses: ctx.state.verseBook?.chapters?.[ctx.state.chapter],
-            targetVerse: verse,
-            reference: { bookId: ctx.state.bookId, chapter: ctx.state.chapter },
-          }).length,
-      )
-      .sort((a, b) => Number(a) - Number(b));
+    const verses = interlinearVerses();
     if (!verses.length) {
       setDetailMessage("Interlinear", "No interlinear data found for this chapter.");
       return;
@@ -377,6 +442,7 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
   }
 
   function showTranslationWorkspaceIndex() {
+    stopInterlinearLazyLoad();
     const verses = Object.keys(ctx.state.verseBook?.chapters?.[ctx.state.chapter] || {}).sort(
       (a, b) => Number(a) - Number(b),
     );
@@ -408,6 +474,7 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
   }
 
   async function showTranslationVerseWorkspace(verse, options = {}) {
+    stopInterlinearLazyLoad();
     const key = referenceKey(ctx.state.bookId, ctx.state.chapter, verse);
     const reference = ctx.currentReference(verse);
     const interlinearAvailable = ctx.canUseCapability?.("interlinear");

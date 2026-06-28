@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { summarizeHebrewGematriaTokens } from "../app/src/language.js";
 import { normalizeInterlinearVerseTokens, resolveInterlinearVerseTokens } from "../app/src/strongs.js";
 
 const rawTokens = [
@@ -49,11 +51,32 @@ assert.deepEqual(firstVerseTokens.map((token) => token.token_index), [1, 2]);
 assert.deepEqual(secondVerseTokens.map((token) => token.token_index), [3]);
 assert.equal(secondVerseTokens[0].verse, "2");
 
+const hebrewMetadata = {
+  alphabet: JSON.parse(await readFile(new URL("../app/data/language/hebrew/alphabet.json", import.meta.url), "utf8")),
+  marks: JSON.parse(await readFile(new URL("../app/data/language/hebrew/marks.json", import.meta.url), "utf8")),
+};
+assert.equal(
+  summarizeHebrewGematriaTokens(
+    [{ language: "hebrew", original: "miš·lê" }],
+    hebrewMetadata,
+  ),
+  null,
+);
+const actualHebrewGematria = summarizeHebrewGematriaTokens(
+  [
+    { language: "hebrew", original: "אב" },
+    { language: "greek", original: "λόγος" },
+  ],
+  hebrewMetadata,
+);
+assert.equal(actualHebrewGematria.total, 3);
+assert.equal(actualHebrewGematria.tokens.length, 1);
+
 console.log(
   JSON.stringify(
     {
       status: "ok",
-      assertions: 6,
+      assertions: 9,
       corrected_reference: "john:4:1:10",
     },
     null,

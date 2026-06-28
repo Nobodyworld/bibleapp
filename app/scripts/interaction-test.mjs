@@ -529,6 +529,29 @@ async function runQa(page) {
       state.detailText.includes("These are the proverbs"),
     "interlinear panel missing Proverbs 1:1 token data",
   );
+  assert(
+    !(await evaluate(page, "Boolean(document.querySelector('.verse-gematria-total'))")),
+    "transliterated Hebrew tokens must not render a zero gematria summary",
+  );
+  await evaluate(
+    page,
+    `(() => {
+      const pane = document.querySelector('.detail-pane');
+      pane.scrollTop = pane.scrollHeight;
+      pane.dispatchEvent(new Event('scroll'));
+      return true;
+    })()`,
+  );
+  await waitFor(page, "Boolean(document.querySelector('.interlinear-verse-section[data-verse=\"2\"]'))", 15000);
+  assert(
+    await evaluate(
+      page,
+      "Boolean(document.querySelector('.interlinear-verse-section[data-verse=\"1\"]') && document.querySelector('.interlinear-verse-section[data-verse=\"2\"]'))",
+    ),
+    "lazy loading replaced the inspected verse instead of appending the next verse",
+  );
+  pass("interlinear verse lazy continuation");
+
   pass("interlinear panel");
 
   await click(page, ".interlinear-token .compact-link");
@@ -536,6 +559,40 @@ async function runQa(page) {
   await waitFor(page, "document.querySelector('#detailContent')?.textContent.includes('H4912')", 10000);
   await waitFor(page, "document.querySelector('#detailContent')?.textContent.includes('Hebrew word breakdown')", 15000);
   await waitFor(page, "document.querySelector('#detailContent')?.textContent.includes(\"Strong's Concordance\")", 15000);
+  const themeBeforeHebrew = await evaluate(page, "document.documentElement.getAttribute('data-theme')");
+  if (themeBeforeHebrew !== "dark") await click(page, "#themeToggle");
+  await waitFor(page, "document.documentElement.getAttribute('data-theme') === 'dark'");
+  const darkHebrewContrast = await evaluate(
+    page,
+    `(() => {
+      const node = document.querySelector('.mark-study-word');
+      const surface = node?.closest('.mark-study');
+      if (!node || !surface) return null;
+      const foregroundStyle = getComputedStyle(node);
+      const backgroundStyle = getComputedStyle(surface);
+      const rgb = (value) => (value.match(/[\\d.]+/g) || []).slice(0, 3).map(Number);
+      const luminance = (values) => {
+        const channels = values.map((value) => {
+          const normalized = value / 255;
+          return normalized <= 0.03928 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+        });
+        return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+      };
+      const foreground = luminance(rgb(foregroundStyle.color));
+      const background = luminance(rgb(backgroundStyle.backgroundColor));
+      return {
+        color: foregroundStyle.color,
+        background: backgroundStyle.backgroundColor,
+        ratio: (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)
+      };
+    })()`,
+  );
+  assert(darkHebrewContrast?.ratio >= 4.5, `dark Hebrew source contrast is too low: ${JSON.stringify(darkHebrewContrast)}`);
+  if (themeBeforeHebrew !== "dark") {
+    await click(page, "#themeToggle");
+    await waitFor(page, `document.documentElement.getAttribute('data-theme') === ${JSON.stringify(themeBeforeHebrew)}`);
+  }
+  pass("dark Hebrew source contrast");
   state = await getQaState(page);
   assert(state.detailText.includes("Gematria total"), "Strong's hover missing Hebrew gematria breakdown");
   assert(state.detailText.includes("Hebrew marks / symbols"), "Strong's hover missing Hebrew marks section");

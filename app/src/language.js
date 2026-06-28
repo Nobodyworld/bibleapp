@@ -131,3 +131,18 @@ export function analyzeOriginalWord(word, language, metadata) {
     unknown_marks: unknownMarks,
   };
 }
+
+export function summarizeHebrewGematriaTokens(tokens, metadata) {
+  const hebrewTokens = (tokens || []).filter(
+    (token) =>
+      token.language === "hebrew" &&
+      token.original &&
+      wordHasLanguageScript(token.original, "hebrew"),
+  );
+  if (!hebrewTokens.length || !metadata) return null;
+  const total = hebrewTokens.reduce((sum, token) => {
+    const analysis = analyzeOriginalWord(token.original, "hebrew", metadata);
+    return sum + Number(analysis.gematria_total || 0);
+  }, 0);
+  return total > 0 ? { total, tokens: hebrewTokens } : null;
+}
