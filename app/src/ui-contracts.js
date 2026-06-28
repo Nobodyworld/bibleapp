@@ -23,13 +23,13 @@ export const STUDY_CONTROL_SCHEMA = Object.freeze({
     action: "showSearch",
     lockOnActivate: true,
   },
-  toolbarOutline: {
+  sidePanelOutline: {
     capabilityId: "outlines",
     dataScope: "book",
     action: "showOutline",
     lockOnActivate: true,
   },
-  toolbarInterlinear: {
+  sidePanelInterlinear: {
     capabilityId: "interlinear",
     dataScope: "chapter",
     action: "showInterlinearChapter",

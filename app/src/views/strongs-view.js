@@ -206,10 +206,57 @@ function createOriginValue(entry, openStrongCode) {
   if (!entry?.word_origin && !entry?.word_origin_refs?.length) return null;
   const wrap = document.createElement("span");
   wrap.className = "word-origin-value";
-  if (entry.word_origin) wrap.append(textNode(entry.word_origin));
-  (entry.word_origin_refs || []).forEach((ref) => {
-    wrap.append(textNode(" "));
-    wrap.append(createInternalStrongButton(ref, ref.strong_code || ref.label, openStrongCode));
+  const refs = entry.word_origin_refs || [];
+  const createOriginLink = (ref) => {
+    const label = ref.label || ref.original_word || ref.strong_code || "Origin word";
+    const button = createInternalStrongButton(ref, label, openStrongCode);
+    button.classList.add("strong-origin-link", "definition-tooltip");
+    button.dataset.tooltip = `${label}${ref.strong_code ? ` (${ref.strong_code})` : ""} — Loading definition…`;
+    button.setAttribute(
+      "aria-label",
+      `Open definition for ${label}${ref.strong_code ? `, ${ref.strong_code}` : ""}`,
+    );
+    let hydration;
+    const hydrateTooltip = () => {
+      if (!ref.strong_code || hydration) return;
+      hydration = fetchLexiconEntry(ref.strong_code)
+        .then((originEntry) => {
+          if (!originEntry) return;
+          const original = originEntry.original_word || label;
+          const transliteration =
+            originEntry.transliteration && originEntry.transliteration !== original
+              ? ` (${originEntry.transliteration})`
+              : "";
+          const definition = compactDefinition(originEntry);
+          button.dataset.tooltip = [original + transliteration, ref.strong_code, definition]
+            .filter(Boolean)
+            .join(" — ");
+        })
+        .catch(() => {
+          button.dataset.tooltip = `${label}${ref.strong_code ? ` (${ref.strong_code})` : ""}`;
+        });
+    };
+    button.addEventListener("pointerenter", hydrateTooltip);
+    button.addEventListener("focus", hydrateTooltip);
+    return button;
+  };
+
+  let remaining = String(entry.word_origin || "");
+  const extraLinks = [];
+  refs.forEach((ref) => {
+    const label = String(ref.label || ref.original_word || "").trim();
+    const index = label ? remaining.toLowerCase().indexOf(label.toLowerCase()) : -1;
+    if (index >= 0) {
+      wrap.append(textNode(remaining.slice(0, index)), createOriginLink(ref));
+      remaining = remaining.slice(index + label.length);
+      return;
+    }
+    extraLinks.push(createOriginLink(ref));
+  });
+  if (remaining) wrap.append(textNode(remaining));
+  extraLinks.forEach((link) => {
+    if (wrap.childNodes.length) wrap.append(textNode(" "));
+    wrap.append(link);
   });
   return wrap;
 }

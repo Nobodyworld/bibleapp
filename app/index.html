@@ -57,13 +57,9 @@
                 <span aria-hidden="true" class="toolbar-icon">⌕</span>
                 <span>Search</span>
               </button>
-              <button id="showOutline" class="toolbar-button" type="button" title="Book outline">
-                <span aria-hidden="true" class="toolbar-icon">☷</span>
-                <span>Outline</span>
-              </button>
-              <button id="showInterlinear" class="toolbar-button" type="button" title="Interlinear words">
-                <span aria-hidden="true" class="toolbar-icon">א</span>
-                <span>Interlinear</span>
+              <button id="openStudyPanel" class="toolbar-button mobile-detail-launcher" type="button" title="Open study panel">
+                <span aria-hidden="true" class="toolbar-icon">☰</span>
+                <span>Study panel</span>
               </button>
             </div>
             <div class="action-group" aria-label="Workspace tools">
@@ -104,6 +100,16 @@
             <button id="clearDetail" type="button">Clear</button>
           </div>
         </div>
+        <nav class="detail-tool-nav" aria-label="Side panel study tools">
+          <button id="showOutline" class="detail-tool-button" type="button" title="Book outline">
+            <span aria-hidden="true">☷</span>
+            <span>Outline</span>
+          </button>
+          <button id="showInterlinear" class="detail-tool-button" type="button" title="Interlinear words">
+            <span aria-hidden="true">א</span>
+            <span>Interlinear</span>
+          </button>
+        </nav>
         <div id="detailContext" class="detail-context" hidden></div>
         <div class="detail-floating-nav" aria-label="Detail panel history">
           <button id="detailBack" class="detail-nav-arrow" type="button" title="Panel history back" aria-label="Panel history back" disabled>

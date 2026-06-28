@@ -380,6 +380,18 @@ async function runQa(page) {
     (await evaluate(page, "document.querySelector('#translationSelect')?.options.length || 0")) >= 10,
     "translation options were not populated",
   );
+  assert(
+    await evaluate(
+      page,
+      `Boolean(
+        !document.querySelector('.chapter-actions #showOutline') &&
+        !document.querySelector('.chapter-actions #showInterlinear') &&
+        document.querySelector('.detail-tool-nav #showOutline') &&
+        document.querySelector('.detail-tool-nav #showInterlinear')
+      )`,
+    ),
+    "Outline and Interlinear controls must live exclusively in the side panel",
+  );
   pass("initial Psalm 23 render");
 
   const initialTheme = await evaluate(page, "document.documentElement.getAttribute('data-theme')");
@@ -407,6 +419,10 @@ async function runQa(page) {
         scrollWidth: document.documentElement.scrollWidth,
         coarsePointer: matchMedia('(pointer: coarse)').matches,
         touchPoints: navigator.maxTouchPoints,
+        studyPanelLauncherVisible: (() => {
+          const node = document.querySelector('#openStudyPanel');
+          return Boolean(node && node.getBoundingClientRect().width > 0 && node.getBoundingClientRect().height > 0);
+        })(),
         visibleControls: ['#bookSelect', '#chapterSelect', '#showSearch', '#showTags'].filter((selector) => {
           const node = document.querySelector(selector);
           return node && node.getBoundingClientRect().width > 0 && node.getBoundingClientRect().height > 0;
@@ -417,6 +433,7 @@ async function runQa(page) {
     assert(mobileLayout.scrollWidth <= mobileLayout.innerWidth + 1, "mobile layout has horizontal overflow");
     assert(mobileLayout.coarsePointer || mobileLayout.touchPoints > 0, "touch emulation was not applied");
     assert(mobileLayout.visibleControls >= 4, "mobile reader controls are not visible");
+    assert(mobileLayout.studyPanelLauncherVisible, "mobile layout cannot reveal the side-panel-only study tools");
     pass("mobile touch viewport");
   }
 
@@ -514,8 +531,32 @@ async function runQa(page) {
   await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Outline'");
   state = await getQaState(page);
   assert(state.detailText.includes("The Beginning of Knowledge"), "outline panel missing expected item");
+  const outlineThemeBefore = await evaluate(page, "document.documentElement.getAttribute('data-theme')");
+  if (outlineThemeBefore !== "dark") await click(page, "#themeToggle");
+  await waitFor(page, "document.documentElement.getAttribute('data-theme') === 'dark'");
   await click(page, "#detailContent .link-button");
   await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('Proverbs 1')");
+  await waitFor(page, "Boolean(document.querySelector('.target-verse'))");
+  await delay(300);
+  const darkOutlineHighlight = await evaluate(
+    page,
+    `(() => {
+      const node = document.querySelector('.target-verse');
+      if (!node) return null;
+      const style = getComputedStyle(node);
+      return { background: style.backgroundColor, color: style.color };
+    })()`,
+  );
+  assert(
+    darkOutlineHighlight &&
+      darkOutlineHighlight.background !== "rgb(238, 247, 245)" &&
+      darkOutlineHighlight.color !== darkOutlineHighlight.background,
+    `outline highlight is unreadable in dark mode: ${JSON.stringify(darkOutlineHighlight)}`,
+  );
+  if (outlineThemeBefore !== "dark") {
+    await click(page, "#themeToggle");
+    await waitFor(page, `document.documentElement.getAttribute('data-theme') === ${JSON.stringify(outlineThemeBefore)}`);
+  }
   pass("outline navigation");
 
   await click(page, ".verse-study-button");
@@ -621,7 +662,32 @@ async function runQa(page) {
       strongSidebar.navButtons.some((label) => label.includes("Next H4913")),
     "Strong's sidebar missing internal previous/next buttons",
   );
-  assert(strongSidebar.originButtons.some((label) => label === "H4910"), "Strong's sidebar missing internal word-origin button");
+  assert(strongSidebar.originButtons.some((label) => label === "mashal"), "Strong's sidebar must emphasize the origin word instead of its number");
+  await evaluate(
+    page,
+    `(() => {
+      document.querySelector('.strong-origin-link')?.dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }));
+      return true;
+    })()`,
+  );
+  await waitFor(
+    page,
+    "document.querySelector('.strong-origin-link')?.dataset.tooltip?.includes('H4910') && !document.querySelector('.strong-origin-link')?.dataset.tooltip?.includes('Loading')",
+    15000,
+  );
+  const originLinkState = await evaluate(
+    page,
+    `(() => {
+      const link = document.querySelector('.strong-origin-link');
+      return link ? { label: link.textContent.trim(), tooltip: link.dataset.tooltip, ariaLabel: link.getAttribute('aria-label') } : null;
+    })()`,
+  );
+  assert(
+    originLinkState?.label === "mashal" &&
+      originLinkState.tooltip.includes("H4910") &&
+      originLinkState.ariaLabel.includes("mashal"),
+    `word-origin definition link is incomplete: ${JSON.stringify(originLinkState)}`,
+  );
   assert(
     strongSidebar.lexicalText.includes("byword, like, parable, proverb") &&
       strongSidebar.lexicalText.includes("Apparently from mashal"),

@@ -51,7 +51,7 @@ for (const [controlId, control] of Object.entries(STUDY_CONTROL_SCHEMA)) {
   }
 }
 
-assert.equal(STUDY_CONTROL_SCHEMA.toolbarInterlinear.dataScope, "chapter");
+assert.equal(STUDY_CONTROL_SCHEMA.sidePanelInterlinear.dataScope, "chapter");
 assert.equal(STUDY_CONTROL_SCHEMA.verseInterlinear.dataScope, "verse");
 
 console.log(

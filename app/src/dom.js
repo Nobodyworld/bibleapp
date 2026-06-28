@@ -22,6 +22,7 @@ export const els = {
   showOutline: document.querySelector("#showOutline"),
   showInterlinear: document.querySelector("#showInterlinear"),
   showSearch: document.querySelector("#showSearch"),
+  openStudyPanel: document.querySelector("#openStudyPanel"),
   showTags: document.querySelector("#showTags"),
   showJobs: document.querySelector("#showJobs"),
   showUserData: document.querySelector("#showUserData"),
@@ -69,6 +70,11 @@ function updateDetailHistoryButtons() {
     els.detailPane.dataset.hoverLocked = locked ? "true" : "false";
     els.detailPane.dataset.panelMode = detailPanelMode;
   }
+  els.showOutline?.setAttribute("aria-pressed", els.detailTitle?.textContent === "Outline" ? "true" : "false");
+  els.showInterlinear?.setAttribute(
+    "aria-pressed",
+    els.detailTitle?.textContent === "Interlinear" ? "true" : "false",
+  );
   document.body.classList.toggle("detail-locked", locked);
 }
 

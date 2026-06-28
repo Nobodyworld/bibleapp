@@ -15,6 +15,7 @@ import {
   trackReaderLocation,
 } from "./src/dom.js?v=interaction-qa-20260628";
 import { createReferenceButton as makeReferenceButton, referenceKey, refDomId } from "./src/references.js";
+import { buildReferenceContext, referenceContextKey } from "./src/reference-context.js";
 import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js";
 import { initStores, listenForUserDataChanges } from "./src/stores.js";
 import { studyUnavailableLabel } from "./src/study-empty-state.js";
@@ -38,6 +39,7 @@ const state = {
   workspaceStore: null,
   userStoreBackend: null,
   userStoreMigration: null,
+  activeReferenceContext: null,
 };
 
 function findBook(bookId) {
@@ -75,10 +77,24 @@ function getCapabilityState(capabilityId) {
   });
 }
 
+function getReferenceContext(overrides = {}) {
+  const hasVerse = Object.prototype.hasOwnProperty.call(overrides, "verse");
+  const hasWord = Object.prototype.hasOwnProperty.call(overrides, "word");
+  return buildReferenceContext({
+    translationId: state.translationId,
+    bookId: state.bookId,
+    chapter: state.chapter,
+    verse: hasVerse ? overrides.verse : state.activeReferenceContext?.verse,
+    word: hasWord ? overrides.word : state.activeReferenceContext?.word,
+    ...overrides,
+  });
+}
+
 function clearReaderHighlight() {
   document.querySelectorAll(".reader-context-verse, .reader-context-word").forEach((node) => {
     node.classList.remove("reader-context-verse", "reader-context-word");
   });
+  state.activeReferenceContext = getReferenceContext({ word: null });
 }
 
 function highlightReaderContext(options = {}) {
@@ -90,6 +106,17 @@ function highlightReaderContext(options = {}) {
     (verse ? document.getElementById(refDomId(referenceKey(state.bookId, state.chapter, verse))) : null);
   if (row) row.classList.add("reader-context-verse");
   if (wordElement?.classList) wordElement.classList.add("reader-context-word");
+  state.activeReferenceContext = getReferenceContext({
+    verse,
+    word: wordElement
+      ? {
+          tokenIndex: wordElement.dataset.tokenIndex,
+          strongCode: wordElement.dataset.strongCode,
+          language: wordElement.__bibleAppStrongToken?.language,
+          original: wordElement.__bibleAppStrongToken?.original,
+        }
+      : null,
+  });
 }
 
 const ctx = {
@@ -103,6 +130,8 @@ const ctx = {
   highlightReaderContext,
   canUseCapability,
   getCapabilityState,
+  getReferenceContext,
+  referenceContextKey,
   renderChapter: () => renderer.renderChapter(),
   syncChapterButtons,
   syncToolButtons,
@@ -299,6 +328,12 @@ async function navigateToRoute(route, options = {}) {
   state.bookId = next.bookId;
   state.chapter = next.chapter;
   state.pendingScrollVerse = next.verse || null;
+  state.activeReferenceContext = buildReferenceContext({
+    translationId: state.translationId,
+    bookId: state.bookId,
+    chapter: state.chapter,
+    verse: next.verse,
+  });
 
   fillTranslationOptions();
   fillBookOptions();
@@ -432,6 +467,10 @@ function bindEvents() {
 
   els.showOutline.addEventListener("click", clearStudyContextAndCall(detailViews.showOutline));
   els.showInterlinear.addEventListener("click", clearStudyContextAndCall(detailViews.showInterlinearChapter));
+  els.openStudyPanel?.addEventListener("click", () => {
+    setDetailHoverLocked(true);
+    els.detailPane?.classList.add("visible");
+  });
   els.showSearch.addEventListener("click", clearStudyContextAndCall(detailViews.showSearch));
   els.showTags.addEventListener("click", clearStudyContextAndCall(detailViews.showTagIndex));
   els.showJobs.addEventListener("click", clearStudyContextAndCall(detailViews.showJobs));
