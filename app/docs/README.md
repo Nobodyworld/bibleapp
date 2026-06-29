@@ -9,5 +9,6 @@ These docs are planning references for the current license-scoped publish packag
 - `TEST_MODE_SPLIT_RECOMMENDATION.md`: publish-package and full-study validation modes.
 - `CURRENT_WORK.md`: current publish/readiness status and remaining work.
 - `UI_FUNCTIONALITY_SCHEMA.md`: executable availability, locking, and interlinear synchronization contract.
+- `TAG_FAVORITES_ANALYSIS_ROADMAP.md`: feature-state roadmap for favorites, target-aware tags, question jobs, personal graph, and optional community graph.
 
 Official publish/license policy remains in `../LICENSES.md` and `../data/license-matrix.json`.
