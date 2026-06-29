@@ -1,94 +1,49 @@
-# Test Mode Split Recommendation
+# Test Mode Split Decision Record
 
-## Goal
+Reviewed: 2026-06-29
 
-Adopt two explicit validation modes without reducing product ambition:
+Status: Superseded proposal retained for traceability.
 
-- Publish package mode: validates current license-scoped packaged app.
-- Full study mode: validates future restored study-data builds.
+## Original proposal
 
-## Why Split
+The earlier package contained reader data while optional study datasets could be absent. This document proposed separate `publish` and `full-study` validation modes so expected missing packs would not appear as regressions.
 
-Current script set mixes assumptions from both modes. This causes expected failures in publish package mode and obscures true regressions.
+## Current decision
 
-## Mode A: Publish Package Tests
+Do not implement the split now. The current package manifest declares the full study feature set and the repository contains cross-reference, commentary, footnote, outline, search, interlinear, Strong's, lexicon, word-map, and graph datasets. The active scripts therefore validate one packaged full-study profile:
 
-Purpose:
+```text
+npm run test:static
+npm run test:browser
+npm run test:browser:mobile
+npm run audit
+```
 
-- Verify active packaged app behavior and retained datasets.
+`npm test` combines the static and browser suites. `npm run verify` adds the structural publish audit.
 
-Should include:
+## Current test boundary
 
-- Runtime shell loading and route handling.
-- Reader rendering from retained verse data.
-- User-data stores, tags, jobs, import/export.
-- Semantic seed integrity for packaged semantic files.
-- Package metadata validity for current package profile.
-- Clear/intentional behavior when optional study packs are absent.
+| Layer | Responsibility |
+|---|---|
+| Static integrity | Syntax, JSON, paths, dataset contracts, capabilities, analysis, accessibility source contracts, documentation. |
+| Desktop browser | Rendered navigation, study panels, panel locking/history, token follow-along, persistence, console health. |
+| Mobile browser | Responsive layout, touch emulation, study-panel reachability, and the shared interaction flow. |
+| Publish audit | Structural package checks only; it does not establish runtime or legal readiness. |
 
-Expected profile assumptions:
+The desktop and mobile browser scripts are currently blocked in this environment by Edge/CDP failing at `Page.enable` before navigation. This is not a reason to weaken or skip their assertions.
 
-- `data/verses/*` retained translations present.
-- `data/license-matrix.json` and retained docs present.
-- Study datasets may be absent by design.
+## When to revisit profiles
 
-## Mode B: Full Study Tests
+Introduce explicit profiles only if the repository intentionally ships more than one package composition, such as:
 
-Purpose:
+- `reader-core`: text and local annotation only.
+- `full-study`: all current datasets and tools.
+- a separately licensed distribution with a materially different capability set.
 
-- Validate full dataset build once licensed/provenance-approved packs are restored.
+If profiles return, each must have:
 
-Should include:
-
-- Commentary, crossrefs, footnotes, outlines, interlinear, strongs, lexicon.
-- Search and analysis indexes.
-- Full package composition and capability availability checks.
-- End-to-end study workflows and performance baselines.
-
-Expected profile assumptions:
-
-- Full package manifest and study artifacts are present.
-- Derived data provenance and version metadata are complete.
-
-## Initial Classification (No Script Changes Yet)
-
-Likely Publish Package mode:
-
-- `semantic-test.mjs`
-- `poll-response-test.mjs`
-- `recovery-scenarios-test.mjs`
-- `user-data-semantic-test.mjs`
-- `interaction-test.mjs` (if configured for absent-pack messaging)
-
-Likely Full Study mode:
-
-- `smoke-test.mjs`
-- `contract-test.mjs`
-- `search-test.mjs`
-- `performance-test.mjs`
-- `job-processor-test.mjs`
-- `benchmark-search-json.mjs`
-- `benchmark-search-sqlite.mjs`
-- `build-search-indexes.mjs`
-- `build-word-map-indexes.mjs`
-- `build-graph-indexes.mjs`
-
-Mixed/needs profile-awareness:
-
-- `package-state-test.mjs`
-- `package-planner-test.mjs`
-- `doc-consistency-test.mjs`
-
-## Implementation Recommendation
-
-1. Add explicit test-mode selector (`publish` or `full-study`) in a top-level script runner.
-2. Keep script files but route each into mode-specific suites.
-3. Introduce profile fixtures for expected package-manifest variants.
-4. Ensure every failure message states the expected mode.
-5. Keep one shared minimal smoke for startup + reader integrity across both modes.
-
-## Exit Criteria
-
-- Publish package CI is green without requiring non-packaged study artifacts.
-- Full study CI is green when full licensed dataset profile is present.
-- No script silently assumes the wrong data profile.
+1. A manifest fixture declaring required and optional packs.
+2. Explicit capability expectations.
+3. Shared reader/startup tests.
+4. Profile-specific browser workflows.
+5. Failure output that names the active profile.

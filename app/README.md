@@ -7,7 +7,7 @@ Static local Bible reader with license/provenance records kept in-repo.
 - Browser-only reader UI: `index.html`, `app.js`, `styles.css`, and `src/`.
 - Local user-data tools for tags, assertions, drafts, jobs, package state, export, and import.
 - Retained Bible text shards under `data/verses/`.
-- Restored study datasets for cross references, commentary, outlines, interlinear views, and generated search indexes.
+- Restored study datasets for cross references, commentary, footnotes, outlines, interlinear views, Strong's/lexicons, search, word maps, and graph analysis.
 - Minimal package metadata in `data/package-manifest.json`.
 
 ## What Was Removed
@@ -21,16 +21,14 @@ The current retained editions are listed in `data/manifest.json`, summarized in 
 
 Licensing and provenance details are documented in the license matrix as written record metadata and are not enforced by runtime or audit gating.
 
-## Study Restoration Planning
+## Engineering Documentation
 
-Reader-adjacent study tools remain part of the product model, with restoration tracked in the planning docs below.
+Start with `docs/README.md`. The active status and design contracts are:
 
-- `docs/STUDY_FEATURE_RESTORE_PLAN.md`: reader-first study feature flows.
-- `docs/STUDY_FEATURE_UI_AUDIT.md`: current missing-data UI findings.
-- `docs/MISSING_STUDY_DATA_COPY_TABLE.md`: prioritized user-facing copy for missing study-data states.
-- `docs/STUDY_DATA_LICENSE_CANDIDATES.md`: candidate study-data source questions.
-- `docs/TEST_MODE_SPLIT_RECOMMENDATION.md`: publish-package vs full-study validation split.
-- `docs/CURRENT_WORK.md`: current publish/readiness status and remaining work.
+- `docs/CURRENT_WORK.md`: verified status, blockers, and next work boundary.
+- `docs/UI_FUNCTIONALITY_SCHEMA.md`: UI availability, panel, reference, and interlinear contracts.
+- `docs/TAG_FAVORITES_ANALYSIS_ROADMAP.md`: target-aware tags, favorites, inquiry jobs, and graph phases.
+- `docs/VISUAL_REVIEW_SUMMARY.md`: current manual and automated browser-QA baseline.
 
 ## Run Locally
 
@@ -60,7 +58,7 @@ From the repository root:
 npm run verify
 ```
 
-This runs static integrity, accessibility, documentation, desktop browser, mobile browser, and structural package checks. Browser tests use an isolated local server and temporary Edge profile.
+This runs static integrity, accessibility, documentation, desktop browser, mobile browser, and structural package checks. See `docs/CURRENT_WORK.md` for the latest verified result and any environment-specific browser-runner blocker.
 
 ## Generate Analysis Packs
 

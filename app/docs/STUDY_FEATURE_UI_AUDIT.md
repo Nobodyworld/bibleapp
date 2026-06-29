@@ -1,110 +1,40 @@
-# Study Feature UI Audit (Current Runtime)
+# Study Feature UI Audit
 
-## Scope
+Reviewed: 2026-06-29
 
-Read-only audit of study-tool behavior when capabilities are unavailable in the active app package.
+## Current status
 
-## High-Impact Findings
+The prior audit focused on absent study packs. Those datasets have since been restored. This table records which findings are resolved and which contracts still matter.
 
-### 1) Disabled controls without clear reason
+| Finding | State | Current direction |
+|---|---|---|
+| Outline and Interlinear duplicated in chapter tools | Resolved | Both are side-panel-only; mobile uses the Study panel launcher. |
+| Interlinear long words overlap English/gloss text | Resolved | Card columns constrain width and wrap content. |
+| Interlinear English rendering missing for aligned token | Resolved for reported John 4 case | Token resolution preserves the expected English rendering, including `hoti` → `because`. |
+| Reader/panel token follow-along unreliable | Resolved in manual desktop QA | Match by verse and token index, with unique Strong's fallback. |
+| Explicit panel actions do not remain selected | Resolved | Actions lock the panel; disengage/reset/navigation returns to follow mode. |
+| Interlinear verse list loads the entire chapter | Resolved | Initial verse plus next-verse lazy append in the detail scroll container. |
+| Hebrew-only gematria appears for Greek | Resolved | Hebrew analysis is gated by language/source context. |
+| Dark outline navigation highlight obscures text | Resolved | Dark-theme highlight colors preserve readable contrast. |
+| Missing capability messaging is technical | Contract retained | Use the fallback matrix when a pack is missing, disabled, corrupt, or has no scoped data. |
+| Translation control has stale internal `showProverbs` identifier | Open maintenance issue | Rename when touching the translation launcher; runtime label is already correct. |
+| Automated mobile and desktop regression execution | Blocked | Edge/CDP fails before app navigation in the current environment. |
 
-Current behavior:
+## Interaction rules that must not regress
 
-- Several toolbar and verse-level controls become disabled when capability data is absent.
-- Disabled state does not always explain what is missing or why.
+1. Tool availability distinguishes missing capability from missing scoped data.
+2. Locked panels remain stable while hover/focus highlighting continues.
+3. Panel history restores the saved view and reactivates view-specific listeners.
+4. Greek and Hebrew analysis are language-scoped.
+5. Side-panel-only tools remain reachable at mobile widths.
+6. Empty states explain the user-visible condition first; technical package state is secondary.
 
-Observed locations:
+## Next audit focus
 
-- Toolbar gating in app state sync.
-- Verse-level study button disabled when no crossrefs/interlinear/commentary is available.
-- Context tabs (Refs/Cmt/Int) disabled by capability checks.
+The next UI audit should accompany tag Phase 2 and cover:
 
-Risk:
-
-- Users interpret controls as broken rather than intentionally unavailable.
-
-Recommendation:
-
-- Keep study affordances visible.
-- On click (or focus), show a short panel message instead of silent disable where possible.
-- Standard copy pattern:
-  - "Not included in this private build."
-  - "Install [Study Data Pack Name] to enable this tool."
-
-### 2) Capability error text is technically correct but not user-friendly
-
-Current behavior:
-
-- Capability messages use package-state language such as "not installed", "dependency missing", or "invalid package definition".
-
-Risk:
-
-- Non-technical users do not know what action to take.
-
-Recommendation:
-
-- Keep technical reasons for diagnostics, but map display copy to plain-language user messages.
-- Proposed message layering:
-  - Primary: user-facing plain sentence.
-  - Secondary (optional): "Details" disclosure with technical reason.
-
-### 3) Search panel hard-blocks when search capability is absent
-
-Current behavior:
-
-- Search opens only when capability is available; otherwise plain technical message appears.
-
-Risk:
-
-- Search appears removed, not temporarily unavailable.
-
-Recommendation:
-
-- Always open Search panel shell.
-- Show disabled input with guided empty-state text:
-  - "Search indexes are not included in this private build."
-  - "Install a search data pack to run verse and study search."
-
-### 4) Translation workspace appears tied to interlinear-only availability
-
-Current behavior:
-
-- Translate action is currently gated by interlinear capability.
-
-Risk:
-
-- Users lose drafting workflow when interlinear data is unavailable, even though draft text entry is still conceptually useful.
-
-Recommendation:
-
-- Preserve workspace entry in draft-first mode.
-- Add advanced token/alignment sections only when interlinear/word-map data is present.
-
-### 5) Obsolete control naming in active runtime code
-
-Current behavior:
-
-- A translation workspace button/control is named with a Proverbs-specific identifier.
-
-Risk:
-
-- Internal naming mismatch increases maintenance confusion.
-
-Recommendation:
-
-- Rename stale identifier to feature-accurate naming in a future patch (no runtime behavior change required).
-
-## Empty-State Copy Suggestions
-
-- Refs: "Cross references are not included in this private build. Install the Cross References study pack to enable this tool."
-- Commentary: "Commentary data is not included in this private build. Install a commentary pack to read verse notes here."
-- Interlinear: "Interlinear data is not included in this private build. Install an interlinear pack to inspect source-language tokens."
-- Strong's/Lexicon: "Word study data is not included in this private build. Install a Strong's and lexicon pack to enable this card."
-- Outline: "Book outlines are not included in this private build. Install an outline pack to view section structure."
-- Search: "Search indexes are not included in this private build. Install a search pack to enable fast lookup."
-
-## UX Direction Summary
-
-- Do not hide study capability as a design choice.
-- Keep study tools discoverable from the reader.
-- Convert dead/technical states into guided onboarding states.
+- favorite controls at book, chapter, verse, English-span, and source-token scope;
+- unified target-aware tag picker behavior;
+- keyboard/touch equivalence;
+- private/personal graph labeling;
+- no accidental community or network requirement.

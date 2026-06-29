@@ -6,9 +6,11 @@ Reviewed: 2026-06-29
 
 This document is the working feature list for expanding tags from verse labels into a user-driven analysis system. It is intended to survive across multiple sessions and should be updated as features move from planned to implemented.
 
-The guiding rule is:
+The guiding rules are:
 
 > A tag is a semantic assertion about a target. Some tags are rendered as quick buttons, and some tags trigger local analysis jobs, but they should still use the same assertion model.
+
+> A tag describing the biblical text is not the same assertion as a tag describing the user's workflow. In particular, “this text is a question” and “I have a question about this target” must remain separate concepts.
 
 ## Current implementation inventory
 
@@ -16,7 +18,7 @@ The guiding rule is:
 
 | Area | Current state |
 |---|---|
-| Default tags | `positive_sentiment`, `negative_sentiment`, `command_declaration`, `question`. |
+| Default tags | `positive_sentiment`, `negative_sentiment`, `command_declaration`, and textual `question`. |
 | Custom tags | User can create, edit, and retire custom tags. |
 | Verse tagging UI | Verse-level tag picker, tag editor, tag badges, and tag index exist. |
 | Semantic tag assertions | Tag applications normalize into assertion records with `actor`, `visibility`, `confidence`, `review_status`, and `active`. |
@@ -36,9 +38,11 @@ The guiding rule is:
 | `setVerseTag` is scope-specific | A target-aware `setTagAssertion` API is needed for book, chapter, verse, text span, source token, and source-token chunk. |
 | Assertion IDs are verse-key based | Word and chunk targets need deterministic target IDs that include translation/testament/book/chapter/verse/token or span identity. |
 | `deriveVerseTagsFromAssertions` ignores non-verse targets | Verse badges can remain derived, but broader target indexes must be separate projections. |
-| `question` does not trigger a question-analysis job yet | The user intent behind `?` should produce structured local data, not just a label. |
+| No user-inquiry tag or inquiry-analysis trigger exists | The user intent behind `?` should produce structured local data without changing textual `tag:question` semantics. |
 | Personal graph is not exposed as a user-facing view | The graph projection exists but needs a UI and graph-specific result types. |
 | Community graph is not modeled separately yet | Community participation must be optional and must not be required for personal features. |
+| Textual question and user inquiry are not separated | Existing `tag:question` means the text contains a direct, rhetorical, or implied question; repurposing it as user uncertainty would corrupt semantics. |
+| Runtime tags still use legacy IDs | Canonical semantic IDs use `tag:*`; legacy IDs must remain compatibility aliases during migration, not become a second identity system. |
 
 ## Target model
 
@@ -57,6 +61,15 @@ The system should support tags on these targets:
 | `source_token_span` | Tag a multi-token Greek/Hebrew phrase. | Verse key plus ordered token range and source snapshots. |
 
 Use the existing reference context hierarchy for canonical keys. Strong's code, language, and original text should remain metadata, not primary identity, because token index is the verse-local identity.
+
+### Target schema invariants
+
+- Every persisted target declares `target_type`, `translation_id`/edition, testament, book, and all hierarchy fields required for its scope.
+- Verse ranges are ordered, stay within one book/chapter in the first implementation, and store both bounds.
+- Text spans store character bounds plus a text snapshot and drift status.
+- Source-token spans store an ordered, contiguous token range plus source snapshots.
+- Deterministic target IDs include target type and canonical scoped identity.
+- Import rejects or quarantines incomplete/unknown targets instead of inventing placeholders.
 
 ### Favorites as tags
 
@@ -96,27 +109,59 @@ Some tags should behave like simple toggle buttons because their meaning is imme
 |---|---|---|
 | `quick_toggle` | Favorite | Toggle immediately; no extra form. |
 | `toggle_with_optional_note` | Positive, Negative, Command/Declaration | Toggle quickly, but allow notes later. |
-| `queue_analysis` | Question | Toggle and enqueue a targeted analysis job. |
+| `queue_analysis` | Inquiry (`?`) | Toggle and enqueue a targeted analysis job. |
 | `custom_manual` | User custom tags | Open normal picker/editor. |
 
-The behavior belongs on the tag definition, not in one-off UI code. This keeps favorites, questions, and future utility tags consistent.
+The behavior belongs on the tag definition, not in one-off UI code. This keeps favorites, inquiries, and future utility tags consistent.
 
-## Question tag workflow
+## Textual question versus user inquiry
 
-The `?` tag should represent "the user has a question about this target" and should enqueue useful local analysis.
+Keep the existing semantic tag:
+
+```text
+tag:question
+```
+
+Meaning: the biblical target contains or expresses a direct, rhetorical, or implied question. It remains a discourse-function tag and does not enqueue analysis.
+
+To prevent two indistinguishable `?` controls, present this existing tag as `Text question` (or equivalent explicit wording) in the picker. Reserve the compact `?` quick action for `tag:inquiry`. This is a display change, not a semantic-ID migration.
+
+Add a separate system tag:
+
+```text
+tag:inquiry
+```
+
+Recommended definition:
+
+| Field | Value |
+|---|---|
+| `legacy_id` | `inquiry` |
+| `label` | `?` |
+| `description` | The user has a question or unresolved study concern about this target. |
+| `category` | `user_workflow` |
+| `allowed_target_types` | All supported target types. |
+| `display_behavior` | `queue_analysis` |
+| `on_apply_job_type` | `inquiry-analysis` |
+
+The visible `?` action can be intuitive without changing the meaning of the existing textual-question tag.
+
+## Inquiry tag workflow
+
+The `?` inquiry tag represents “the user has a question about this target” and should enqueue useful local analysis.
 
 ### New job type
 
 Proposed job type:
 
 ```text
-question-analysis
+inquiry-analysis
 ```
 
 Trigger:
 
-- Applying `tag:question` to a book, chapter, verse, text span, source token, or source-token span.
-- Editing a note attached to a question tag.
+- Applying `tag:inquiry` to a book, chapter, verse, text span, source token, or source-token span.
+- Editing a note attached to an inquiry tag.
 - Changing a related translation draft or token rendering.
 
 Inputs:
@@ -136,7 +181,7 @@ Outputs:
 
 | Output section | Contents |
 |---|---|
-| `question_profile` | Interpreted question type: translation, comparison, definition, usage, grammar, variant, interpretation, or unknown. |
+| `inquiry_profile` | Interpreted inquiry type: translation, comparison, definition, usage, grammar, variant, interpretation, or unknown. |
 | `source_language_summary` | Hebrew/Greek token, Strong's, morphology, gloss, lexicon summary. |
 | `english_rendering_summary` | Current English span and related renderings in the same verse/chapter/book. |
 | `same_source_uses` | Other occurrences of the same Strong's/source token across scripture. |
@@ -159,10 +204,10 @@ Future optional AI can consume this same job input/output envelope without repla
 
 The personal graph should combine:
 
-1. User assertions: tags, favorites, questions, interpretations, poll responses.
+1. User assertions: tags, favorites, inquiries, interpretations, poll responses.
 2. User workspace data: drafts, token renderings, red-letter ranges, manual alignments.
 3. Packaged graph data: cross references, word-map edges, Strong's/lexicon relations.
-4. Job results: question-analysis, glossary candidates, word-map refresh findings.
+4. Job results: inquiry-analysis, glossary candidates, word-map refresh findings.
 
 ### Graph nodes
 
@@ -177,7 +222,7 @@ The personal graph should combine:
 | `tag_definition` | System or user tag. |
 | `tag_assertion` | User applies/removes a tag. |
 | `job_result` | Analysis result generated from user action. |
-| `question` | Question assertion or question-analysis profile. |
+| `inquiry` | User inquiry assertion or inquiry-analysis profile. |
 | `strongs_entry` | Strong's code. |
 | `lexicon_definition` | Local lexicon entry summary. |
 | `interpretation_proposition` | Proposition used by interpretation/poll flows. |
@@ -189,7 +234,7 @@ The personal graph should combine:
 | `contains` | Book -> chapter -> verse -> span/token. |
 | `tagged_as` | Target -> tag definition. |
 | `favorited` | Target -> `tag:favorite`; can be derived from `tagged_as`. |
-| `asks_about` | Question assertion -> target. |
+| `asks_about` | Inquiry assertion -> target. |
 | `produced` | Job -> job result. |
 | `mentions_strong` | Target or job result -> Strong's entry. |
 | `translates_to` | Source token -> English span. |
@@ -203,9 +248,9 @@ The personal graph should combine:
 | View | Purpose |
 |---|---|
 | Favorites map | Jump to favorite books, chapters, verses, words, and chunks. |
-| Question queue graph | Show all `?` tags and the data generated for each. |
+| Inquiry queue graph | Show all user `?` tags and the data generated for each. |
 | Word study graph | Start from a source token and show Strong's, same-source uses, English renderings, and tagged notes. |
-| Conflict/hot spot view | Personal-only first: places where the user has competing interpretations, unresolved questions, or low-confidence job results. |
+| Conflict/hot spot view | Personal-only first: places where the user has competing interpretations, unresolved inquiries, or low-confidence job results. |
 | Tag cloud/network | Show which tags cluster around which books/chapters/words. |
 
 ## Community model
@@ -238,7 +283,7 @@ Community tags can exist, but they should not replace personal tags.
 
 | Type | Example | Rule |
 |---|---|---|
-| System tag | `tag:question`, `tag:favorite` | Packaged with app. |
+| System tag | `tag:question`, `tag:inquiry`, `tag:favorite` | Packaged with app. |
 | User tag | `tag:custom_covenant_theme` | Private/local unless shared. |
 | Community tag | `community-tag:translation_dispute` | Downloaded/optional, visible only when community layer is enabled. |
 | Adopted community tag | `tag:custom_translation_dispute` or linked alias | Personal copy with provenance. |
@@ -249,11 +294,11 @@ A hot spot should be an aggregate, not a command to the user.
 
 Examples:
 
-- Many users tagged the same word with `?`.
+- Many opted-in users tagged the same word with `tag:inquiry`.
 - Many users disagree on an interpretation proposition.
 - Same English rendering maps to multiple Hebrew/Greek terms in a heavily questioned passage.
 - Poll responses show high disagreement.
-- A job result has low confidence and many matching questions.
+- A job result has low confidence and many matching inquiries.
 
 ## Feature state matrix
 
@@ -271,8 +316,9 @@ Examples:
 | Word chunk/text-span favorite | Planned | Needs text selection anchor and source-token-span target. |
 | Target-aware tag API | Planned | Replace or wrap `setVerseTag` with `setTagAssertion`. |
 | Word tag picker | Planned | Reuse current selection/follow context and Strong's/interlinear token identity. |
-| `?` queues question-analysis | Planned | Add job type, processor, UI result rendering. |
-| Deterministic question-analysis processor | Planned | Use local datasets first; no external dependency. |
+| User inquiry tag (`tag:inquiry`) | Planned | Separate from textual `tag:question`; rendered as `?`. |
+| `?` queues inquiry-analysis | Planned | Add idempotent job trigger, processor, and result rendering. |
+| Deterministic inquiry-analysis processor | Planned | Use local datasets first; no external dependency. |
 | Personal graph panel | Planned | Build from assertion projection plus packaged graph and job results. |
 | Graph visuals | Planned | Start with scoped graph views, not a giant all-data canvas. |
 | Community data model | Future | Design store contracts before network features. |
@@ -284,13 +330,15 @@ Examples:
 
 ### Phase 1: Schema and local tag foundation
 
-1. Add `tag:favorite` to packaged semantic tag definitions and default runtime tags.
-2. Add tag definition behavior metadata: `display_behavior`, optional `on_apply_job_type`.
-3. Add target constructors for `book`, `chapter`, `source_token`, and `source_token_span`.
+1. Add `tag:favorite` and `tag:inquiry` to packaged semantic definitions and default runtime tags; preserve textual `tag:question` with an explicit picker label.
+2. Add tag definition behavior metadata: `display_behavior` and optional `on_apply_job_type`.
+3. Add target constructors for `book`, `chapter`, `verse_range`, `text_span`, `source_token`, and `source_token_span`.
 4. Add deterministic target IDs and assertion IDs for every supported target type.
 5. Add `setTagAssertion(state, target, tagId, enabled, options)` and keep `setVerseTag` as a compatibility wrapper.
-6. Add target indexes separate from `verse_tags`, such as `tag_target_index` or derived selectors.
-7. Add tests for book/chapter/verse/word/text-span assertions and export/import.
+6. Add a versioned migration from legacy verse-key assertions to complete canonical targets.
+7. Add target indexes separate from `verse_tags`; keep `verse_tags` as a rebuildable compatibility projection.
+8. Add an idempotent behavior-trigger key based on assertion ID, job type, and input revision.
+9. Add tests for every target type, legacy migration, rejection/quarantine, duplicate-trigger prevention, and export/import.
 
 ### Phase 2: Favorites UI
 
@@ -312,23 +360,23 @@ Examples:
 6. Add drift handling for text spans using existing text snapshot logic.
 7. Add tests for English word, Greek/Hebrew token, and chunk tags.
 
-### Phase 4: Question-analysis jobs
+### Phase 4: Inquiry-analysis jobs
 
-1. Add `question-analysis` to job types and analysis manifest.
+1. Add `inquiry-analysis` to job types and analysis manifest.
 2. Register processor in `job-processor.js`.
-3. Queue the job when `tag:question` is applied to any supported target.
+3. Queue the job when `tag:inquiry` is applied to any supported target.
 4. Produce structured deterministic findings from local data.
-5. Render question-analysis results in Jobs and in a Question detail view.
+5. Render inquiry-analysis results in Jobs and in an Inquiry detail view.
 6. Add stale-result invalidation when related tags, drafts, or token renderings change.
-7. Add tests for queued job, run result, stale result, and missing-data warnings.
+7. Add tests for queued job, deduplicated trigger, run result, stale result, cancellation, and missing-data warnings.
 
 ### Phase 5: Personal graph UI
 
 1. Add graph projection builder that combines assertion graph, packaged graph snippets, and job graph patches.
-2. Add a graph detail panel with scoped entry points: current verse, selected word, favorites, questions.
+2. Add a graph detail panel with scoped entry points: current verse, selected word, favorites, and inquiries.
 3. Render graph views as useful constrained visuals: grouped lists, small network, paths, and conflict cards.
 4. Add filters for personal-only, packaged-only, and combined view.
-5. Add tests for graph nodes/edges generated by favorites and question tags.
+5. Add tests for graph nodes/edges generated by favorites and inquiry tags.
 
 ### Phase 6: Optional community layer
 
@@ -341,20 +389,22 @@ Examples:
 
 ## Immediate next task list
 
-1. Implement target-aware tag assertions and keep existing verse tags working.
-2. Add `tag:favorite` as a system tag and render it as a quick-toggle star.
-3. Add Favorites panel grouped by target type.
-4. Add word/source-token tagging from the Interlinear panel first, because token identity is already explicit there.
-5. Add reader text-span tagging second, using existing word-map spans and text snapshots.
-6. Add `question-analysis` job type and deterministic processor.
-7. Add personal graph projection for favorites and questions.
-8. Only after personal graph is solid, add community-cache schema and opt-in UI.
+1. Implement canonical target constructors, IDs, and target-aware assertions while keeping existing verse tags working.
+2. Separate textual `tag:question` from user `tag:inquiry`; add behavior metadata and idempotent triggers.
+3. Add `tag:favorite` and render it as a definition-driven quick-toggle star.
+4. Add migration, export/import, recovery, and duplicate-trigger tests.
+5. Add Favorites panel grouped by target type.
+6. Add word/source-token tagging from the Interlinear panel first, because token identity is already explicit there.
+7. Add reader text-span tagging second, using existing word-map spans and text snapshots.
+8. Add `inquiry-analysis` job type and deterministic processor.
+9. Add personal graph projection for favorites and inquiries.
+10. Only after the personal graph is solid, add community-cache schema and opt-in UI.
 
 ## Non-goals for the next build step
 
-- Do not require accounts, servers, or network sync for favorites, word tags, or question analysis.
+- Do not require accounts, servers, or network sync for favorites, word tags, or inquiry analysis.
 - Do not let community data write into personal stores automatically.
 - Do not store ambiguous word targets without translation, testament, book, chapter, verse, and token/span identity.
 - Do not make external AI a hard dependency for local analysis jobs.
 - Do not render a giant graph first; start with scoped visuals tied to the user's selected target.
-
+- Do not repurpose `tag:question` as user uncertainty; use `tag:inquiry`.

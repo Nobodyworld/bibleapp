@@ -1,23 +1,26 @@
-# Missing Study Data Copy Table
+# Study Capability Fallback Copy Matrix
+
+Reviewed: 2026-06-29
 
 ## Scope
 
-Prioritized wording table only. No runtime changes are included in this document.
+The current repository packages the full study-data set. This matrix applies only when a capability is missing, disabled, invalid, or has no data for the active scope. It is a copy contract, not evidence that a pack is currently absent.
 
-| Priority | Feature | Current behavior | Target file/line | Recommended user-facing copy | Technical detail disclosure | Notes |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | Verse study launcher hard-disabled state | Verse-level study launcher button is disabled when refs/interlinear/commentary are unavailable. User cannot open a guided empty state from this control. | app/src/chapter-renderer.js:408-423 | Primary: Study tools are not included for this verse in this private build. Secondary: Install a study data pack to open references, commentary, and interlinear tools here. | Details (optional): capability states for crossrefs/commentary/interlinear from resolveCapability. | Prefer launcher click to open a study panel shell. If button must stay disabled, add title and aria explanation with the same plain-language copy. |
-| 2 | Search unavailable state | Search exits early with technical capability text instead of opening the panel shell. | app/src/views/search-view.js:378-381 | Primary: Search indexes are not included in this private build. Secondary: Install a search study data pack to enable verse and study search. | Details (optional): search capability state and missing pack ids. | Keep Search button visible. Open panel with disabled form and guidance instead of hard stop. |
-| 3 | Refs/Cmt/Int context tabs unavailable states | Verse context tabs are rendered but disabled when data is unavailable; no direct explanation appears at tab level. | app/src/views/verse-context-tabs.js:31-52 | Refs primary: Cross references are not included in this private build. Secondary: Install a cross references study pack to use Refs. Cmt primary: Commentary data is not included in this private build. Secondary: Install a commentary study pack to use Cmt. Int primary: Interlinear data is not included in this private build. Secondary: Install an interlinear study pack to use Int. | Details (optional): per-tab capability state from crossrefs/commentary/interlinear checks. | Keep tabs visible to teach feature availability. Add title and aria text for disabled tabs or route to panel shell help. |
-| 4 | Translation workspace draft-first state when interlinear is absent | Translation workspace is currently gated by interlinear capability and returns technical message. | app/src/views/interlinear-translation-view.js:336-340, app/src/views/interlinear-translation-view.js:364-367 | Primary: Translation drafting is available, but source-language study data is not included in this private build. Secondary: Install an interlinear study pack to unlock token alignment and source-word tools. | Details (optional): interlinear capability state and whether word-map data is present. | Preserve draft-first workflow even when interlinear is absent. Advanced sections should be progressive disclosure. |
-| 5 | Strong's / word-study unavailable state | Word-study view returns technical capability text when Strong's overlay is unavailable. Lexicon load failures also read as hard failure. | app/src/views/strongs-view.js:455-458, app/src/views/strongs-view.js:542-545, app/src/capabilities.js:174-184 | Primary: Word study data is not included in this private build. Secondary: Install a Strong's and lexicon study pack to view definitions and source-word details. | Details (optional): strongs-overlay capability state and lexicon fetch error details. | Keep word affordances near verse text. Avoid making the feature feel removed or broken. |
-| 6 | Outline unavailable state | Outline view uses technical capability text when unavailable; separate empty copy appears when enabled but no items exist. | app/src/views/commentary-outline-view.js:69-72, app/src/views/commentary-outline-view.js:82 | Primary: Book outline data is not included in this private build. Secondary: Install an outlines study pack to browse section structure. | Details (optional): outlines capability state and pack status. | Distinguish missing pack from true empty data for an installed pack. |
-| 7 | Data/package manager copy for private build vs installed packs | User Data capability manager and capability messages are technical and state-heavy. | app/src/views/user-data-view.js:67-70, app/src/views/user-data-view.js:85, app/src/capabilities.js:174-184 | Primary: This private build includes only installed study data packs. Secondary: Add or enable study packs to unlock more tools in the reader. | Details (optional): capability state values such as not_installed, disabled, dependency_missing, corrupt. | Keep management copy user-friendly first, technical second. Avoid primary-copy terms like dependency, resolver, manifest, or shard. |
+| Feature | Capability-unavailable primary copy | Scoped-data-unavailable primary copy | Suggested secondary copy |
+|---|---|---|---|
+| Cross references | Cross-reference data is unavailable. | No cross references were found for this verse. | Check that the Cross References study pack is installed and enabled. |
+| Commentary | Commentary data is unavailable. | No commentary entries were found for this verse. | Check that the Commentary study pack is installed and enabled. |
+| Interlinear | Interlinear data is unavailable. | No interlinear tokens were found for this verse or chapter. | Check that the Interlinear study pack is installed and enabled. |
+| Strong's / lexicon | Word-study data is unavailable. | No word-study entry was found for this token. | Check that the Strong's and Lexicon study packs are installed and enabled. |
+| Outline | Outline data is unavailable. | No outline sections were found for this book. | Check that the Outlines study pack is installed and enabled. |
+| Search | Search indexes are unavailable. | No results matched this query and scope. | Check that the Search study pack is installed and enabled. |
+| Translation workspace | Source-language tools are unavailable for this chapter. | No tokenized verses were found in this chapter. | Draft-only mode may be offered separately; token alignment requires Interlinear data. |
 
-## Insertion Strategy
+## Rendering rules
 
-- Prefer opening the panel shell with a useful empty state over disabling controls.
-- If a control must remain disabled, provide title and aria explanation with plain-language guidance.
-- Keep technical capability reason available only as secondary detail.
-- Make every missing-data state tell the user what kind of study pack enables the tool.
-- Keep study affordances visible and reader-adjacent so users can discover tools naturally.
+1. Use `capability_unavailable` for a disabled, missing, dependency-failed, or invalid capability.
+2. Use `data_unavailable` when the capability is healthy but has no data for the current book/chapter/verse.
+3. Put the user-facing condition first.
+4. Put package IDs, dependency failures, fetch paths, and validation detail behind optional diagnostic disclosure.
+5. Disabled controls must expose the same reason through `title` and `aria-disabled`; where practical, a panel shell may show the fuller message.
+6. Do not say “private build” unless the product actually exposes multiple named distribution profiles.

@@ -1,8 +1,12 @@
 # Study Data License Candidates (Draft)
 
+Reviewed: 2026-06-29
+
+Status: Research backlog only. Restored datasets are currently packaged, so this file records questions that remain to be answered; it does not grant clearance or override `../data/license-matrix.json`.
+
 ## Scope
 
-Draft research list only. This file does not change packaged data policy or the official retained-data matrix.
+Draft research list only. This file does not change packaged data policy, prove source ownership, or establish public/commercial redistribution rights.
 
 ## Review Questions To Answer For Every Source
 
@@ -137,12 +141,12 @@ Use this template for each candidate row before any restore proposal:
 
 ## Priority Order For Review
 
-1. Cross references
-2. Footnotes
-3. Outlines
-4. Search indexes
-5. Strong's and lexicon
-6. Interlinear and morphology
-7. Commentary corpora
+1. Strong's overlay and lexicon source chain.
+2. Interlinear alignments and morphology source chain.
+3. Commentary corpora, source by source.
+4. Cross-reference compilation.
+5. Footnotes and translation-specific note offsets.
+6. Outlines and editorial section labels.
+7. Search/word-map/graph derivatives after their input sources are cleared.
 
-This order prioritizes high-utility, lower-cognitive-load study features nearest to reader flow.
+This order prioritizes the packaged datasets with the least specific provenance or the greatest derivative-data impact.
