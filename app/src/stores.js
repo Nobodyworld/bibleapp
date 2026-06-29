@@ -30,6 +30,7 @@ const USER_STORE_NAMES = {
 };
 
 let userDbPromise = null;
+const INDEXED_DB_TIMEOUT_MS = 3000;
 let userDataBroadcast = null;
 let userDataStorageMode = "localStorage";
 let userDataStorageFailure = null;
@@ -125,6 +126,14 @@ function saveStorage(key, value) {
 
 function canUseIndexedDb() {
   return typeof window !== "undefined" && Boolean(window.indexedDB);
+}
+
+function withTimeout(promise, message) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = window.setTimeout(() => reject(new Error(message)), INDEXED_DB_TIMEOUT_MS);
+  });
+  return Promise.race([promise, timeout]).finally(() => window.clearTimeout(timer));
 }
 
 function storeNameForStorageKey(key) {
@@ -490,13 +499,17 @@ export async function initStores(state) {
   }
 
   try {
-    const [indexedTags, indexedWorkspace, indexedAssertions, indexedPolls, indexedPackages] = await Promise.all([
-      readIndexedStore(USER_STORE_NAMES.tags),
-      readIndexedStore(USER_STORE_NAMES.workspace),
-      readIndexedStore(USER_STORE_NAMES.assertions),
-      readIndexedStore(USER_STORE_NAMES.polls),
-      readIndexedStore(USER_STORE_NAMES.packages),
-    ]);
+    const [indexedTags, indexedWorkspace, indexedAssertions, indexedPolls, indexedPackages] =
+      await withTimeout(
+        Promise.all([
+          readIndexedStore(USER_STORE_NAMES.tags),
+          readIndexedStore(USER_STORE_NAMES.workspace),
+          readIndexedStore(USER_STORE_NAMES.assertions),
+          readIndexedStore(USER_STORE_NAMES.polls),
+          readIndexedStore(USER_STORE_NAMES.packages),
+        ]),
+        "IndexedDB initialization timed out.",
+      );
     state.tagStore = normalizeTagStore(indexedTags || localTagStore);
     state.workspaceStore = normalizeWorkspaceStore(indexedWorkspace || localWorkspaceStore);
     state.assertionStore = normalizeAssertionStore(indexedAssertions || localAssertionStore, state.tagStore.tag_assertions);
@@ -510,11 +523,17 @@ export async function initStores(state) {
         ? "already-indexed"
         : "migrated-from-localStorage";
 
-    if (!indexedTags) await writeIndexedStore(USER_STORE_NAMES.tags, state.tagStore);
-    if (!indexedWorkspace) await writeIndexedStore(USER_STORE_NAMES.workspace, state.workspaceStore);
-    if (!indexedAssertions) await writeIndexedStore(USER_STORE_NAMES.assertions, state.assertionStore);
-    if (!indexedPolls) await writeIndexedStore(USER_STORE_NAMES.polls, state.pollStore);
-    if (!indexedPackages) await writeIndexedStore(USER_STORE_NAMES.packages, state.packageStore);
+    const migrations = [];
+    if (!indexedTags) migrations.push(writeIndexedStore(USER_STORE_NAMES.tags, state.tagStore));
+    if (!indexedWorkspace) migrations.push(writeIndexedStore(USER_STORE_NAMES.workspace, state.workspaceStore));
+    if (!indexedAssertions) {
+      migrations.push(writeIndexedStore(USER_STORE_NAMES.assertions, state.assertionStore));
+    }
+    if (!indexedPolls) migrations.push(writeIndexedStore(USER_STORE_NAMES.polls, state.pollStore));
+    if (!indexedPackages) migrations.push(writeIndexedStore(USER_STORE_NAMES.packages, state.packageStore));
+    if (migrations.length) {
+      await withTimeout(Promise.all(migrations), "IndexedDB migration timed out.");
+    }
     [
       STORAGE_KEYS.tags,
       STORAGE_KEYS.workspace,

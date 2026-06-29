@@ -28,30 +28,87 @@ const NEW_TESTAMENT_BOOKS = new Set([
   "revelation",
 ]);
 
+const OLD_TESTAMENT_BOOKS = new Set([
+  "genesis",
+  "exodus",
+  "leviticus",
+  "numbers",
+  "deuteronomy",
+  "joshua",
+  "judges",
+  "ruth",
+  "1_samuel",
+  "2_samuel",
+  "1_kings",
+  "2_kings",
+  "1_chronicles",
+  "2_chronicles",
+  "ezra",
+  "nehemiah",
+  "esther",
+  "job",
+  "psalms",
+  "proverbs",
+  "ecclesiastes",
+  "songs",
+  "isaiah",
+  "jeremiah",
+  "lamentations",
+  "ezekiel",
+  "daniel",
+  "hosea",
+  "joel",
+  "amos",
+  "obadiah",
+  "jonah",
+  "micah",
+  "nahum",
+  "habakkuk",
+  "zephaniah",
+  "haggai",
+  "zechariah",
+  "malachi",
+]);
+
 function positiveInteger(value) {
   const number = Number(value);
   return Number.isInteger(number) && number > 0 ? number : null;
 }
 
+function normalizedId(value) {
+  return String(value || "").trim().toLowerCase() || null;
+}
+
 export function testamentForBook(bookId) {
-  const normalized = String(bookId || "").toLowerCase();
+  const normalized = normalizedId(bookId);
   if (!normalized) return null;
-  return NEW_TESTAMENT_BOOKS.has(normalized) ? "new" : "old";
+  if (NEW_TESTAMENT_BOOKS.has(normalized)) return "new";
+  if (OLD_TESTAMENT_BOOKS.has(normalized)) return "old";
+  return null;
 }
 
 export function buildReferenceContext(input = {}) {
-  const bookId = String(input.book_id || input.bookId || "").toLowerCase() || null;
+  const bookId = normalizedId(input.book_id || input.bookId);
+  const suppliedTestament = normalizedId(input.testament);
+  const inferredTestament = testamentForBook(bookId);
+  const testament =
+    inferredTestament ||
+    (suppliedTestament === "old" || suppliedTestament === "new"
+      ? suppliedTestament
+      : null);
   const word = input.word
     ? {
         token_index: positiveInteger(input.word.token_index ?? input.word.tokenIndex),
-        strong_code: String(input.word.strong_code || input.word.strongCode || "") || null,
-        language: String(input.word.language || "") || null,
+        strong_code:
+          String(input.word.strong_code || input.word.strongCode || "").trim().toUpperCase() ||
+          null,
+        language: normalizedId(input.word.language),
         original: String(input.word.original || "") || null,
       }
     : null;
   return Object.freeze({
-    translation_id: String(input.translation_id || input.translationId || "") || null,
-    testament: input.testament || testamentForBook(bookId),
+    translation_id: normalizedId(input.translation_id || input.translationId),
+    testament,
     book_id: bookId,
     chapter: positiveInteger(input.chapter),
     verse: positiveInteger(input.verse),
@@ -68,18 +125,23 @@ export function referenceContextKey(context, scope = "word") {
     value.chapter,
     value.verse,
     value.word?.token_index,
-    value.word?.strong_code,
   ];
+  const segmentNames = ["translation", "testament", "book", "chapter", "verse", "word"];
   const scopeLength = {
+    translation: 1,
     testament: 2,
     book: 3,
     chapter: 4,
     verse: 5,
-    word: 7,
+    word: 6,
   }[scope];
   if (!scopeLength) throw new Error(`Unknown reference context scope: ${scope}`);
-  return segments
-    .slice(0, scopeLength)
-    .map((segment) => String(segment ?? "_"))
-    .join(":");
+  const scopedSegments = segments.slice(0, scopeLength);
+  const missingIndex = scopedSegments.findIndex((segment) => segment == null || segment === "");
+  if (missingIndex >= 0) {
+    throw new Error(
+      `Incomplete reference context for ${scope}: missing ${segmentNames[missingIndex]}`,
+    );
+  }
+  return scopedSegments.map(String).join(":");
 }

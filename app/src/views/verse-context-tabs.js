@@ -134,7 +134,12 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
     }
 
     button.setAttribute("aria-pressed", action.id === active ? "true" : "false");
-    if (action.run) button.addEventListener("click", action.run);
+    if (action.run) {
+      button.addEventListener("click", () => {
+        ctx.highlightReaderContext?.({ verse, commit: true });
+        action.run();
+      });
+    }
     tabs.append(button);
   });
 

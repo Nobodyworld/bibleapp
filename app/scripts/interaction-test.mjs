@@ -989,6 +989,20 @@ async function runQa(page) {
   await waitFor(page, "location.hash.includes('/proverbs/1/2')");
   pass("book search and result navigation");
 
+  await page.send("Page.addScriptToEvaluateOnNewDocument", {
+    source: `
+      Object.defineProperty(window, "indexedDB", {
+        configurable: true,
+        value: { open() { return {}; } }
+      });
+    `,
+  });
+  await navigate(page, `${routeBase}?qa-storage-timeout=1#/read/bsb/john/4`);
+  await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('John 4')");
+  state = await getQaState(page);
+  assert(state.status.includes("BSB"), "reader did not recover from a stalled IndexedDB open");
+  pass("IndexedDB timeout fallback");
+
   state = await getQaState(page);
   assert(state.consoleErrors.length === 0, `page errors found: ${state.consoleErrors.join("; ")}`);
   return checks;

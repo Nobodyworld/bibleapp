@@ -47,4 +47,13 @@ Navigation and selection state is represented as one immutable hierarchy rather 
 
 `translation → testament → book → chapter → verse → word`
 
-`src/reference-context.js` normalizes this context and creates stable keys at testament, book, chapter, verse, or word scope. UI hover/selection may update the active context, while persisted user records should continue receiving an explicit scoped key so transient hover state cannot accidentally change where data is saved.
+`src/reference-context.js` normalizes this context and creates stable keys at translation, testament, book, chapter, verse, or word scope. A word key ends at its verse-local token index; Strong's code, language, and original spelling are metadata and are not part of identity.
+
+Committed selection and transient hover are separate:
+
+- `activeReferenceContext` changes only through navigation or an explicit selection.
+- `hoverReferenceContext` exists only while reader/panel follow-along highlighting is active.
+- Leaving a hovered word clears only `hoverReferenceContext`.
+- Persisted user records must receive an explicit complete scoped key. Key generation rejects incomplete or unknown hierarchy data rather than storing an ambiguous placeholder.
+
+IndexedDB initialization and migration have a three-second boundary. If the browser blocks or stalls the database request, startup continues with the existing localStorage backend instead of leaving the reader on its loading shell.

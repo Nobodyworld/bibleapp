@@ -40,6 +40,7 @@ const state = {
   userStoreBackend: null,
   userStoreMigration: null,
   activeReferenceContext: null,
+  hoverReferenceContext: null,
 };
 
 function findBook(bookId) {
@@ -94,7 +95,7 @@ function clearReaderHighlight() {
   document.querySelectorAll(".reader-context-verse, .reader-context-word").forEach((node) => {
     node.classList.remove("reader-context-verse", "reader-context-word");
   });
-  state.activeReferenceContext = getReferenceContext({ word: null });
+  state.hoverReferenceContext = null;
 }
 
 function highlightReaderContext(options = {}) {
@@ -106,17 +107,24 @@ function highlightReaderContext(options = {}) {
     (verse ? document.getElementById(refDomId(referenceKey(state.bookId, state.chapter, verse))) : null);
   if (row) row.classList.add("reader-context-verse");
   if (wordElement?.classList) wordElement.classList.add("reader-context-word");
-  state.activeReferenceContext = getReferenceContext({
+  const context = getReferenceContext({
     verse,
-    word: wordElement
-      ? {
-          tokenIndex: wordElement.dataset.tokenIndex,
-          strongCode: wordElement.dataset.strongCode,
-          language: wordElement.__bibleAppStrongToken?.language,
-          original: wordElement.__bibleAppStrongToken?.original,
-        }
-      : null,
+    word:
+      options.word ||
+      (wordElement
+        ? {
+            tokenIndex: wordElement.dataset.tokenIndex,
+            strongCode: wordElement.dataset.strongCode,
+            language: wordElement.__bibleAppStrongToken?.language,
+            original: wordElement.__bibleAppStrongToken?.original,
+          }
+        : null),
   });
+  if (options.commit) {
+    state.activeReferenceContext = context;
+  } else {
+    state.hoverReferenceContext = context;
+  }
 }
 
 const ctx = {
@@ -493,6 +501,7 @@ function bindEvents() {
   els.clearDetail.addEventListener("click", () => {
     detailViews.clearStrongPin();
     clearReaderHighlight();
+    state.activeReferenceContext = getReferenceContext({ verse: null, word: null });
     resetDetail();
   });
 

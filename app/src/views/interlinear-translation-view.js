@@ -233,7 +233,16 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
           verse: card.dataset.verse,
           reference: ctx.currentReference(card.dataset.verse),
         };
-        ctx.highlightReaderContext?.({ verse: tokenVerseContext.verse });
+        ctx.highlightReaderContext?.({
+          verse: tokenVerseContext.verse,
+          word: {
+            tokenIndex: token.token_index,
+            strongCode: token.strong_code,
+            language: token.language,
+            original: token.original,
+          },
+          commit: true,
+        });
         showStrong(token, { pin: true, verseContext: tokenVerseContext });
       });
     }
