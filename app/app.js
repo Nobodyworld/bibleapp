@@ -1,8 +1,8 @@
 import { DEFAULT_ROUTE } from "./src/config.js";
 import { capabilityAvailable, resolveCapability } from "./src/capabilities.js";
-import { createChapterRenderer } from "./src/chapter-renderer.js?v=interaction-qa-20260628";
+import { createChapterRenderer } from "./src/chapter-renderer.js?v=interaction-qa-20260629";
 import { loadManifest, loadReaderBookData, translationCanLoadBook } from "./src/data-service.js";
-import { createDetailViews } from "./src/detail-views.js?v=interaction-qa-20260628";
+import { createDetailViews } from "./src/detail-views.js?v=interaction-qa-20260629";
 import {
   els,
   goBackDetail,
@@ -13,7 +13,7 @@ import {
   setStatus,
   sortedNumericKeys,
   trackReaderLocation,
-} from "./src/dom.js?v=interaction-qa-20260628";
+} from "./src/dom.js?v=interaction-qa-20260629";
 import { createReferenceButton as makeReferenceButton, referenceKey, refDomId } from "./src/references.js";
 import { buildReferenceContext, referenceContextKey } from "./src/reference-context.js";
 import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js";

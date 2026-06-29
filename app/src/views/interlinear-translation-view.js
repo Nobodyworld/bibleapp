@@ -1,11 +1,11 @@
 import { fetchVerseBook, fetchWordMapBook, loadLanguageMetadata, loadOriginalSourceTexts } from "../data-service.js";
-import { createDetailList, els, setDetail, setDetailMessage, textNode } from "../dom.js?v=interaction-qa-20260628";
+import { createDetailList, els, setDetail, setDetailMessage, textNode } from "../dom.js?v=interaction-qa-20260629";
 import { setLanguageTextWithTooltips } from "../language-tooltips.js";
 import { referenceKey } from "../references.js";
 import { analyzeOriginalWord, summarizeHebrewGematriaTokens, wordHasLanguageScript } from "../language.js";
-import { resolveInterlinearVerseTokens } from "../strongs.js?v=interaction-qa-20260628";
+import { resolveInterlinearVerseTokens } from "../strongs.js?v=interaction-qa-20260629";
 import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=interaction-qa-20260628";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=interaction-qa-20260629";
 import { createStudyEmptyState } from "../study-empty-state.js";
 import { interlinearTokenIdentity } from "../ui-contracts.js";
 
@@ -356,6 +356,7 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
 
     const wrap = document.createElement("div");
     wrap.className = "interlinear-lazy-reader";
+    wrap.dataset.detailRestore = "interlinear-lazy-reader";
     wrap.append(createVerseContextTabs(ctx, reference, verse, "interlinear", ctx.studyContext?.strong), initialSection);
     const status = document.createElement("p");
     status.className = "interlinear-lazy-status";
@@ -366,7 +367,7 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     const verses = interlinearVerses();
     let currentIndex = verses.indexOf(String(verse));
     let loading = false;
-    const pane = els.detailPane;
+    const pane = els.detail || els.detailPane;
     const updateStatus = () => {
       const nextVerse = verses[currentIndex + 1];
       status.textContent = nextVerse ? `Scroll to load ${ctx.currentReference(nextVerse)}.` : "End of chapter.";
@@ -405,6 +406,15 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     function onScroll() {
       maybeLoadNext();
     }
+    function restoreLazyLoad() {
+      stopInterlinearLazyLoad();
+      if (!wrap.isConnected) return;
+      stopInterlinearLazyLoad = stop;
+      pane?.addEventListener("scroll", onScroll, { passive: true });
+      updateStatus();
+      window.requestAnimationFrame(maybeLoadNext);
+    }
+    wrap.addEventListener("detail:restore", restoreLazyLoad);
     stopInterlinearLazyLoad = stop;
     pane?.addEventListener("scroll", onScroll, { passive: true });
     updateStatus();

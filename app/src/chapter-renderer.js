@@ -1,4 +1,4 @@
-import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=interaction-qa-20260628";
+import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=interaction-qa-20260629";
 import { resolvePassageText } from "./data-service.js";
 import { referenceKey, refDomId, parseLocationFromHref } from "./references.js";
 import { addRedLetterRange, ensureStores, getRedLetterRanges } from "./stores.js";

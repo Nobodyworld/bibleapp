@@ -1,5 +1,5 @@
 import { createUserDataExport, getUserDataSummary, importUserData, setPackageStore } from "../stores.js";
-import { setDetail } from "../dom.js?v=interaction-qa-20260628";
+import { setDetail } from "../dom.js?v=interaction-qa-20260629";
 import { resolveCapabilities } from "../capabilities.js";
 import { setCapabilityDisabled } from "../package-state.js";
 

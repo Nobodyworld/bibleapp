@@ -1,4 +1,4 @@
-import { createDetailList, setDetail } from "../dom.js?v=interaction-qa-20260628";
+import { createDetailList, setDetail } from "../dom.js?v=interaction-qa-20260629";
 import { canRunJob, runJob } from "../job-processor.js";
 import { completeJob, getAllJobEvents, updateJobStatus } from "../stores.js";
 

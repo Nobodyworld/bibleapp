@@ -1,6 +1,6 @@
 import { studyUnavailableLabel } from "../study-empty-state.js";
 import { CONTROL_STATES, resolveControlState } from "../ui-contracts.js";
-import { resolveInterlinearVerseTokens } from "../strongs.js?v=interaction-qa-20260628";
+import { resolveInterlinearVerseTokens } from "../strongs.js?v=interaction-qa-20260629";
 
 function getVerseText(ctx, verse) {
   return ctx.state.verseBook?.chapters?.[ctx.state.chapter]?.[verse] || "";

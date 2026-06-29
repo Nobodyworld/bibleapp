@@ -208,7 +208,7 @@ async function launchBrowser() {
   const profile = await mkdtemp(join(tmpdir(), "openbible-edge-"));
   debugQa(`Profile: ${profile}`);
   const args = [
-    "--headless",
+    "--headless=new",
     "--disable-gpu",
     "--disable-dev-shm-usage",
     "--disable-background-networking",
@@ -221,42 +221,53 @@ async function launchBrowser() {
   ];
   const child = spawn(edgePath, args, { stdio: "ignore", windowsHide: true });
   debugQa(`Spawned Edge PID: ${child.pid || "unknown"}`);
-  const version = await waitForJson(`http://127.0.0.1:${port}/json/version`);
-  debugQa("Loaded CDP version.");
-  const client = new CdpClient(version.webSocketDebuggerUrl);
-  await client.open();
-  debugQa("Opened browser-level WebSocket.");
-  const target = await client.send("Target.createTarget", { url: "about:blank" });
-  debugQa(`Created target: ${target.targetId}`);
-  const attached = await client.send("Target.attachToTarget", { targetId: target.targetId, flatten: true });
-  debugQa(`Attached target session: ${attached.sessionId}`);
-  const page = {
-    send(method, params = {}, timeoutMs = 10000) {
-      return client.send(method, params, timeoutMs, attached.sessionId);
-    },
-    close() {
-      client.close();
-    },
-  };
-  await page.send("Page.enable");
-  await page.send("Runtime.enable");
-  if (qaDevice === "mobile") {
-    await page.send("Emulation.setDeviceMetricsOverride", {
-      width: 390,
-      height: 844,
-      deviceScaleFactor: 3,
-      mobile: true,
-    });
-    await page.send("Emulation.setTouchEmulationEnabled", {
-      enabled: true,
-      maxTouchPoints: 5,
-    });
-    await page.send("Emulation.setUserAgentOverride", {
-      userAgent:
-        "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36 OpenBibleQA",
-    });
+  let pageClient;
+  try {
+    await waitForJson(`http://127.0.0.1:${port}/json/version`);
+    debugQa("Loaded CDP version.");
+    const targets = await waitForJson(`http://127.0.0.1:${port}/json/list`);
+    const pageTarget = targets.find((candidate) => candidate.type === "page" && candidate.webSocketDebuggerUrl);
+    if (!pageTarget?.webSocketDebuggerUrl) {
+      throw new Error("Could not resolve initial page target WebSocket.");
+    }
+    pageClient = new CdpClient(pageTarget.webSocketDebuggerUrl);
+    await pageClient.open();
+    debugQa(`Opened page-level WebSocket for target: ${pageTarget.id}`);
+    const page = {
+      send(method, params = {}, timeoutMs = 10000) {
+        return pageClient.send(method, params, timeoutMs);
+      },
+      close() {
+        pageClient.close();
+      },
+    };
+    await page.send("Page.enable");
+    await page.send("Runtime.enable");
+    if (qaDevice === "mobile") {
+      await page.send("Emulation.setDeviceMetricsOverride", {
+        width: 390,
+        height: 844,
+        deviceScaleFactor: 3,
+        mobile: true,
+      });
+      await page.send("Emulation.setTouchEmulationEnabled", {
+        enabled: true,
+        maxTouchPoints: 5,
+      });
+      await page.send("Emulation.setUserAgentOverride", {
+        userAgent:
+          "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36 OpenBibleQA",
+      });
+    }
+    return { page, child, profile };
+  } catch (error) {
+    pageClient?.close();
+    if (child.pid) {
+      spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], { stdio: "ignore" });
+    }
+    await rm(profile, { recursive: true, force: true });
+    throw error;
   }
-  return { page, child, profile };
 }
 
 async function navigate(page, url) {
@@ -577,7 +588,7 @@ async function runQa(page) {
   await evaluate(
     page,
     `(() => {
-      const pane = document.querySelector('.detail-pane');
+      const pane = document.querySelector('#detailContent');
       pane.scrollTop = pane.scrollHeight;
       pane.dispatchEvent(new Event('scroll'));
       return true;

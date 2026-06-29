@@ -1,7 +1,7 @@
-import { createDetailList, setDetail } from "../dom.js?v=interaction-qa-20260628";
+import { createDetailList, setDetail } from "../dom.js?v=interaction-qa-20260629";
 import { referenceKey } from "../references.js";
 import { createCustomTag, deleteCustomTag, getVerseTags, setVerseTag, updateCustomTag } from "../stores.js";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=interaction-qa-20260628";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=interaction-qa-20260629";
 
 function tagIcon(tag) {
   return String(tag?.icon || tag?.label?.slice(0, 1) || "*").slice(0, 3);

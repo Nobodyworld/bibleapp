@@ -95,6 +95,25 @@ function snapshotDetail() {
   };
 }
 
+function notifyDetailRestored() {
+  if (!els.detail) return;
+  els.detail.dispatchEvent(new CustomEvent("detail:restore", { bubbles: false }));
+  els.detail.querySelectorAll("[data-detail-restore]").forEach((node) => {
+    node.dispatchEvent(new CustomEvent("detail:restore", { bubbles: false }));
+  });
+}
+
+function restoreDetail(snapshot) {
+  els.detailTitle.textContent = snapshot.title;
+  setDetailContext(null);
+  if (els.detailContext) {
+    els.detailContext.replaceChildren(...(snapshot.contextNodes || []));
+    els.detailContext.hidden = Boolean(snapshot.contextHidden);
+  }
+  els.detail.replaceChildren(...snapshot.nodes);
+  notifyDetailRestored();
+}
+
 function extractContextNode(node, options = {}) {
   if (options.context) return options.context;
   if (!node?.querySelector) return null;
@@ -172,83 +191,64 @@ export function setDetailMessage(title, message, options = {}) {
 
 export function goBackDetail() {
   const previousDetail = detailHistory.pop();
-  const previousLocation = readerLocationHistory.pop();
 
-  if (!previousDetail && !previousLocation) {
+  if (previousDetail) {
+    if (canStoreCurrentDetail()) detailForwardHistory.push(snapshotDetail());
+    transientBase = null;
+    currentDetailTransient = false;
+    detailPanelMode = transitionPanelMode(detailPanelMode, PANEL_EVENTS.activate);
+    restoreDetail(previousDetail);
     updateDetailHistoryButtons();
     return;
   }
 
-  // Store current state in forward history
-  if (canStoreCurrentDetail()) detailForwardHistory.push(snapshotDetail());
-  if (previousLocation && lastTrackedLocation) readerLocationForwardHistory.push(lastTrackedLocation);
+  const previousLocation = readerLocationHistory.pop();
+
+  if (!previousLocation) {
+    updateDetailHistoryButtons();
+    return;
+  }
+
+  if (lastTrackedLocation) readerLocationForwardHistory.push(lastTrackedLocation);
 
   transientBase = null;
   currentDetailTransient = false;
   detailPanelMode = transitionPanelMode(detailPanelMode, PANEL_EVENTS.activate);
 
-  // If we have a location to restore, return it via callback
-  // The app.js will handle the actual navigation
-  if (previousLocation) {
-    if (previousDetail) {
-      detailHistory.push(previousDetail);
-    }
-    lastTrackedLocation = { ...previousLocation };
-    updateDetailHistoryButtons();
-    return previousLocation;
-  }
-
-  // Otherwise just restore the detail panel
-  if (previousDetail) {
-    els.detailTitle.textContent = previousDetail.title;
-    setDetailContext(null);
-    if (els.detailContext) {
-      els.detailContext.replaceChildren(...(previousDetail.contextNodes || []));
-      els.detailContext.hidden = Boolean(previousDetail.contextHidden);
-    }
-    els.detail.replaceChildren(...previousDetail.nodes);
-  }
+  lastTrackedLocation = { ...previousLocation };
   updateDetailHistoryButtons();
+  return previousLocation;
 }
 
 export function goForwardDetail() {
   const nextDetail = detailForwardHistory.pop();
-  const nextLocation = readerLocationForwardHistory.pop();
 
-  if (!nextDetail && !nextLocation) {
+  if (nextDetail) {
+    if (canStoreCurrentDetail()) detailHistory.push(snapshotDetail());
+    transientBase = null;
+    currentDetailTransient = false;
+    detailPanelMode = transitionPanelMode(detailPanelMode, PANEL_EVENTS.activate);
+    restoreDetail(nextDetail);
     updateDetailHistoryButtons();
     return;
   }
 
-  // Store current state in back history
-  if (canStoreCurrentDetail()) detailHistory.push(snapshotDetail());
-  if (nextLocation && lastTrackedLocation) readerLocationHistory.push(lastTrackedLocation);
+  const nextLocation = readerLocationForwardHistory.pop();
+
+  if (!nextLocation) {
+    updateDetailHistoryButtons();
+    return;
+  }
+
+  if (lastTrackedLocation) readerLocationHistory.push(lastTrackedLocation);
 
   transientBase = null;
   currentDetailTransient = false;
   detailPanelMode = transitionPanelMode(detailPanelMode, PANEL_EVENTS.activate);
 
-  // If we have a location to restore, return it via callback
-  if (nextLocation) {
-    if (nextDetail) {
-      detailForwardHistory.push(nextDetail);
-    }
-    lastTrackedLocation = { ...nextLocation };
-    updateDetailHistoryButtons();
-    return nextLocation;
-  }
-
-  // Otherwise just restore the detail panel
-  if (nextDetail) {
-    els.detailTitle.textContent = nextDetail.title;
-    setDetailContext(null);
-    if (els.detailContext) {
-      els.detailContext.replaceChildren(...(nextDetail.contextNodes || []));
-      els.detailContext.hidden = Boolean(nextDetail.contextHidden);
-    }
-    els.detail.replaceChildren(...nextDetail.nodes);
-  }
+  lastTrackedLocation = { ...nextLocation };
   updateDetailHistoryButtons();
+  return nextLocation;
 }
 
 export function resetDetail(title = "Details", message = defaultDetailText) {

@@ -1,9 +1,9 @@
 import { fetchCommentaryAggregate, fetchCommentarySource } from "../data-service.js";
-import { createDetailList, setDetail, setDetailMessage } from "../dom.js?v=interaction-qa-20260628";
+import { createDetailList, setDetail, setDetailMessage } from "../dom.js?v=interaction-qa-20260629";
 import { capabilityMessage } from "../capabilities.js";
 import { makeInternalLinksNavigable } from "../references.js";
 import { createStudyEmptyState } from "../study-empty-state.js";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=interaction-qa-20260628";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=interaction-qa-20260629";
 
 export function createCommentaryOutlineViews(ctx) {
   async function loadCommentaryAggregate() {
