@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Bible App Reader</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231d4ed8'/%3E%3Ctext x='8' y='12' font-size='10' font-family='sans-serif' fill='white' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="./styles.css?v=qa-fixes-20260629-1" />
+    <link rel="stylesheet" href="./styles.css?v=tag-phase-20260629" />
   </head>
   <body>
     <header class="app-header">
@@ -39,7 +39,13 @@
       <section class="reader-pane" aria-label="Bible reader">
         <div class="chapter-title">
           <div class="chapter-heading">
-            <h2 id="chapterTitle">Loading...</h2>
+            <div class="chapter-heading-title">
+              <h2 id="chapterTitle">Loading...</h2>
+              <div class="chapter-favorite-actions" aria-label="Current reading favorites">
+                <button id="favoriteBook" class="scope-favorite-button" type="button" title="Add current book to favorites" aria-label="Add current book to favorites" aria-pressed="false">☆ <span>Book</span></button>
+                <button id="favoriteChapter" class="scope-favorite-button" type="button" title="Add current chapter to favorites" aria-label="Add current chapter to favorites" aria-pressed="false">☆ <span>Chapter</span></button>
+              </div>
+            </div>
             <div class="chapter-stepper" aria-label="Chapter navigation">
               <button id="prevChapter" class="chapter-nav-button" type="button" title="Previous chapter">
                 <span aria-hidden="true">‹</span>
@@ -125,6 +131,6 @@
       </aside>
     </main>
 
-    <script type="module" src="./app.js?v=interaction-qa-20260629"></script>
+    <script type="module" src="./app.js?v=tag-phase-20260629"></script>
   </body>
 </html>

@@ -1,11 +1,11 @@
 import { createCommentaryOutlineViews } from "./views/commentary-outline-view.js?v=interaction-qa-20260629";
-import { createInterlinearTranslationViews } from "./views/interlinear-translation-view.js?v=interaction-qa-20260629";
-import { createJobsView } from "./views/jobs-view.js?v=interaction-qa-20260629";
+import { createInterlinearTranslationViews } from "./views/interlinear-translation-view.js?v=tag-phase-20260629";
+import { createJobsView } from "./views/jobs-view.js?v=tag-phase-20260629";
 import { createReferenceViews } from "./views/reference-view.js?v=interaction-qa-20260629";
 import { createSearchView } from "./views/search-view.js?v=interaction-qa-20260629";
 import { createStrongsView } from "./views/strongs-view.js?v=interaction-qa-20260629";
-import { createTagsView } from "./views/tags-view.js?v=interaction-qa-20260629";
-import { createUserDataView } from "./views/user-data-view.js?v=interaction-qa-20260629";
+import { createTagsView } from "./views/tags-view.js?v=tag-phase-20260629";
+import { createUserDataView } from "./views/user-data-view.js?v=tag-phase-20260629";
 import { setDetail } from "./dom.js?v=interaction-qa-20260629";
 
 export function createDetailViews(ctx) {
@@ -21,6 +21,7 @@ export function createDetailViews(ctx) {
 
   return {
     clearStrongPin: strongsView.clearStrongPin,
+    createFavoriteButton: tagsView.createFavoriteButton,
     renderInlineTagPicker: tagsView.renderInlineTagPicker,
     renderTagBadges: tagsView.renderTagBadges,
     showCommentary: commentaryOutlineViews.showCommentary,
@@ -36,6 +37,7 @@ export function createDetailViews(ctx) {
     showStudyUnavailable: (title, node, options = {}) => setDetail(title, node, options),
     showStrong: strongsView.showStrong,
     showJobs: jobsView,
+    showFavorites: tagsView.showFavorites,
     showTagEditor: tagsView.showTagEditor,
     showTagIndex: tagsView.showTagIndex,
     showUserData: createUserDataView(ctx),

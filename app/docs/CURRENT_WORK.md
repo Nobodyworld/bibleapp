@@ -10,7 +10,7 @@ Reviewed: 2026-06-29
 - Reader and interlinear tokens follow each other by verse and token index. Strong's is only a uniqueness fallback.
 - Explicit panel actions lock the selected panel; disengage, clear, or navigation returns it to follow mode.
 - Active and hovered reference contexts are separate and use the translation-to-word hierarchy documented in `UI_FUNCTIONALITY_SCHEMA.md`.
-- Verse tags, custom tag management, semantic assertions, local jobs, export/import, and graph projection exist. Target-aware tags and favorites are not implemented yet.
+- Verse tags, custom tag management, semantic assertions, local jobs, export/import, and graph projection exist. The schema-v2 target-aware tag foundation and favorite/inquiry definitions are implemented; dedicated favorites and word-selection UI are next.
 
 ## Verification status
 
@@ -32,12 +32,11 @@ Reviewed: 2026-06-29
 
 ## Next implementation boundary
 
-Begin Phase 1 of `TAG_FAVORITES_ANALYSIS_ROADMAP.md`:
+Phase 1 of `TAG_FAVORITES_ANALYSIS_ROADMAP.md` completed on 2026-06-29. Begin Phase 2:
 
-1. Add versioned, target-aware tag assertion APIs while preserving existing verse tags.
-2. Add separate user-inquiry and textual-question semantics.
-3. Add `tag:favorite` and definition-driven tag behavior metadata.
-4. Add migration, export/import, and idempotent job-trigger tests before adding new UI.
+1. Add favorite action to verse context tabs and Interlinear source-token cards.
+2. Add committed rendered interaction assertions for favorite controls and panel persistence.
+3. Add reader text-span tagging after source-token tagging is stable.
 
 ## Verification commands
 

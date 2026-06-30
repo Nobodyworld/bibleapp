@@ -1,0 +1,209 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "target.schema.json",
+  "title": "Bible App semantic target",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "target_type",
+    "target_id",
+    "translation_id",
+    "edition_id",
+    "testament",
+    "reference"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "target_type": {
+      "enum": [
+        "book",
+        "chapter",
+        "verse",
+        "verse_range",
+        "text_span",
+        "source_token",
+        "source_token_span"
+      ]
+    },
+    "target_id": {
+      "type": "string",
+      "pattern": "^target:"
+    },
+    "translation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "edition_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "testament": {
+      "enum": [
+        "old",
+        "new"
+      ]
+    },
+    "reference": {
+      "type": "object",
+      "required": [
+        "book_id"
+      ],
+      "properties": {
+        "book_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "chapter": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "verse_start": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "verse_end": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false
+    },
+    "anchor": {
+      "type": "object",
+      "required": [
+        "char_start",
+        "char_end",
+        "text_snapshot"
+      ],
+      "properties": {
+        "char_start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "char_end": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "text_snapshot": {
+          "type": "string"
+        }
+      }
+    },
+    "token": {
+      "type": "object",
+      "required": [
+        "token_index"
+      ],
+      "properties": {
+        "token_index": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "strong_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "language": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "original": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "token_span": {
+      "type": "object",
+      "required": [
+        "token_start",
+        "token_end",
+        "source_snapshots"
+      ],
+      "properties": {
+        "token_start": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "token_end": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "source_snapshots": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "language": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "strong_codes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "target_type": {
+            "const": "chapter"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "reference": {
+            "required": [
+              "book_id",
+              "chapter"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "target_type": {
+            "enum": [
+              "verse",
+              "verse_range",
+              "text_span",
+              "source_token",
+              "source_token_span"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "reference": {
+            "required": [
+              "book_id",
+              "chapter",
+              "verse_start",
+              "verse_end"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

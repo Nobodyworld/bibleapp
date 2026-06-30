@@ -1,6 +1,15 @@
 import { createDetailList, setDetail } from "../dom.js?v=interaction-qa-20260629";
 import { referenceKey } from "../references.js";
-import { createCustomTag, deleteCustomTag, getVerseTags, setVerseTag, updateCustomTag } from "../stores.js";
+import {
+  createCustomTag,
+  deleteCustomTag,
+  getTagTargets,
+  getVerseTags,
+  setTagAssertion,
+  setVerseTag,
+  updateCustomTag,
+} from "../stores.js?v=tag-phase-20260629";
+import { targetId } from "../semantic-targets.js?v=tag-phase-20260629";
 import { createVerseContextTabs } from "./verse-context-tabs.js?v=interaction-qa-20260629";
 
 function tagIcon(tag) {
@@ -8,6 +17,24 @@ function tagIcon(tag) {
 }
 
 export function createTagsView(ctx) {
+  function createFavoriteButton(target, options = {}) {
+    const id = targetId(target);
+    const active = id ? getTagTargets(ctx.state, "favorite").includes(id) : false;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = [options.className || "favorite-button", active ? "active" : ""].filter(Boolean).join(" ");
+    button.textContent = active ? "★" : "☆";
+    button.title = `${active ? "Remove" : "Add"} ${options.label || "target"} ${active ? "from" : "to"} favorites`;
+    button.setAttribute("aria-label", button.title);
+    button.setAttribute("aria-pressed", active ? "true" : "false");
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      const assertion = setTagAssertion(ctx.state, target, "favorite", !active);
+      options.onChange?.(assertion);
+    });
+    return button;
+  }
+
   function renderTagBadges(key) {
     const tagIds = getVerseTags(ctx.state, key);
     if (!tagIds.length) return null;
@@ -270,7 +297,12 @@ export function createTagsView(ctx) {
     const wrap = document.createElement("div");
     const heading = document.createElement("h3");
     heading.textContent = "Verse Tags";
-    wrap.append(heading);
+    const favoritesButton = document.createElement("button");
+    favoritesButton.type = "button";
+    favoritesButton.className = "mini-button";
+    favoritesButton.textContent = `Favorites (${getTagTargets(ctx.state, "favorite").length})`;
+    favoritesButton.addEventListener("click", showFavorites);
+    wrap.append(heading, favoritesButton);
 
     const createTitle = document.createElement("h4");
     createTitle.textContent = "Create Tag";
@@ -317,5 +349,76 @@ export function createTagsView(ctx) {
     setDetail("Tags", wrap);
   }
 
-  return { renderInlineTagPicker, renderTagBadges, showTagEditor, showTagIndex };
+  function showFavorites() {
+    const wrap = document.createElement("div");
+    const heading = document.createElement("h3");
+    heading.textContent = "Favorites";
+    wrap.append(heading);
+
+    const assertions = Object.values(ctx.state.tagStore.tag_assertions || {})
+      .filter((assertion) => assertion.active && assertion.tag_id === "tag:favorite")
+      .sort((a, b) => String(a.target_id).localeCompare(String(b.target_id)));
+    if (!assertions.length) {
+      const empty = document.createElement("p");
+      empty.textContent = "No favorites yet. Use a star beside a book, chapter, or verse.";
+      wrap.append(empty);
+      setDetail("Favorites", wrap);
+      return;
+    }
+
+    const labels = {
+      book: "Books",
+      chapter: "Chapters",
+      verse: "Verses",
+      verse_range: "Verse ranges",
+      text_span: "English words and phrases",
+      source_token: "Source words",
+      source_token_span: "Source-word chunks",
+    };
+    Object.entries(labels).forEach(([type, groupLabel]) => {
+      const matching = assertions.filter((assertion) => assertion.target?.target_type === type);
+      if (!matching.length) return;
+      const title = document.createElement("h4");
+      title.textContent = `${groupLabel} (${matching.length})`;
+      wrap.append(title);
+      wrap.append(
+        createDetailList(matching, (li, assertion) => {
+          const target = assertion.target;
+          const ref = target.reference || {};
+          const book = ctx.findBook(ref.book_id);
+          let label = book?.name || ref.book_id;
+          if (ref.chapter) label += ` ${ref.chapter}`;
+          if (ref.verse_start) {
+            label += `:${ref.verse_start}`;
+            if (ref.verse_end > ref.verse_start) label += `-${ref.verse_end}`;
+          }
+          if (type === "text_span") label += ` — “${target.anchor?.text_snapshot || ""}”`;
+          if (type === "source_token") {
+            label += ` — ${target.token?.original || `token ${target.token?.token_index}`}`;
+            if (target.token?.strong_code) label += ` (${target.token.strong_code})`;
+          }
+          if (type === "source_token_span") {
+            label += ` — ${(target.token_span?.source_snapshots || []).join(" ") || "source phrase"}`;
+          }
+          li.append(
+            ctx.createReferenceButton(label, {
+              book_id: ref.book_id,
+              chapter: ref.chapter || 1,
+              verse_start: ref.verse_start || null,
+            }),
+          );
+        }),
+      );
+    });
+    setDetail("Favorites", wrap);
+  }
+
+  return {
+    createFavoriteButton,
+    renderInlineTagPicker,
+    renderTagBadges,
+    showFavorites,
+    showTagEditor,
+    showTagIndex,
+  };
 }

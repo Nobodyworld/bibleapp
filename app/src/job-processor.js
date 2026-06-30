@@ -1,9 +1,10 @@
-import { JOB_TYPES } from "./config.js";
+import { JOB_TYPES } from "./config.js?v=tag-phase-20260629";
 import { fetchWordMapBook } from "./data-service.js";
-import { parseReferenceKey } from "./semantic-targets.js";
+import { parseReferenceKey, referenceKeyFromTarget, targetId } from "./semantic-targets.js?v=tag-phase-20260629";
 
 const PROCESSOR_VERSIONS = {
   [JOB_TYPES.tagIndexRefresh]: "tag-index-refresh-v1",
+  [JOB_TYPES.inquiryAnalysis]: "inquiry-analysis-v1",
   [JOB_TYPES.translationEditAnalysis]: "translation-edit-analysis-v1",
   [JOB_TYPES.personalGlossaryBuild]: "personal-glossary-build-v1",
   [JOB_TYPES.wordMapRefresh]: "word-map-refresh-v1",
@@ -105,7 +106,7 @@ export async function analyzeTagIndexRefreshJob(job, state) {
   });
   const byReference = {};
   activeAssertions.forEach((assertion) => {
-    const key = assertion.reference_key || assertion.target?.reference_key || "unknown";
+    const key = assertion.reference_key || referenceKeyFromTarget(assertion.target) || assertion.target_id || "unknown";
     byReference[key] = byReference[key] || [];
     byReference[key].push(assertion.id);
   });
@@ -131,6 +132,84 @@ export async function analyzeTagIndexRefreshJob(job, state) {
           .sort(([a], [b]) => a.localeCompare(b))
           .map(([referenceKey, assertionIds]) => [referenceKey, assertionIds.sort()]),
       ),
+    },
+  });
+}
+
+export async function analyzeInquiryJob(job) {
+  const target = job?.payload?.target || null;
+  const canonicalTargetId = targetId(target);
+  if (!canonicalTargetId) {
+    throw new Error("inquiry-analysis requires a complete supported target.");
+  }
+  const referenceKey = referenceKeyFromTarget(target);
+  const sourceToken = target.target_type === "source_token" ? target.token : null;
+  const sourceTokenSpan = target.target_type === "source_token_span" ? target.token_span : null;
+  const selectedText = target.target_type === "text_span" ? target.anchor?.text_snapshot || "" : "";
+  const missingInputs = [];
+  if (!referenceKey && !["book", "chapter"].includes(target.target_type)) {
+    missingInputs.push("verse_reference");
+  }
+  if (target.target_type === "source_token" && !sourceToken?.strong_code) {
+    missingInputs.push("strong_code");
+  }
+
+  return resultEnvelope(job, {
+    input_target: target,
+    input_revision_id: job?.payload?.input_revision_id || null,
+    result_status: missingInputs.length ? "needs_review" : "foundation_complete",
+    inquiry_profile: {
+      type: "unknown",
+      question_text: String(job?.payload?.question_text || ""),
+      requires_user_clarification: !String(job?.payload?.question_text || "").trim(),
+    },
+    source_language_summary: sourceToken
+      ? {
+          token_index: sourceToken.token_index,
+          strong_code: sourceToken.strong_code,
+          language: sourceToken.language,
+          original: sourceToken.original,
+        }
+      : sourceTokenSpan
+        ? {
+            token_start: sourceTokenSpan.token_start,
+            token_end: sourceTokenSpan.token_end,
+            strong_codes: sourceTokenSpan.strong_codes,
+            language: sourceTokenSpan.language,
+            source_snapshots: sourceTokenSpan.source_snapshots,
+          }
+        : null,
+    english_rendering_summary: selectedText ? { selected_text: selectedText } : null,
+    findings: missingInputs.map((input) => ({
+      finding_type: "inquiry_input_missing",
+      input,
+      severity: "warning",
+      confidence: 1,
+    })),
+    confidence: missingInputs.length ? 0.5 : 0.75,
+    missing_inputs: missingInputs,
+    graph_patch: {
+      schema_version: 1,
+      nodes: [
+        {
+          id: canonicalTargetId,
+          type: target.target_type,
+          target,
+        },
+        {
+          id: `inquiry:${job.payload.assertion_id}`,
+          type: "inquiry",
+          assertion_id: job.payload.assertion_id,
+        },
+      ],
+      edges: [
+        {
+          id: `edge:inquiry:${job.payload.assertion_id}:asks_about`,
+          type: "asks_about",
+          from: `inquiry:${job.payload.assertion_id}`,
+          to: canonicalTargetId,
+        },
+      ],
     },
   });
 }
@@ -325,6 +404,7 @@ export async function runJob(job, state, options = {}) {
   }
   const type = job?.type || job?.job_type;
   if (type === JOB_TYPES.tagIndexRefresh) return analyzeTagIndexRefreshJob(job, state, options);
+  if (type === JOB_TYPES.inquiryAnalysis) return analyzeInquiryJob(job, state, options);
   if (type === JOB_TYPES.translationEditAnalysis) return analyzeTranslationEditJob(job, state, options);
   if (type === JOB_TYPES.personalGlossaryBuild) return analyzePersonalGlossaryJob(job, state, options);
   return analyzeWordMapRefreshJob(job, state, options);

@@ -7,6 +7,8 @@ export const els = {
   book: document.querySelector("#bookSelect"),
   chapter: document.querySelector("#chapterSelect"),
   title: document.querySelector("#chapterTitle"),
+  favoriteBook: document.querySelector("#favoriteBook"),
+  favoriteChapter: document.querySelector("#favoriteChapter"),
   content: document.querySelector("#chapterContent"),
   detailTitle: document.querySelector("#detailTitle"),
   detailContext: document.querySelector("#detailContext"),

@@ -8,6 +8,7 @@ Reviewed: 2026-06-29
 - Outline and Interlinear are side-panel tools only.
 - Mobile exposes a Study panel launcher so side-panel-only tools remain reachable.
 - Verse context tabs expose Parallel, Refs, Cmt, Int, and Tags when their scoped actions apply.
+- Book, chapter, and verse favorite stars are direct `tag:favorite` toggles and expose state through `aria-pressed`.
 
 The executable control map is `src/ui-contracts.js`.
 
@@ -65,7 +66,9 @@ Committed selection and transient hover remain separate:
 - Leaving a hovered word clears only `hoverReferenceContext`.
 - Persisted records require a complete key for their declared scope. Key generation rejects missing or unknown hierarchy data.
 
-The current hierarchy supports one word token. Planned text spans and source-token spans require their own target schema and must not be forced into the word key.
+The navigation reference hierarchy supports one word token. Text spans and source-token spans use the separate schema-v2 semantic target model and are not forced into the navigation word key.
+
+Tag persistence uses schema-v2 semantic targets for book, chapter, verse, verse range, text span, source token, and source-token span. `verse_tags` remains a rebuildable verse-only compatibility projection; `tag_target_index` indexes every supported target type.
 
 ## Persistence startup boundary
 

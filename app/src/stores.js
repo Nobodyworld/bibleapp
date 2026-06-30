@@ -1,16 +1,21 @@
-import { DEFAULT_TAGS, JOB_TYPES, STORAGE_KEYS } from "./config.js";
+import { DEFAULT_TAGS, JOB_TYPES, STORAGE_KEYS } from "./config.js?v=tag-phase-20260629";
 import {
+  createVerseTarget,
   createTagAssertion,
+  deriveTagTargetIndex,
   deriveVerseTagsFromAssertions,
-  normalizeTagAssertions,
+  legacyTagId,
+  normalizeTagAssertionCollection,
+  referenceKeyFromTarget,
   tagAssertionId,
   tagDefinitionId,
-} from "./semantic-targets.js";
+  normalizeTarget,
+} from "./semantic-targets.js?v=tag-phase-20260629";
 import { aggregatePollResponses, createPollResponse, normalizePollResponse } from "./semantic-polls.js";
 import { createDefaultPackageStore, normalizePackageStore } from "./package-state.js";
 
 const USER_DATA_EXPORT_KIND = "bibleapp:user-data";
-const USER_DATA_EXPORT_VERSION = 2;
+const USER_DATA_EXPORT_VERSION = 3;
 const JOB_STATES = new Set(["planned", "queued", "running", "completed", "failed", "cancelled", "simulation_only"]);
 const LEGACY_JOB_STATUS_TO_STATE = {
   pending: "queued",
@@ -214,13 +219,15 @@ function normalizeIcon(value) {
 
 function createDefaultTagStore() {
   return {
-    version: 3,
+    version: 4,
     tags: Object.fromEntries(DEFAULT_TAGS.map((tag) => [tag.id, normalizeTagDefinition(tag)])),
     verse_tags: {},
     tag_assertions: {},
+    tag_target_index: {},
+    quarantined_records: [],
     conflicts: [],
     job_events: [],
-    available_job_types: [JOB_TYPES.tagIndexRefresh],
+    available_job_types: [JOB_TYPES.tagIndexRefresh, JOB_TYPES.inquiryAnalysis],
   };
 }
 
@@ -276,7 +283,9 @@ function normalizeTagDefinition(tag = {}) {
     category: tag.category || "reader_classification",
     allowed_target_types: Array.isArray(tag.allowed_target_types)
       ? tag.allowed_target_types
-      : ["verse", "verse_range", "text_span", "source_token"],
+      : ["verse", "verse_range", "text_span", "source_token", "source_token_span"],
+    display_behavior: tag.display_behavior || "custom_manual",
+    on_apply_job_type: tag.on_apply_job_type || null,
     status: tag.status || "active",
     retired_at: tag.retired_at || null,
     replacement_id: tag.replacement_id || null,
@@ -312,8 +321,14 @@ export function normalizeTagStore(value = {}) {
     ...fallback.tags,
   };
   store.verse_tags = store.verse_tags && typeof store.verse_tags === "object" ? store.verse_tags : {};
-  store.tag_assertions = normalizeTagAssertions(store.verse_tags, store.tag_assertions);
+  const normalizedAssertions = normalizeTagAssertionCollection(store.verse_tags, store.tag_assertions);
+  store.tag_assertions = normalizedAssertions.assertions;
   store.verse_tags = deriveVerseTagsFromAssertions(store.tag_assertions);
+  store.tag_target_index = deriveTagTargetIndex(store.tag_assertions);
+  store.quarantined_records = [
+    ...(Array.isArray(store.quarantined_records) ? store.quarantined_records : []),
+    ...normalizedAssertions.quarantined.map((item) => ({ ...item, quarantined_at: nowIso() })),
+  ].slice(-200);
   store.conflicts = Array.isArray(store.conflicts) ? store.conflicts.slice(-100) : [];
   store.job_events = normalizeJobEvents(store.job_events);
   store.version = fallback.version;
@@ -340,7 +355,11 @@ export function normalizeAssertionStore(value = {}, seedAssertions = {}) {
   const fallback = createDefaultAssertionStore();
   const store = { ...fallback, ...(value || {}) };
   const quarantinedRecords = [];
-  const tagAssertions = normalizeTagAssertions({}, { ...(seedAssertions || {}), ...(store.assertions || {}) });
+  const normalizedTagAssertions = normalizeTagAssertionCollection(
+    {},
+    { ...(seedAssertions || {}), ...(store.assertions || {}) },
+  );
+  const tagAssertions = normalizedTagAssertions.assertions;
   const genericAssertions = {};
   Object.values(store.assertions || {}).forEach((assertion) => {
     if (!assertion?.id || !assertion.assertion_type) {
@@ -372,6 +391,7 @@ export function normalizeAssertionStore(value = {}, seedAssertions = {}) {
     : [];
   store.quarantined_records = [
     ...(Array.isArray(store.quarantined_records) ? store.quarantined_records : []),
+    ...normalizedTagAssertions.quarantined.map((item) => ({ ...item, quarantined_at: nowIso() })),
     ...quarantinedRecords,
   ].slice(-200);
   store.version = fallback.version;
@@ -641,6 +661,16 @@ export function ensureStores(state) {
 }
 
 function hasPendingJob(events, type, payload) {
+  const triggerKey = payload?.trigger_key;
+  if (triggerKey) {
+    return events.some(
+      (event) =>
+        event.type === type &&
+        event.trigger_key === triggerKey &&
+        event.state !== "failed" &&
+        event.state !== "cancelled",
+    );
+  }
   const payloadKey = JSON.stringify(payload);
   return events.some((event) => event.state === "queued" && event.type === type && JSON.stringify(event.payload) === payloadKey);
 }
@@ -652,6 +682,7 @@ function createJob(prefix, type, payload) {
     schema_version: 1,
     job_type: type,
     type,
+    trigger_key: payload?.trigger_key || null,
     payload,
     input_targets: payload?.target ? [payload.target] : [],
     output_assertion_ids: [],
@@ -828,7 +859,9 @@ export function createCustomTag(state, fields) {
     label,
     description: String(fields?.description || "").trim(),
     category: "reader_classification",
-    allowed_target_types: ["verse", "verse_range", "text_span", "source_token"],
+    allowed_target_types: ["book", "chapter", "verse", "verse_range", "text_span", "source_token", "source_token_span"],
+    display_behavior: "custom_manual",
+    on_apply_job_type: null,
     status: "active",
     color: normalizeColor(fields?.color),
     icon: normalizeIcon(fields?.icon),
@@ -874,7 +907,11 @@ export function updateCustomTag(state, tagId, fields, options = {}) {
     schema_version: Number(current.schema_version || 1),
     namespace: current.namespace || "user",
     category: current.category || "reader_classification",
-    allowed_target_types: current.allowed_target_types || ["verse", "verse_range", "text_span", "source_token"],
+    allowed_target_types:
+      current.allowed_target_types ||
+      ["book", "chapter", "verse", "verse_range", "text_span", "source_token", "source_token_span"],
+    display_behavior: current.display_behavior || "custom_manual",
+    on_apply_job_type: current.on_apply_job_type || null,
     status: current.status || "active",
     color: normalizeColor(fields?.color),
     icon: normalizeIcon(fields?.icon),
@@ -908,6 +945,7 @@ export function deleteCustomTag(state, tagId) {
     assertion.updated_at = nowIso();
     upsertAssertion(state, assertion, "tag_assertion_superseded");
   });
+  state.tagStore.tag_target_index = deriveTagTargetIndex(state.tagStore.tag_assertions);
   let affectedReferences = 0;
   Object.entries(state.tagStore.verse_tags || {}).forEach(([key, tagIds]) => {
     const next = tagIds.filter((id) => id !== tagId);
@@ -1123,35 +1161,96 @@ export function getVerseTags(state, key) {
   return state.tagStore.verse_tags[key] || [];
 }
 
-export function setVerseTag(state, key, tagId, enabled) {
+function resolveRuntimeTag(state, tagId) {
+  const canonicalId = tagDefinitionId(tagId);
+  const legacyId = legacyTagId(canonicalId);
+  return (
+    state.tagStore.tags[legacyId] ||
+    state.tagStore.tags[tagId] ||
+    Object.values(state.tagStore.tags).find((tag) => tag.tag_definition_id === canonicalId) ||
+    null
+  );
+}
+
+function tagBehaviorTriggerKey(assertion, jobType) {
+  return `tag-behavior:${assertion.id}:${jobType}:r${Number(assertion.revision || 1)}`;
+}
+
+export function getTagTargets(state, tagId) {
   ensureStores(state);
-  const current = new Set(getVerseTags(state, key));
-  if (enabled) current.add(tagId);
-  else current.delete(tagId);
-  const next = [...current].sort();
-  if (next.length) state.tagStore.verse_tags[key] = next;
-  else delete state.tagStore.verse_tags[key];
-  const assertionId = tagAssertionId(key, tagId);
+  return state.tagStore.tag_target_index[tagDefinitionId(tagId)] || [];
+}
+
+export function setTagAssertion(state, targetInput, tagId, enabled, options = {}) {
+  ensureStores(state);
+  const target = normalizeTarget(targetInput);
+  if (!target) throw new Error("A complete supported tag target is required.");
+  const tag = resolveRuntimeTag(state, tagId);
+  if (!tag || tag.status === "retired") throw new Error(`Unknown or retired tag: ${tagId}`);
+  if (!tag.allowed_target_types.includes(target.target_type)) {
+    throw new Error(`${tag.label} cannot be applied to ${target.target_type} targets.`);
+  }
+
+  const canonicalTagId = tag.tag_definition_id || tagDefinitionId(tag.id);
+  const assertionId = tagAssertionId(target, canonicalTagId);
+  const existing = state.tagStore.tag_assertions[assertionId] || null;
+  const note = typeof options.note === "string" ? options.note : existing?.note || "";
+  if (existing && existing.active === Boolean(enabled) && existing.note === note) return existing;
+  if (!existing && !enabled) return null;
+
   const timestamp = nowIso();
-  state.tagStore.tag_assertions[assertionId] = {
-    ...(state.tagStore.tag_assertions[assertionId] ||
-      createTagAssertion(key, tagId, { active: enabled, timestamp })),
+  const assertion = {
+    ...(existing ||
+      createTagAssertion(target, canonicalTagId, {
+        active: enabled,
+        timestamp,
+        actor: options.actor,
+        confidence: options.confidence,
+        visibility: options.visibility,
+      })),
     active: Boolean(enabled),
     review_status: enabled ? "accepted" : "superseded",
+    revision: Number(existing?.revision || 0) + 1,
+    note,
     updated_at: timestamp,
   };
+  state.tagStore.tag_assertions[assertionId] = assertion;
+  state.tagStore.verse_tags = deriveVerseTagsFromAssertions(state.tagStore.tag_assertions);
+  state.tagStore.tag_target_index = deriveTagTargetIndex(state.tagStore.tag_assertions);
   upsertAssertion(
     state,
-    state.tagStore.tag_assertions[assertionId],
+    assertion,
     enabled ? "tag_assertion_applied" : "tag_assertion_superseded",
   );
   saveStorage(STORAGE_KEYS.tags, state.tagStore);
   enqueueTagJob(state, JOB_TYPES.tagIndexRefresh, {
-    reference_key: key,
-    tag_id: tagDefinitionId(tagId),
+    reference_key: referenceKeyFromTarget(target),
+    target_id: target.target_id,
+    target,
+    tag_id: canonicalTagId,
     assertion_id: assertionId,
     enabled,
   });
+
+  if (enabled && tag.on_apply_job_type) {
+    enqueueTagJob(state, tag.on_apply_job_type, {
+      trigger_key: tagBehaviorTriggerKey(assertion, tag.on_apply_job_type),
+      assertion_id: assertion.id,
+      assertion_revision: assertion.revision,
+      tag_id: assertion.tag_id,
+      target: assertion.target,
+      reference_key: referenceKeyFromTarget(assertion.target),
+      question_text: assertion.note || "",
+      input_revision_id: `${assertion.id}:r${assertion.revision}`,
+    });
+  }
+  return assertion;
+}
+
+export function setVerseTag(state, key, tagId, enabled, options = {}) {
+  const translation = options.translation_id || state.translationId || state.translation_id || "bsb";
+  const target = createVerseTarget(key, translation);
+  return setTagAssertion(state, target, tagId, enabled, options);
 }
 
 export function getWorkspaceVerse(state, key) {

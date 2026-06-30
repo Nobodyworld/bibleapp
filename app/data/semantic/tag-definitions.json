@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "content_version": "local-packaged-2026-06-20",
+  "content_version": "local-packaged-2026-06-29",
   "description": "System semantic tag definitions. These define concepts; user tag applications are stored separately as assertions.",
   "definitions": [
     {
@@ -11,9 +11,10 @@
       "label": "Positive",
       "description": "The target expresses blessing, approval, hope, comfort, gratitude, or another positive sentiment.",
       "category": "sentiment",
-      "allowed_target_types": ["verse", "verse_range", "text_span", "source_token"],
+      "allowed_target_types": ["verse", "verse_range", "text_span", "source_token", "source_token_span"],
       "default_icon": "+",
       "default_color": "#1f7a4d",
+      "display_behavior": "toggle_with_optional_note",
       "status": "active"
     },
     {
@@ -24,9 +25,10 @@
       "label": "Negative",
       "description": "The target expresses warning, grief, judgment, opposition, lament, or another negative sentiment.",
       "category": "sentiment",
-      "allowed_target_types": ["verse", "verse_range", "text_span", "source_token"],
+      "allowed_target_types": ["verse", "verse_range", "text_span", "source_token", "source_token_span"],
       "default_icon": "-",
       "default_color": "#a33a3a",
+      "display_behavior": "toggle_with_optional_note",
       "status": "active"
     },
     {
@@ -37,9 +39,10 @@
       "label": "Command/Declaration",
       "description": "The target contains or expresses an instruction, imperative, charge, formal declaration, or authoritative statement.",
       "category": "discourse_function",
-      "allowed_target_types": ["verse", "verse_range", "text_span", "source_token"],
+      "allowed_target_types": ["verse", "verse_range", "text_span", "source_token", "source_token_span"],
       "default_icon": "!",
       "default_color": "#7a5c12",
+      "display_behavior": "toggle_with_optional_note",
       "status": "active"
     },
     {
@@ -47,12 +50,42 @@
       "schema_version": 1,
       "namespace": "system",
       "legacy_id": "question",
-      "label": "Question",
+      "label": "Text question",
       "description": "The target contains or expresses a question, whether direct, rhetorical, or implied by the discourse.",
       "category": "discourse_function",
-      "allowed_target_types": ["verse", "verse_range", "text_span", "source_token"],
-      "default_icon": "?",
+      "allowed_target_types": ["verse", "verse_range", "text_span", "source_token", "source_token_span"],
+      "default_icon": "Q",
       "default_color": "#315f99",
+      "display_behavior": "toggle_with_optional_note",
+      "status": "active"
+    },
+    {
+      "id": "tag:favorite",
+      "schema_version": 1,
+      "namespace": "system",
+      "legacy_id": "favorite",
+      "label": "Favorite",
+      "description": "The user saved this target to a personal favorites collection.",
+      "category": "user_collection",
+      "allowed_target_types": ["book", "chapter", "verse", "verse_range", "text_span", "source_token", "source_token_span"],
+      "default_icon": "★",
+      "default_color": "#a66b00",
+      "display_behavior": "quick_toggle",
+      "status": "active"
+    },
+    {
+      "id": "tag:inquiry",
+      "schema_version": 1,
+      "namespace": "system",
+      "legacy_id": "inquiry",
+      "label": "Inquiry",
+      "description": "The user has a question or unresolved study concern about this target.",
+      "category": "user_workflow",
+      "allowed_target_types": ["book", "chapter", "verse", "verse_range", "text_span", "source_token", "source_token_span"],
+      "default_icon": "?",
+      "default_color": "#6b4bb3",
+      "display_behavior": "queue_analysis",
+      "on_apply_job_type": "inquiry-analysis",
       "status": "active"
     }
   ]

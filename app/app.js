@@ -1,8 +1,8 @@
-import { DEFAULT_ROUTE } from "./src/config.js";
+import { DEFAULT_ROUTE } from "./src/config.js?v=tag-phase-20260629";
 import { capabilityAvailable, resolveCapability } from "./src/capabilities.js";
-import { createChapterRenderer } from "./src/chapter-renderer.js?v=interaction-qa-20260629";
+import { createChapterRenderer } from "./src/chapter-renderer.js?v=tag-phase-20260629";
 import { loadManifest, loadReaderBookData, translationCanLoadBook } from "./src/data-service.js";
-import { createDetailViews } from "./src/detail-views.js?v=interaction-qa-20260629";
+import { createDetailViews } from "./src/detail-views.js?v=tag-phase-20260629";
 import {
   els,
   goBackDetail,
@@ -13,11 +13,12 @@ import {
   setStatus,
   sortedNumericKeys,
   trackReaderLocation,
-} from "./src/dom.js?v=interaction-qa-20260629";
+} from "./src/dom.js?v=tag-phase-20260629";
 import { createReferenceButton as makeReferenceButton, referenceKey, refDomId } from "./src/references.js";
 import { buildReferenceContext, referenceContextKey } from "./src/reference-context.js";
+import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js?v=tag-phase-20260629";
 import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js";
-import { initStores, listenForUserDataChanges } from "./src/stores.js";
+import { getTagTargets, initStores, listenForUserDataChanges, setTagAssertion } from "./src/stores.js?v=tag-phase-20260629";
 import { studyUnavailableLabel } from "./src/study-empty-state.js";
 import { CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js";
 
@@ -142,6 +143,7 @@ const ctx = {
   referenceContextKey,
   renderChapter: () => renderer.renderChapter(),
   syncChapterButtons,
+  syncFavoriteButtons,
   syncToolButtons,
   studyContext: {}, // Stores current Strong's word context for tab switching
 };
@@ -181,6 +183,36 @@ function syncChapterButtons() {
   els.next.disabled = index < 0 || index >= chapters.length - 1;
   if (els.prevFloat) els.prevFloat.disabled = els.prev.disabled;
   if (els.nextFloat) els.nextFloat.disabled = els.next.disabled;
+}
+
+function currentFavoriteTargets() {
+  return {
+    book: createBookTarget({
+      translation_id: state.translationId,
+      book_id: state.bookId,
+    }),
+    chapter: createChapterTarget({
+      translation_id: state.translationId,
+      book_id: state.bookId,
+      chapter: state.chapter,
+    }),
+  };
+}
+
+function syncFavoriteButton(button, target, label) {
+  if (!button || !target) return;
+  const active = getTagTargets(state, "favorite").includes(target.target_id);
+  button.firstChild.textContent = active ? "★ " : "☆ ";
+  button.classList.toggle("active", active);
+  button.setAttribute("aria-pressed", active ? "true" : "false");
+  button.title = `${active ? "Remove" : "Add"} current ${label} ${active ? "from" : "to"} favorites`;
+  button.setAttribute("aria-label", button.title);
+}
+
+function syncFavoriteButtons() {
+  const targets = currentFavoriteTargets();
+  syncFavoriteButton(els.favoriteBook, targets.book, "book");
+  syncFavoriteButton(els.favoriteChapter, targets.chapter, "chapter");
 }
 
 function syncToolButtons() {
@@ -241,6 +273,8 @@ function showHomePage(options = {}) {
   setStatus("Home");
   if (options.writeUrl !== false) writeHomeRoute({ replace: Boolean(options.replace) });
   els.title.textContent = "Bible App Home";
+  if (els.favoriteBook) els.favoriteBook.hidden = true;
+  if (els.favoriteChapter) els.favoriteChapter.hidden = true;
   els.content.replaceChildren();
   const home = document.createElement("div");
   home.className = "home-view";
@@ -296,7 +330,10 @@ async function loadBookData() {
   }
 
   fillChapterOptions();
+  if (els.favoriteBook) els.favoriteBook.hidden = false;
+  if (els.favoriteChapter) els.favoriteChapter.hidden = false;
   renderer.renderChapter();
+  syncFavoriteButtons();
 
   if (state.chapter !== requestedChapter) {
     writeReaderRoute(currentRoute(), { replace: true });
@@ -425,6 +462,18 @@ function bindEvents() {
   els.prevFloat?.addEventListener("click", () => void goToChapter(-1));
   els.nextFloat?.addEventListener("click", () => void goToChapter(1));
   els.homeButton?.addEventListener("click", () => void navigateToRoute({ home: true }, { writeUrl: true }));
+  els.favoriteBook?.addEventListener("click", () => {
+    const target = currentFavoriteTargets().book;
+    const active = getTagTargets(state, "favorite").includes(target.target_id);
+    setTagAssertion(state, target, "favorite", !active);
+    syncFavoriteButtons();
+  });
+  els.favoriteChapter?.addEventListener("click", () => {
+    const target = currentFavoriteTargets().chapter;
+    const active = getTagTargets(state, "favorite").includes(target.target_id);
+    setTagAssertion(state, target, "favorite", !active);
+    syncFavoriteButtons();
+  });
 
   // Theme toggle functionality
   function initializeTheme() {

@@ -4,7 +4,7 @@ import { setLanguageTextWithTooltips } from "../language-tooltips.js";
 import { referenceKey } from "../references.js";
 import { analyzeOriginalWord, summarizeHebrewGematriaTokens, wordHasLanguageScript } from "../language.js";
 import { resolveInterlinearVerseTokens } from "../strongs.js?v=interaction-qa-20260629";
-import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js";
+import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=tag-phase-20260629";
 import { createVerseContextTabs } from "./verse-context-tabs.js?v=interaction-qa-20260629";
 import { createStudyEmptyState } from "../study-empty-state.js";
 import { interlinearTokenIdentity } from "../ui-contracts.js";

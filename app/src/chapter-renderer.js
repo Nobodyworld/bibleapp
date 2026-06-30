@@ -1,7 +1,8 @@
 import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=interaction-qa-20260629";
 import { resolvePassageText } from "./data-service.js";
 import { referenceKey, refDomId, parseLocationFromHref } from "./references.js";
-import { addRedLetterRange, ensureStores, getRedLetterRanges } from "./stores.js";
+import { addRedLetterRange, ensureStores, getRedLetterRanges } from "./stores.js?v=tag-phase-20260629";
+import { createVerseTarget } from "./semantic-targets.js?v=tag-phase-20260629";
 import { mapStrongChapterRanges } from "./strongs.js";
 import { createStudyEmptyState, studyUnavailableLabel } from "./study-empty-state.js";
 import { interlinearTokenIdentity } from "./ui-contracts.js";
@@ -567,11 +568,26 @@ export function createChapterRenderer(ctx) {
       }
     });
 
+    const favoriteButton = ctx.detailViews.createFavoriteButton(
+      createVerseTarget(key, ctx.state.translationId),
+      {
+        className: "verse-favorite-button",
+        label: reference,
+        onChange: () => {
+          ctx.renderChapter();
+          ctx.syncFavoriteButtons?.();
+        },
+      },
+    );
+    const verseActions = document.createElement("div");
+    verseActions.className = "verse-row-actions";
+    verseActions.append(favoriteButton, studyButton);
+
     body.addEventListener("mouseup", () => showSelectionMenuForVerse(reference, verse, verseText, body, key));
     body.addEventListener("touchend", () => window.setTimeout(() => showSelectionMenuForVerse(reference, verse, verseText, body, key), 0));
     body.addEventListener("keyup", () => showSelectionMenuForVerse(reference, verse, verseText, body, key));
 
-    row.append(numberWrap, body, studyButton);
+    row.append(numberWrap, body, verseActions);
     return row;
   }
 

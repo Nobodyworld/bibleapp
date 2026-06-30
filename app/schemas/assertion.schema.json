@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "assertion.schema.json",
+  "title": "Bible App tag assertion",
+  "type": "object",
+  "required": [
+    "id",
+    "schema_version",
+    "assertion_type",
+    "tag_id",
+    "legacy_tag_id",
+    "target",
+    "target_id",
+    "actor",
+    "visibility",
+    "review_status",
+    "active",
+    "revision",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^assertion:tag:"
+    },
+    "schema_version": {
+      "const": 2
+    },
+    "assertion_type": {
+      "const": "tag_application"
+    },
+    "tag_id": {
+      "type": "string",
+      "pattern": "^tag:"
+    },
+    "legacy_tag_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "target": {
+      "$ref": "target.schema.json"
+    },
+    "target_id": {
+      "type": "string",
+      "pattern": "^target:"
+    },
+    "actor": {
+      "type": "object",
+      "required": [
+        "actor_type",
+        "actor_id"
+      ],
+      "properties": {
+        "actor_type": {
+          "type": "string"
+        },
+        "actor_id": {
+          "type": "string"
+        }
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "visibility": {
+      "enum": [
+        "private",
+        "shared",
+        "public"
+      ]
+    },
+    "review_status": {
+      "enum": [
+        "accepted",
+        "superseded"
+      ]
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "note": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    }
+  }
+}

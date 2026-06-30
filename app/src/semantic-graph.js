@@ -1,20 +1,9 @@
-import { referenceKeyFromTarget } from "./semantic-targets.js";
-
-function verseNodeId(target) {
-  const ref = target?.reference || {};
-  if (!ref.book_id || !ref.chapter || !ref.verse_start) return null;
-  return `verse:${ref.book_id}:${ref.chapter}:${ref.verse_start}`;
-}
+import { targetId } from "./semantic-targets.js?v=tag-phase-20260629";
 
 function targetNodeId(target) {
   if (!target) return null;
-  if (target.target_type === "verse") return verseNodeId(target);
-  if (target.target_type === "text_span") {
-    const key = referenceKeyFromTarget(target);
-    const anchor = target.anchor || {};
-    if (!key || !Number.isFinite(anchor.char_start) || !Number.isFinite(anchor.char_end)) return null;
-    return `span:${target.edition_id || "bsb"}:${key.replaceAll(":", ".")}:${anchor.char_start}:${anchor.char_end}`;
-  }
+  const canonicalTargetId = targetId(target);
+  if (canonicalTargetId) return canonicalTargetId;
   if (target.target_type === "tag_definition" && target.id) return target.id;
   if (target.target_type === "interpretation_proposition" && target.id) return target.id;
   if (target.target_type === "strongs_entry" && target.id) return target.id;

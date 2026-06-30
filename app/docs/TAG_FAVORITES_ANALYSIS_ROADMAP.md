@@ -18,7 +18,7 @@ The guiding rules are:
 
 | Area | Current state |
 |---|---|
-| Default tags | `positive_sentiment`, `negative_sentiment`, `command_declaration`, and textual `question`. |
+| Default tags | `positive_sentiment`, `negative_sentiment`, `command_declaration`, textual `question`, `favorite`, and user `inquiry`. |
 | Custom tags | User can create, edit, and retire custom tags. |
 | Verse tagging UI | Verse-level tag picker, tag editor, tag badges, and tag index exist. |
 | Semantic tag assertions | Tag applications normalize into assertion records with `actor`, `visibility`, `confidence`, `review_status`, and `active`. |
@@ -29,20 +29,22 @@ The guiding rules are:
 | Graph projection | Local assertions can project into nodes and edges through `projectAssertionsToSemanticGraph`. |
 | Polls | Poll response store and aggregate logic exist for future interpretation/community flows. |
 | Export/import | User data export/import includes tags, workspace, assertions, polls, and packages. |
+| Target-aware tag API | `setTagAssertion` supports all seven target types; `setVerseTag` remains a compatibility wrapper. |
+| Canonical target identity | Schema-v2 targets include translation, testament, hierarchy, target type, and deterministic `target_id`. |
+| Legacy migration | Legacy verse tags, assertion IDs, and underscore-form system IDs migrate to canonical targets/IDs; invalid records are quarantined. |
+| Behavior metadata | Tag definitions support `display_behavior` and optional `on_apply_job_type`. |
+| Inquiry job foundation | Applying `tag:inquiry` queues one idempotent `inquiry-analysis` job per assertion revision with a runnable local processor and graph patch. |
 
 ### Important current gaps
 
 | Gap | Why it matters |
 |---|---|
-| Tag UI is verse-first | Tag definitions allow `text_span` and `source_token`, but the visible UI only supports verse tagging. |
-| `setVerseTag` is scope-specific | A target-aware `setTagAssertion` API is needed for book, chapter, verse, text span, source token, and source-token chunk. |
-| Assertion IDs are verse-key based | Word and chunk targets need deterministic target IDs that include translation/testament/book/chapter/verse/token or span identity. |
-| `deriveVerseTagsFromAssertions` ignores non-verse targets | Verse badges can remain derived, but broader target indexes must be separate projections. |
-| No user-inquiry tag or inquiry-analysis trigger exists | The user intent behind `?` should produce structured local data without changing textual `tag:question` semantics. |
+| Tag UI is verse-first | The target API supports broader scopes, but visible controls still expose verse tagging only. |
+| Favorites have no dedicated UI | `tag:favorite` exists, but book/chapter/verse stars and the Favorites panel remain to be built. |
+| Word/chunk target UI is missing | Source-token, source-token-span, and text-span targets exist in the data layer but need selection/tag controls. |
+| Inquiry processor is foundational | It records exact targets, notes, missing inputs, and a graph patch; richer same-source/same-English/scripture analysis remains Phase 4 work. |
 | Personal graph is not exposed as a user-facing view | The graph projection exists but needs a UI and graph-specific result types. |
 | Community graph is not modeled separately yet | Community participation must be optional and must not be required for personal features. |
-| Textual question and user inquiry are not separated | Existing `tag:question` means the text contains a direct, rhetorical, or implied question; repurposing it as user uncertainty would corrupt semantics. |
-| Runtime tags still use legacy IDs | Canonical semantic IDs use `tag:*`; legacy IDs must remain compatibility aliases during migration, not become a second identity system. |
 
 ## Target model
 
@@ -309,18 +311,19 @@ Examples:
 | Tag assertion projection | Implemented | Projects active tag assertions into semantic graph. |
 | User data export/import | Implemented | Includes tags, workspace, assertions, polls, packages. |
 | Local jobs panel | Implemented | Run/simulate/requeue flows exist. |
-| Favorites as tag definition | Planned | Add `tag:favorite` and quick-toggle behavior. |
-| Book/chapter favorite buttons | Planned | Needs target-aware tag assertion API. |
-| Verse favorite button | Planned | Can reuse verse target once `tag:favorite` exists. |
+| Favorites as tag definition | Implemented | `tag:favorite` supports all seven target types and quick-toggle behavior metadata. |
+| Book/chapter favorite buttons | Implemented | Current reading header exposes persistent accessible toggles. |
+| Verse favorite button | Implemented | Every verse row exposes a persistent accessible star. |
 | Word/source-token favorite | Planned | Needs source-token target and tag UI on reader/interlinear selections. |
 | Word chunk/text-span favorite | Planned | Needs text selection anchor and source-token-span target. |
-| Target-aware tag API | Planned | Replace or wrap `setVerseTag` with `setTagAssertion`. |
+| Target-aware tag API | Implemented | `setTagAssertion` is canonical; `setVerseTag` is the compatibility wrapper. |
 | Word tag picker | Planned | Reuse current selection/follow context and Strong's/interlinear token identity. |
-| User inquiry tag (`tag:inquiry`) | Planned | Separate from textual `tag:question`; rendered as `?`. |
-| `?` queues inquiry-analysis | Planned | Add idempotent job trigger, processor, and result rendering. |
-| Deterministic inquiry-analysis processor | Planned | Use local datasets first; no external dependency. |
+| User inquiry tag (`tag:inquiry`) | Implemented | Separate from textual `tag:question`; rendered as `?`. |
+| `?` queues inquiry-analysis | Implemented in data layer | Trigger is idempotent per assertion revision; dedicated result UI remains planned. |
+| Deterministic inquiry-analysis processor | Foundation implemented | Produces target/source summary, warnings, and graph patch; full corpus comparisons remain planned. |
 | Personal graph panel | Planned | Build from assertion projection plus packaged graph and job results. |
 | Graph visuals | Planned | Start with scoped graph views, not a giant all-data canvas. |
+| Favorites panel | Implemented | Groups active favorites by target type and links back to reader context. |
 | Community data model | Future | Design store contracts before network features. |
 | Community contribution sync | Future | Opt-in only. |
 | Community hot spots | Future | Aggregates only; personal features do not depend on them. |
@@ -330,25 +333,29 @@ Examples:
 
 ### Phase 1: Schema and local tag foundation
 
-1. Add `tag:favorite` and `tag:inquiry` to packaged semantic definitions and default runtime tags; preserve textual `tag:question` with an explicit picker label.
-2. Add tag definition behavior metadata: `display_behavior` and optional `on_apply_job_type`.
-3. Add target constructors for `book`, `chapter`, `verse_range`, `text_span`, `source_token`, and `source_token_span`.
-4. Add deterministic target IDs and assertion IDs for every supported target type.
-5. Add `setTagAssertion(state, target, tagId, enabled, options)` and keep `setVerseTag` as a compatibility wrapper.
-6. Add a versioned migration from legacy verse-key assertions to complete canonical targets.
-7. Add target indexes separate from `verse_tags`; keep `verse_tags` as a rebuildable compatibility projection.
-8. Add an idempotent behavior-trigger key based on assertion ID, job type, and input revision.
-9. Add tests for every target type, legacy migration, rejection/quarantine, duplicate-trigger prevention, and export/import.
+Completed: 2026-06-29.
+
+1. [x] Add `tag:favorite` and `tag:inquiry` to packaged semantic definitions and default runtime tags; preserve textual `tag:question` with an explicit picker label.
+2. [x] Add tag definition behavior metadata: `display_behavior` and optional `on_apply_job_type`.
+3. [x] Add target constructors for `book`, `chapter`, `verse_range`, `text_span`, `source_token`, and `source_token_span`.
+4. [x] Add deterministic target IDs and assertion IDs for every supported target type.
+5. [x] Add `setTagAssertion(state, target, tagId, enabled, options)` and keep `setVerseTag` as a compatibility wrapper.
+6. [x] Add a versioned migration from legacy verse-key assertions to complete canonical targets.
+7. [x] Add target indexes separate from `verse_tags`; keep `verse_tags` as a rebuildable compatibility projection.
+8. [x] Add an idempotent behavior-trigger key based on assertion ID, job type, and input revision.
+9. [x] Add tests for every target type, legacy migration, rejection/quarantine, duplicate-trigger prevention, and export/import.
 
 ### Phase 2: Favorites UI
 
-1. Add favorite star for current book.
-2. Add favorite star for current chapter.
-3. Add favorite star for verse rows and verse context tabs.
-4. Add favorite action to reader text selection menu.
-5. Add favorite action to interlinear/source-token cards.
-6. Add Favorites panel grouped by book, chapter, verse, English span, source token, and source-token span.
-7. Add tests for toggling favorites and preserving them across reload/export/import.
+1. [x] Add favorite star for current book.
+2. [x] Add favorite star for current chapter.
+3. [x] Add favorite star for verse rows.
+4. [ ] Add favorite action to verse context tabs.
+5. [ ] Add favorite action to reader text selection menu.
+6. [ ] Add favorite action to interlinear/source-token cards.
+7. [x] Add Favorites panel grouped by book, chapter, verse, English span, source token, and source-token span.
+8. [x] Add data-layer tests for toggling favorites and preserving them through export/import.
+9. [ ] Add committed rendered browser assertions for favorite controls and panel persistence.
 
 ### Phase 3: Word and chunk tagging
 
@@ -389,16 +396,13 @@ Examples:
 
 ## Immediate next task list
 
-1. Implement canonical target constructors, IDs, and target-aware assertions while keeping existing verse tags working.
-2. Separate textual `tag:question` from user `tag:inquiry`; add behavior metadata and idempotent triggers.
-3. Add `tag:favorite` and render it as a definition-driven quick-toggle star.
-4. Add migration, export/import, recovery, and duplicate-trigger tests.
-5. Add Favorites panel grouped by target type.
-6. Add word/source-token tagging from the Interlinear panel first, because token identity is already explicit there.
-7. Add reader text-span tagging second, using existing word-map spans and text snapshots.
-8. Add `inquiry-analysis` job type and deterministic processor.
-9. Add personal graph projection for favorites and inquiries.
-10. Only after the personal graph is solid, add community-cache schema and opt-in UI.
+1. Add favorite action to verse context tabs.
+2. Add favorite/tag actions to Interlinear source-token cards.
+3. Add committed rendered browser assertions for favorite controls and panel persistence.
+4. Add reader text-span tagging using existing word-map spans and text snapshots.
+5. Enrich `inquiry-analysis` with local corpus comparisons and render a dedicated Inquiry result view.
+6. Add personal graph projection/views for favorites and inquiries.
+7. Only after the personal graph is solid, add community-cache schema and opt-in UI.
 
 ## Non-goals for the next build step
 
