@@ -1,6 +1,7 @@
 import { studyUnavailableLabel } from "../study-empty-state.js";
 import { CONTROL_STATES, resolveControlState } from "../ui-contracts.js";
 import { resolveInterlinearVerseTokens } from "../strongs.js?v=interaction-qa-20260629";
+import { createVerseTarget } from "../semantic-targets.js?v=tag-initiative-20260630";
 
 function getVerseText(ctx, verse) {
   return ctx.state.verseBook?.chapters?.[ctx.state.chapter]?.[verse] || "";
@@ -142,6 +143,27 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
     }
     tabs.append(button);
   });
+
+  const favorite = ctx.detailViews.createFavoriteButton(
+    createVerseTarget(
+      {
+        translation_id: ctx.state.translationId,
+        book_id: ctx.state.bookId,
+        chapter: ctx.state.chapter,
+        verse,
+      },
+      ctx.state.translationId,
+    ),
+    {
+      className: "verse-context-favorite-button",
+      label: reference,
+      onChange: () => {
+        ctx.renderChapter();
+        ctx.syncFavoriteButtons?.();
+      },
+    },
+  );
+  tabs.append(favorite);
 
   return tabs;
 }

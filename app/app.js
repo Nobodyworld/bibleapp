@@ -2,7 +2,7 @@ import { DEFAULT_ROUTE } from "./src/config.js?v=tag-phase-20260629";
 import { capabilityAvailable, resolveCapability } from "./src/capabilities.js";
 import { createChapterRenderer } from "./src/chapter-renderer.js?v=tag-phase-20260629";
 import { loadManifest, loadReaderBookData, translationCanLoadBook } from "./src/data-service.js";
-import { createDetailViews } from "./src/detail-views.js?v=tag-phase-20260629";
+import { createDetailViews } from "./src/detail-views.js?v=tag-initiative-20260630";
 import {
   els,
   goBackDetail,

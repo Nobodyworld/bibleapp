@@ -4,10 +4,11 @@ import { setLanguageTextWithTooltips } from "../language-tooltips.js";
 import { referenceKey } from "../references.js";
 import { analyzeOriginalWord, summarizeHebrewGematriaTokens, wordHasLanguageScript } from "../language.js";
 import { resolveInterlinearVerseTokens } from "../strongs.js?v=interaction-qa-20260629";
-import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=tag-phase-20260629";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=interaction-qa-20260629";
+import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=tag-initiative-20260630";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=tag-initiative-20260630";
 import { createStudyEmptyState } from "../study-empty-state.js";
 import { interlinearTokenIdentity } from "../ui-contracts.js";
+import { createSourceTokenTarget } from "../semantic-targets.js?v=tag-initiative-20260630";
 
 function normalizeWordMapSpan(raw, bsbVerseText) {
   const start = Number(raw[2] || 0);
@@ -257,6 +258,45 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     gloss.textContent = token.gloss || "";
 
     card.append(original, transliteration, meta, english, gloss);
+
+    const targetReferenceKey =
+      options.referenceKey ||
+      referenceKey(ctx.state.bookId, ctx.state.chapter, card.dataset.verse);
+    const sourceTarget = createSourceTokenTarget(
+      targetReferenceKey,
+      {
+        token_index: token.token_index,
+        strong_code: token.strong_code,
+        language: token.language,
+        original: token.original,
+      },
+      ctx.state.translationId,
+    );
+    if (sourceTarget) {
+      const actions = document.createElement("div");
+      actions.className = "token-tag-actions";
+      const tokenLabel = `${ctx.currentReference(card.dataset.verse)} ${token.original || token.transliteration || "source token"}`;
+      const favorite = ctx.detailViews.createFavoriteButton(sourceTarget, {
+        className: "token-favorite-button",
+        label: tokenLabel,
+      });
+      const tags = document.createElement("button");
+      tags.type = "button";
+      tags.className = "token-tag-button";
+      tags.textContent = "Tags";
+      tags.setAttribute("aria-label", `Tag ${tokenLabel}`);
+      tags.addEventListener("click", (event) => {
+        event.stopPropagation();
+        ctx.detailViews.showTargetTagEditor(sourceTarget, {
+          label: tokenLabel,
+          preview: [token.english, token.gloss].filter(Boolean).join(" — "),
+          forceHistory: true,
+          lock: true,
+        });
+      });
+      actions.append(favorite, tags);
+      card.append(actions);
+    }
     appendLanguageBreakdown(card, token);
 
     if (options.workspace && options.referenceKey) {

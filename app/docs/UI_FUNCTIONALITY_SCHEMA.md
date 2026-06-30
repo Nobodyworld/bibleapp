@@ -1,6 +1,6 @@
 # UI Functionality Contract
 
-Reviewed: 2026-06-29
+Reviewed: 2026-06-30
 
 ## Control placement
 
@@ -8,7 +8,8 @@ Reviewed: 2026-06-29
 - Outline and Interlinear are side-panel tools only.
 - Mobile exposes a Study panel launcher so side-panel-only tools remain reachable.
 - Verse context tabs expose Parallel, Refs, Cmt, Int, and Tags when their scoped actions apply.
-- Book, chapter, and verse favorite stars are direct `tag:favorite` toggles and expose state through `aria-pressed`.
+- Book, chapter, verse-row, verse-context, and Interlinear source-token favorite stars are direct `tag:favorite` toggles and expose state through `aria-pressed`.
+- Interlinear source-token tag actions open the target-aware tag editor. The editor only presents active tags whose `allowed_target_types` include `source_token`.
 
 The executable control map is `src/ui-contracts.js`.
 
@@ -50,6 +51,7 @@ Reader and panel tokens match by `verse + token_index`. Strong's code is used on
 - A verse inspection renders one verse initially and appends the next verse as the user nears the bottom of `#detailContent`.
 - Cards must constrain both original-language and English/gloss columns so long words wrap without overlapping.
 - Hebrew-only analysis such as gematria and Hebrew mark details must not render for Greek tokens.
+- Each card's favorite and tag actions use the exact canonical `source_token` target built from its verse reference and token metadata; they do not infer identity from display text.
 
 ## Canonical reference context
 
@@ -79,4 +81,4 @@ IndexedDB initialization and migration have a three-second boundary. If the brow
 - `tests/ui-contracts.mjs`: availability, panel transitions, control schema, token identity.
 - `tests/reference-context.mjs`: hierarchy normalization and stable keys.
 - `tests/interlinear.mjs`: packaged interlinear data contracts.
-- `app/scripts/interaction-test.mjs`: rendered interaction behavior when the browser runner is available.
+- `app/scripts/interaction-test.mjs`: rendered interaction behavior, including favorite controls, target-aware source-token tagging, Favorites grouping, panel history, and cleanup, when the browser runner is available.

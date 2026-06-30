@@ -1181,6 +1181,21 @@ export function getTagTargets(state, tagId) {
   return state.tagStore.tag_target_index[tagDefinitionId(tagId)] || [];
 }
 
+export function getTargetTags(state, targetInput) {
+  ensureStores(state);
+  const target = normalizeTarget(targetInput);
+  if (!target) return [];
+  return Object.values(state.tagStore.tag_assertions || {})
+    .filter(
+      (assertion) =>
+        assertion.active &&
+        assertion.assertion_type === "tag_application" &&
+        assertion.target_id === target.target_id,
+    )
+    .map((assertion) => legacyTagId(assertion.tag_id))
+    .sort();
+}
+
 export function setTagAssertion(state, targetInput, tagId, enabled, options = {}) {
   ensureStores(state);
   const target = normalizeTarget(targetInput);

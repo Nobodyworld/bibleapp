@@ -350,12 +350,12 @@ Completed: 2026-06-29.
 1. [x] Add favorite star for current book.
 2. [x] Add favorite star for current chapter.
 3. [x] Add favorite star for verse rows.
-4. [ ] Add favorite action to verse context tabs.
+4. [x] Add favorite action to verse context tabs.
 5. [ ] Add favorite action to reader text selection menu.
-6. [ ] Add favorite action to interlinear/source-token cards.
+6. [x] Add favorite action to interlinear/source-token cards.
 7. [x] Add Favorites panel grouped by book, chapter, verse, English span, source token, and source-token span.
 8. [x] Add data-layer tests for toggling favorites and preserving them through export/import.
-9. [ ] Add committed rendered browser assertions for favorite controls and panel persistence.
+9. [x] Add committed rendered browser assertions for favorite controls and panel persistence. The assertions are in `app/scripts/interaction-test.mjs`; a green rendered run remains blocked by the current browser-runner connection failure.
 
 ### Phase 3: Word and chunk tagging
 
@@ -396,12 +396,12 @@ Completed: 2026-06-29.
 
 ## Immediate next task list
 
-1. Add favorite action to verse context tabs.
-2. Add favorite/tag actions to Interlinear source-token cards.
-3. Add committed rendered browser assertions for favorite controls and panel persistence.
-4. Add reader text-span tagging using existing word-map spans and text snapshots.
-5. Enrich `inquiry-analysis` with local corpus comparisons and render a dedicated Inquiry result view.
-6. Add personal graph projection/views for favorites and inquiries.
+1. Add favorite and tag actions to the reader text-selection menu using canonical text-span targets.
+2. Add visible tag badges to reader spans and Interlinear source-token cards.
+3. Add contiguous source-token-span selection and tests.
+4. Enrich `inquiry-analysis` with local corpus comparisons and render a dedicated Inquiry result view.
+5. Add personal graph projection/views for favorites and inquiries.
+6. Restore a green rendered desktop/mobile browser run for the committed interaction assertions.
 7. Only after the personal graph is solid, add community-cache schema and opt-in UI.
 
 ## Non-goals for the next build step

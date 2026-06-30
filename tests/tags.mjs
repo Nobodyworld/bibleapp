@@ -24,6 +24,7 @@ import {
   createUserDataExport,
   getAllJobEvents,
   getTagTargets,
+  getTargetTags,
   importUserData,
   normalizeTagStore,
   setTagAssertion,
@@ -161,6 +162,7 @@ setTagAssertion(state, tokenSpan, "favorite", true);
 assert.equal(favoriteBook.tag_id, "tag:favorite");
 assert.equal(getTagTargets(state, "favorite").length, 6);
 assert.deepEqual(state.tagStore.verse_tags["john:4:1"], ["favorite"]);
+assert.deepEqual(getTargetTags(state, token), ["favorite"]);
 assert.throws(
   () => setTagAssertion(state, book, "positive_sentiment", true),
   /cannot be applied to book/,
@@ -169,6 +171,7 @@ assert.throws(
 const inquiry = setTagAssertion(state, token, "inquiry", true, { note: "Why is this rendered because?" });
 const duplicate = setTagAssertion(state, token, "inquiry", true, { note: "Why is this rendered because?" });
 assert.equal(duplicate.id, inquiry.id);
+assert.deepEqual(getTargetTags(state, token), ["favorite", "inquiry"]);
 const inquiryJobs = getAllJobEvents(state).filter((job) => job.type === JOB_TYPES.inquiryAnalysis);
 assert.equal(inquiryJobs.length, 1);
 assert.equal(inquiryJobs[0].trigger_key, `tag-behavior:${inquiry.id}:${JOB_TYPES.inquiryAnalysis}:r1`);

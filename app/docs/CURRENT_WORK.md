@@ -1,6 +1,6 @@
 # Current Work
 
-Reviewed: 2026-06-29
+Reviewed: 2026-06-30
 
 ## Current implementation
 
@@ -10,15 +10,19 @@ Reviewed: 2026-06-29
 - Reader and interlinear tokens follow each other by verse and token index. Strong's is only a uniqueness fallback.
 - Explicit panel actions lock the selected panel; disengage, clear, or navigation returns it to follow mode.
 - Active and hovered reference contexts are separate and use the translation-to-word hierarchy documented in `UI_FUNCTIONALITY_SCHEMA.md`.
-- Verse tags, custom tag management, semantic assertions, local jobs, export/import, and graph projection exist. The schema-v2 target-aware tag foundation and favorite/inquiry definitions are implemented; dedicated favorites and word-selection UI are next.
+- Verse tags, custom tag management, semantic assertions, local jobs, export/import, and graph projection exist.
+- Favorite controls exist for the current book, current chapter, verse rows, verse context tabs, and exact Interlinear source tokens. The Favorites panel groups every supported target type.
+- Interlinear source-token cards expose a target-aware tag editor that filters tags by allowed target type and persists canonical source-token assertions.
+- Reader text-span selection, source-token-span selection, and visible per-token tag badges remain the next tagging UI boundary.
 
 ## Verification status
 
 | Check | Status | Evidence |
 |---|---|---|
-| Static suite | Passing | `npm run test:static` passed on 2026-06-29. |
+| Static suite | Passing | `npm run test:static` passed on 2026-06-30. |
 | Documentation consistency | Passing | Included in the static suite. |
 | Manual desktop browser QA | Passing for exercised flows | Reader navigation, Outline, Interlinear, lazy loading, Strong's panel history, dark Hebrew contrast, and console health were exercised on 2026-06-29. |
+| Committed favorite interaction assertions | Implemented, run blocked | `app/scripts/interaction-test.mjs` covers header, verse-context, source-token favorite/tag actions, Favorites grouping, panel history, and cleanup. The in-app browser connection timed out before tab attachment on 2026-06-30. |
 | Automated desktop browser suite | Environment-blocked | Edge/CDP fails during `Page.enable` before app navigation in this environment. This is a runner problem, not a passing app result. |
 | Automated mobile browser suite | Environment-blocked | The same Edge/CDP startup boundary prevents a reliable mobile result. |
 | `npm test` / `npm run verify` | Not currently green | Both include the blocked browser suites. |
@@ -32,11 +36,12 @@ Reviewed: 2026-06-29
 
 ## Next implementation boundary
 
-Phase 1 of `TAG_FAVORITES_ANALYSIS_ROADMAP.md` completed on 2026-06-29. Begin Phase 2:
+Phase 1 is complete. Phase 2 now has one remaining product task:
 
-1. Add favorite action to verse context tabs and Interlinear source-token cards.
-2. Add committed rendered interaction assertions for favorite controls and panel persistence.
-3. Add reader text-span tagging after source-token tagging is stable.
+1. Add favorite/tag actions to the reader text-selection menu with canonical text-span targets.
+2. Add visible tag badges to reader and Interlinear targets.
+3. Add contiguous source-token-span selection and tests.
+4. Enrich the local inquiry-analysis result and then expose personal graph views.
 
 ## Verification commands
 

@@ -405,6 +405,55 @@ async function runQa(page) {
   );
   pass("initial Psalm 23 render");
 
+  assert(
+    await evaluate(
+      page,
+      `Boolean(
+        document.querySelector('#favoriteBook[aria-pressed="false"]') &&
+        document.querySelector('#favoriteChapter[aria-pressed="false"]') &&
+        document.querySelector('.verse-favorite-button[aria-pressed="false"]')
+      )`,
+    ),
+    "book, chapter, and verse favorite controls were not initialized",
+  );
+  await click(page, "#favoriteBook");
+  await waitFor(page, "document.querySelector('#favoriteBook')?.getAttribute('aria-pressed') === 'true'");
+  await click(page, "#favoriteChapter");
+  await waitFor(page, "document.querySelector('#favoriteChapter')?.getAttribute('aria-pressed') === 'true'");
+  await click(page, ".verse-favorite-button");
+  await waitFor(page, "document.querySelector('.verse-favorite-button')?.getAttribute('aria-pressed') === 'true'");
+  await click(page, "#showTags");
+  await waitFor(page, "document.querySelector('#detailContent')?.textContent.includes('Favorites (3)')");
+  await evaluate(
+    page,
+    `(() => {
+      const button = [...document.querySelectorAll('#detailContent button')].find((node) =>
+        node.textContent.trim() === 'Favorites (3)'
+      );
+      button?.click();
+      return Boolean(button);
+    })()`,
+  );
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Favorites'");
+  assert(
+    await evaluate(
+      page,
+      `(() => {
+        const text = document.querySelector('#detailContent')?.textContent || '';
+        return text.includes('Books (1)') && text.includes('Chapters (1)') && text.includes('Verses (1)');
+      })()`,
+    ),
+    "Favorites panel did not group book, chapter, and verse targets",
+  );
+  await click(page, "#favoriteBook");
+  await click(page, "#favoriteChapter");
+  await click(page, ".verse-favorite-button.active");
+  await waitFor(
+    page,
+    "document.querySelector('#favoriteBook')?.getAttribute('aria-pressed') === 'false' && document.querySelector('#favoriteChapter')?.getAttribute('aria-pressed') === 'false' && !document.querySelector('.verse-favorite-button.active')",
+  );
+  pass("book chapter verse favorites and grouped panel");
+
   const initialTheme = await evaluate(page, "document.documentElement.getAttribute('data-theme')");
   await click(page, "#themeToggle");
   await waitFor(page, `document.documentElement.getAttribute('data-theme') !== ${JSON.stringify(initialTheme)}`);
@@ -475,6 +524,17 @@ async function runQa(page) {
     state.detailText.includes("KJV - King James Version") && state.detailText.includes("The LORD is my shepherd"),
     "parallel verse panel missing expected translation text",
   );
+  await click(page, "#detailContent .verse-context-favorite-button");
+  await waitFor(
+    page,
+    "document.querySelector('#detailContent .verse-context-favorite-button')?.getAttribute('aria-pressed') === 'true'",
+  );
+  await click(page, "#detailContent .verse-context-favorite-button");
+  await waitFor(
+    page,
+    "document.querySelector('#detailContent .verse-context-favorite-button')?.getAttribute('aria-pressed') === 'false'",
+  );
+  pass("verse context favorite toggle");
   pass("parallel translations by verse number");
 
   await click(page, ".fn-marker");
@@ -782,6 +842,33 @@ async function runQa(page) {
   await waitFor(page, "document.querySelectorAll('#detailContent .interlinear-token').length > 0", 15000);
   state = await getQaState(page);
   assert(state.detailText.includes("G1722") && state.detailText.includes("archē"), "Greek interlinear token data missing");
+  assert(
+    await evaluate(
+      page,
+      "document.querySelectorAll('.interlinear-token .token-tag-actions').length === document.querySelectorAll('.interlinear-token').length",
+    ),
+    "Interlinear source tokens are missing tag actions",
+  );
+  await click(page, ".interlinear-token .token-favorite-button");
+  await waitFor(
+    page,
+    "document.querySelector('.interlinear-token .token-favorite-button')?.getAttribute('aria-pressed') === 'true'",
+  );
+  await click(page, ".interlinear-token .token-tag-button");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Tags'");
+  await waitFor(page, "document.querySelector('.target-tag-editor')");
+  await click(page, '.target-tag-editor [aria-label="Add Positive tag"]');
+  await waitFor(page, 'document.querySelector(\'.target-tag-editor [aria-label="Remove Positive tag"]\')');
+  await click(page, '.target-tag-editor [aria-label="Remove Positive tag"]');
+  await waitFor(page, 'document.querySelector(\'.target-tag-editor [aria-label="Add Positive tag"]\')');
+  await click(page, "#detailBack");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Interlinear'");
+  await click(page, ".interlinear-token .token-favorite-button.active");
+  await waitFor(
+    page,
+    "document.querySelector('.interlinear-token .token-favorite-button')?.getAttribute('aria-pressed') === 'false'",
+  );
+  pass("Interlinear source-token favorites and tags");
   pass("Greek interlinear token data");
 
   await navigate(page, `${routeBase}#/read/bsb/proverbs/1/1`);

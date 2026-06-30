@@ -4,13 +4,14 @@ import {
   createCustomTag,
   deleteCustomTag,
   getTagTargets,
+  getTargetTags,
   getVerseTags,
   setTagAssertion,
   setVerseTag,
   updateCustomTag,
-} from "../stores.js?v=tag-phase-20260629";
-import { targetId } from "../semantic-targets.js?v=tag-phase-20260629";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=interaction-qa-20260629";
+} from "../stores.js?v=tag-initiative-20260630";
+import { targetId } from "../semantic-targets.js?v=tag-initiative-20260630";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=tag-initiative-20260630";
 
 function tagIcon(tag) {
   return String(tag?.icon || tag?.label?.slice(0, 1) || "*").slice(0, 3);
@@ -19,20 +20,72 @@ function tagIcon(tag) {
 export function createTagsView(ctx) {
   function createFavoriteButton(target, options = {}) {
     const id = targetId(target);
-    const active = id ? getTagTargets(ctx.state, "favorite").includes(id) : false;
+    let active = id ? getTagTargets(ctx.state, "favorite").includes(id) : false;
     const button = document.createElement("button");
     button.type = "button";
-    button.className = [options.className || "favorite-button", active ? "active" : ""].filter(Boolean).join(" ");
-    button.textContent = active ? "★" : "☆";
-    button.title = `${active ? "Remove" : "Add"} ${options.label || "target"} ${active ? "from" : "to"} favorites`;
-    button.setAttribute("aria-label", button.title);
-    button.setAttribute("aria-pressed", active ? "true" : "false");
+    const updateState = () => {
+      button.className = [options.className || "favorite-button", active ? "active" : ""].filter(Boolean).join(" ");
+      button.textContent = active ? "★" : "☆";
+      button.title = `${active ? "Remove" : "Add"} ${options.label || "target"} ${active ? "from" : "to"} favorites`;
+      button.setAttribute("aria-label", button.title);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    };
+    updateState();
     button.addEventListener("click", (event) => {
       event.stopPropagation();
       const assertion = setTagAssertion(ctx.state, target, "favorite", !active);
+      active = Boolean(assertion?.active);
+      updateState();
       options.onChange?.(assertion);
     });
     return button;
+  }
+
+  function showTargetTagEditor(target, options = {}) {
+    const wrap = document.createElement("div");
+    wrap.className = "target-tag-editor";
+    const heading = document.createElement("h3");
+    heading.textContent = options.label || "Target tags";
+    wrap.append(heading);
+    if (options.preview) {
+      const preview = document.createElement("p");
+      preview.className = "target-tag-preview";
+      preview.textContent = options.preview;
+      wrap.append(preview);
+    }
+
+    const activeTags = new Set(getTargetTags(ctx.state, target));
+    const group = document.createElement("div");
+    group.className = "tag-editor";
+    Object.values(ctx.state.tagStore.tags)
+      .filter(
+        (tag) =>
+          tag.status !== "retired" &&
+          Array.isArray(tag.allowed_target_types) &&
+          tag.allowed_target_types.includes(target.target_type),
+      )
+      .forEach((tag) => {
+        const active = activeTags.has(tag.id);
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = active ? "tag-editor-toggle active" : "tag-editor-toggle";
+        button.style.setProperty("--tag-color", tag.color || "#696f78");
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+        button.setAttribute("aria-label", `${active ? "Remove" : "Add"} ${tag.label} tag`);
+        button.addEventListener("click", () => {
+          setTagAssertion(ctx.state, target, tag.id, !active);
+          showTargetTagEditor(target, { ...options, history: "replace", lock: true });
+        });
+        const icon = document.createElement("span");
+        icon.className = "tag-picker-icon";
+        icon.textContent = tagIcon(tag);
+        const text = document.createElement("span");
+        text.textContent = tag.label;
+        button.append(icon, text);
+        group.append(button);
+      });
+    wrap.append(group);
+    setDetail("Tags", wrap, options);
   }
 
   function renderTagBadges(key) {
@@ -418,6 +471,7 @@ export function createTagsView(ctx) {
     renderInlineTagPicker,
     renderTagBadges,
     showFavorites,
+    showTargetTagEditor,
     showTagEditor,
     showTagIndex,
   };
