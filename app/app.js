@@ -1,8 +1,8 @@
 import { DEFAULT_ROUTE } from "./src/config.js?v=tag-phase-20260629";
 import { capabilityAvailable, resolveCapability } from "./src/capabilities.js";
-import { createChapterRenderer } from "./src/chapter-renderer.js?v=tag-phase-20260629";
+import { createChapterRenderer } from "./src/chapter-renderer.js?v=tag-spans-20260630";
 import { loadManifest, loadReaderBookData, translationCanLoadBook } from "./src/data-service.js";
-import { createDetailViews } from "./src/detail-views.js?v=tag-initiative-20260630";
+import { createDetailViews } from "./src/detail-views.js?v=tag-spans-20260630";
 import {
   els,
   goBackDetail,
@@ -16,9 +16,9 @@ import {
 } from "./src/dom.js?v=tag-phase-20260629";
 import { createReferenceButton as makeReferenceButton, referenceKey, refDomId } from "./src/references.js";
 import { buildReferenceContext, referenceContextKey } from "./src/reference-context.js";
-import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js?v=tag-phase-20260629";
+import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js?v=tag-spans-20260630";
 import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js";
-import { getTagTargets, initStores, listenForUserDataChanges, setTagAssertion } from "./src/stores.js?v=tag-phase-20260629";
+import { getTagTargets, initStores, listenForUserDataChanges, setTagAssertion } from "./src/stores.js?v=tag-spans-20260630";
 import { studyUnavailableLabel } from "./src/study-empty-state.js";
 import { CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js";
 

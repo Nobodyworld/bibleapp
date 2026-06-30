@@ -405,6 +405,58 @@ async function runQa(page) {
   );
   pass("initial Psalm 23 render");
 
+  const selectedReaderText = await evaluate(
+    page,
+    `(() => {
+      const body = document.querySelector('.verse-row[data-verse="1"] .verse-body');
+      const segment = [...body.querySelectorAll('[data-verse-char-start]')].find((node) => node.textContent.trim());
+      const textNode = segment?.firstChild;
+      if (!body || !segment || !textNode) return '';
+      const text = textNode.textContent || '';
+      const start = text.search(/\\S/);
+      const end = text.length - (text.match(/\\s*$/)?.[0].length || 0);
+      if (start < 0 || end <= start) return '';
+      const range = document.createRange();
+      range.setStart(textNode, start);
+      range.setEnd(textNode, end);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      body.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      return text.slice(start, end);
+    })()`,
+  );
+  assert(selectedReaderText, "reader text selection could not be created");
+  await waitFor(
+    page,
+    "!document.querySelector('.selection-action-menu')?.hidden && document.querySelector('.selection-favorite-button')",
+  );
+  assert(
+    await evaluate(
+      page,
+      `(() => {
+        const text = document.querySelector('.selection-action-menu')?.textContent || '';
+        return text.includes('Favorite') && text.includes('Tags');
+      })()`,
+    ),
+    "reader selection menu is missing favorite or tag actions",
+  );
+  await click(page, ".selection-favorite-button");
+  await waitFor(page, "document.querySelector('.reader-target-badges .target-tag-badge')");
+  assert(
+    await evaluate(page, "Boolean(document.querySelector('.tagged-text-span'))"),
+    "favorited reader text span was not highlighted",
+  );
+  await click(page, ".reader-target-badges .target-tag-badge");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Tags'");
+  await click(page, '.target-tag-editor [aria-label="Add Positive tag"]');
+  await waitFor(page, "document.querySelectorAll('.reader-target-badges .target-tag-badge').length === 2");
+  await click(page, '.target-tag-editor [aria-label="Remove Favorite tag"]');
+  await waitFor(page, "document.querySelectorAll('.reader-target-badges .target-tag-badge').length === 1");
+  await click(page, '.target-tag-editor [aria-label="Remove Positive tag"]');
+  await waitFor(page, "!document.querySelector('.reader-target-badges')");
+  pass("reader text-span favorite tags and badges");
+
   assert(
     await evaluate(
       page,
@@ -859,10 +911,16 @@ async function runQa(page) {
   await waitFor(page, "document.querySelector('.target-tag-editor')");
   await click(page, '.target-tag-editor [aria-label="Add Positive tag"]');
   await waitFor(page, 'document.querySelector(\'.target-tag-editor [aria-label="Remove Positive tag"]\')');
+  await click(page, "#detailBack");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Interlinear'");
+  await waitFor(page, "document.querySelector('.interlinear-token .token-target-badges .target-tag-badge')");
+  await click(page, ".interlinear-token .token-target-badges .target-tag-badge");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Tags'");
   await click(page, '.target-tag-editor [aria-label="Remove Positive tag"]');
   await waitFor(page, 'document.querySelector(\'.target-tag-editor [aria-label="Add Positive tag"]\')');
   await click(page, "#detailBack");
   await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Interlinear'");
+  await waitFor(page, "!document.querySelector('.interlinear-token .token-target-badges')");
   await click(page, ".interlinear-token .token-favorite-button.active");
   await waitFor(
     page,

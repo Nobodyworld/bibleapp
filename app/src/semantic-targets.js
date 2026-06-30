@@ -282,6 +282,40 @@ export function getTextSpanDriftStatus(target, currentText) {
   return currentText.slice(charStart, charEnd) === snapshot ? "current" : "drifted";
 }
 
+export function resolveTextSpanAnchor(target, currentText) {
+  const status = getTextSpanDriftStatus(target, currentText);
+  const anchor = target?.anchor || {};
+  const snapshot = typeof anchor.text_snapshot === "string" ? anchor.text_snapshot : "";
+  if (status === "current") {
+    return {
+      status,
+      char_start: anchor.char_start,
+      char_end: anchor.char_end,
+      text_snapshot: snapshot,
+    };
+  }
+  if (!snapshot || typeof currentText !== "string") return { status, text_snapshot: snapshot };
+
+  const matches = [];
+  let index = currentText.indexOf(snapshot);
+  while (index >= 0 && matches.length < 2) {
+    matches.push(index);
+    index = currentText.indexOf(snapshot, index + 1);
+  }
+  if (matches.length !== 1) {
+    return {
+      status: matches.length > 1 ? "ambiguous" : status === "out_of_bounds" ? "out_of_bounds" : "unresolved",
+      text_snapshot: snapshot,
+    };
+  }
+  return {
+    status: "relocated",
+    char_start: matches[0],
+    char_end: matches[0] + snapshot.length,
+    text_snapshot: snapshot,
+  };
+}
+
 export function tagAssertionId(targetOrKey, tagId, options = {}) {
   const target =
     typeof targetOrKey === "string"

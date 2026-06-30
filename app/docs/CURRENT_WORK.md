@@ -12,8 +12,10 @@ Reviewed: 2026-06-30
 - Active and hovered reference contexts are separate and use the translation-to-word hierarchy documented in `UI_FUNCTIONALITY_SCHEMA.md`.
 - Verse tags, custom tag management, semantic assertions, local jobs, export/import, and graph projection exist.
 - Favorite controls exist for the current book, current chapter, verse rows, verse context tabs, and exact Interlinear source tokens. The Favorites panel groups every supported target type.
-- Interlinear source-token cards expose a target-aware tag editor that filters tags by allowed target type and persists canonical source-token assertions.
-- Reader text-span selection, source-token-span selection, and visible per-token tag badges remain the next tagging UI boundary.
+- Interlinear source-token cards expose a target-aware tag editor, persistent editable badges, and canonical source-token assertions.
+- Reader selections use exact rendered character boundaries, create canonical text-span targets, and expose favorite/tag actions, highlights, and editable badges.
+- Text-span snapshots render at their original range or one unique relocated range. Ambiguous/unresolved snapshots are not attached to potentially wrong text.
+- Contiguous source-token-span selection is the remaining word/chunk tagging boundary.
 
 ## Verification status
 
@@ -22,7 +24,8 @@ Reviewed: 2026-06-30
 | Static suite | Passing | `npm run test:static` passed on 2026-06-30. |
 | Documentation consistency | Passing | Included in the static suite. |
 | Manual desktop browser QA | Passing for exercised flows | Reader navigation, Outline, Interlinear, lazy loading, Strong's panel history, dark Hebrew contrast, and console health were exercised on 2026-06-29. |
-| Committed favorite interaction assertions | Implemented, run blocked | `app/scripts/interaction-test.mjs` covers header, verse-context, source-token favorite/tag actions, Favorites grouping, panel history, and cleanup. The in-app browser connection timed out before tab attachment on 2026-06-30. |
+| In-app Browser tag QA | Passing for exercised flow | On 2026-06-30, John 4 Interlinear source-token tagging, badge persistence/editing, dark-theme layout, corrected `because` rendering, and console health passed. Direct drag selection could not be synthesized by the Browser controller. |
+| Committed favorite interaction assertions | Implemented, full run blocked | `app/scripts/interaction-test.mjs` covers reader text spans, header/verse-context/source-token favorites and tags, badges, Favorites grouping, panel history, and cleanup. The standalone Edge/CDP runner remains blocked before app navigation. |
 | Automated desktop browser suite | Environment-blocked | Edge/CDP fails during `Page.enable` before app navigation in this environment. This is a runner problem, not a passing app result. |
 | Automated mobile browser suite | Environment-blocked | The same Edge/CDP startup boundary prevents a reliable mobile result. |
 | `npm test` / `npm run verify` | Not currently green | Both include the blocked browser suites. |
@@ -36,12 +39,11 @@ Reviewed: 2026-06-30
 
 ## Next implementation boundary
 
-Phase 1 is complete. Phase 2 now has one remaining product task:
+Phases 1 and 2 are complete. Continue Phase 3:
 
-1. Add favorite/tag actions to the reader text-selection menu with canonical text-span targets.
-2. Add visible tag badges to reader and Interlinear targets.
-3. Add contiguous source-token-span selection and tests.
-4. Enrich the local inquiry-analysis result and then expose personal graph views.
+1. Add contiguous source-token-span selection, actions, badges, and tests.
+2. Add review handling for ambiguous/unresolved English text anchors.
+3. Enrich the local inquiry-analysis result and then expose personal graph views.
 
 ## Verification commands
 

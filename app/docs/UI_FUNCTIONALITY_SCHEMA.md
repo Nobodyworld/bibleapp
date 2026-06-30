@@ -10,6 +10,7 @@ Reviewed: 2026-06-30
 - Verse context tabs expose Parallel, Refs, Cmt, Int, and Tags when their scoped actions apply.
 - Book, chapter, verse-row, verse-context, and Interlinear source-token favorite stars are direct `tag:favorite` toggles and expose state through `aria-pressed`.
 - Interlinear source-token tag actions open the target-aware tag editor. The editor only presents active tags whose `allowed_target_types` include `source_token`.
+- Selecting reader text exposes Favorite, Tags, Study, Draft, and Red letters actions. Favorite and Tags use one canonical `text_span` target.
 
 The executable control map is `src/ui-contracts.js`.
 
@@ -52,6 +53,16 @@ Reader and panel tokens match by `verse + token_index`. Strong's code is used on
 - Cards must constrain both original-language and English/gloss columns so long words wrap without overlapping.
 - Hebrew-only analysis such as gematria and Hebrew mark details must not render for Greek tokens.
 - Each card's favorite and tag actions use the exact canonical `source_token` target built from its verse reference and token metadata; they do not infer identity from display text.
+- Active non-favorite source-token tags render as editable card badges without replacing the favorite star.
+
+## Reader text-span selection
+
+- Every rendered verse-text segment carries its canonical start/end character offsets.
+- A selection derives its range from the DOM Range endpoints, not by searching for the selected string. Repeated words therefore retain the selected occurrence's identity.
+- Leading/trailing whitespace is excluded from the canonical target and snapshot.
+- Selecting text takes precedence over activating a Strong's token.
+- Tagged spans render a visible highlight and editable tag badges.
+- Snapshot drift resolves only when the original offsets still match or the snapshot has one unique relocated occurrence. Ambiguous or unresolved snapshots are not rendered on arbitrary text.
 
 ## Canonical reference context
 
@@ -81,4 +92,4 @@ IndexedDB initialization and migration have a three-second boundary. If the brow
 - `tests/ui-contracts.mjs`: availability, panel transitions, control schema, token identity.
 - `tests/reference-context.mjs`: hierarchy normalization and stable keys.
 - `tests/interlinear.mjs`: packaged interlinear data contracts.
-- `app/scripts/interaction-test.mjs`: rendered interaction behavior, including favorite controls, target-aware source-token tagging, Favorites grouping, panel history, and cleanup, when the browser runner is available.
+- `app/scripts/interaction-test.mjs`: rendered interaction behavior, including reader text-span selection, favorite controls, editable target badges, source-token tagging, Favorites grouping, panel history, and cleanup, when the browser runner is available.

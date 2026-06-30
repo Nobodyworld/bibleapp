@@ -1196,6 +1196,25 @@ export function getTargetTags(state, targetInput) {
     .sort();
 }
 
+export function getTaggedTargetsForReference(state, key, options = {}) {
+  ensureStores(state);
+  const targetTypes = Array.isArray(options.targetTypes) ? new Set(options.targetTypes) : null;
+  const translationId = String(options.translationId || "").trim().toLowerCase();
+  const grouped = new Map();
+  Object.values(state.tagStore.tag_assertions || {}).forEach((assertion) => {
+    if (!assertion?.active || assertion.assertion_type !== "tag_application") return;
+    const target = normalizeTarget(assertion.target);
+    if (!target || referenceKeyFromTarget(target) !== key) return;
+    if (targetTypes && !targetTypes.has(target.target_type)) return;
+    if (translationId && target.translation_id !== translationId) return;
+    const current = grouped.get(target.target_id) || { target, tag_ids: [] };
+    current.tag_ids.push(legacyTagId(assertion.tag_id));
+    current.tag_ids = [...new Set(current.tag_ids)].sort();
+    grouped.set(target.target_id, current);
+  });
+  return [...grouped.values()].sort((a, b) => a.target.target_id.localeCompare(b.target.target_id));
+}
+
 export function setTagAssertion(state, targetInput, tagId, enabled, options = {}) {
   ensureStores(state);
   const target = normalizeTarget(targetInput);

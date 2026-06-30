@@ -985,6 +985,32 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   background: rgba(37, 99, 95, 0.1);
 }
 
+.reader-text-segment {
+  display: inline;
+}
+
+.verse-body,
+.strong-token,
+.reader-text-segment {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.tagged-text-span {
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--accent) 11%, transparent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.16em;
+}
+
+.reader-target-badges {
+  display: inline-flex;
+  margin: 0 0.12em;
+  vertical-align: 0.2em;
+}
+
 .verse-context-tabs {
   display: inline-flex;
   align-items: center;
@@ -2356,10 +2382,17 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   grid-column: 1 / -1;
   grid-row: 4;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   gap: 6px;
   padding-top: 8px;
   border-top: 1px solid var(--line);
+}
+
+.token-tag-controls {
+  display: inline-flex;
+  gap: 6px;
+  margin-left: auto;
 }
 
 .token-favorite-button,
@@ -2394,6 +2427,52 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   border-left: 3px solid var(--accent);
   background: var(--panel-alt);
   color: var(--muted);
+}
+
+.target-tag-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.target-tag-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 2px 7px;
+  border: 1px solid var(--tag-color);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tag-color) 7%, var(--panel));
+  color: var(--tag-color);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+button.target-tag-badge:hover,
+button.target-tag-badge:focus-visible {
+  background: color-mix(in srgb, var(--tag-color) 15%, var(--panel));
+}
+
+.target-tag-badges.compact {
+  gap: 2px;
+}
+
+.target-tag-badges.compact .target-tag-badge {
+  min-width: 18px;
+  min-height: 18px;
+  padding: 1px 4px;
+}
+
+.target-tag-badges.compact .target-tag-badge-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 .interlinear-token.interlinear-hover {
@@ -3441,7 +3520,8 @@ button {
 
 :root[data-theme="dark"] .verse-context-favorite-button,
 :root[data-theme="dark"] .token-favorite-button,
-:root[data-theme="dark"] .token-tag-button {
+:root[data-theme="dark"] .token-tag-button,
+:root[data-theme="dark"] .target-tag-badge {
   background: transparent !important;
   border-color: var(--line) !important;
   color: var(--muted) !important;
@@ -3451,6 +3531,25 @@ button {
 :root[data-theme="dark"] .token-favorite-button.active {
   border-color: #fbbf24 !important;
   color: #fbbf24 !important;
+}
+
+:root[data-theme="dark"] .target-tag-badge {
+  border-color: var(--tag-color) !important;
+  background: color-mix(in srgb, var(--tag-color) 10%, transparent) !important;
+  color: var(--tag-color) !important;
+}
+
+:root[data-theme="dark"] .selection-action-menu {
+  border-color: var(--line);
+  background: rgba(24, 28, 33, 0.98);
+}
+
+:root[data-theme="dark"] .selection-action-menu button {
+  color: var(--text);
+}
+
+:root[data-theme="dark"] .tagged-text-span {
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
 }
 
 /* Dark mode link-button and context highlighting */

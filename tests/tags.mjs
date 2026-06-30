@@ -16,6 +16,7 @@ import {
   deriveTagTargetIndex,
   deriveVerseTagsFromAssertions,
   normalizeTagAssertion,
+  resolveTextSpanAnchor,
   tagAssertionId,
   tagDefinitionId,
   targetId,
@@ -24,6 +25,7 @@ import {
   createUserDataExport,
   getAllJobEvents,
   getTagTargets,
+  getTaggedTargetsForReference,
   getTargetTags,
   importUserData,
   normalizeTagStore,
@@ -95,6 +97,19 @@ assert.equal(tokenSpan.target_id, "target:source_token_span:bsb:new:john:4:1:8:1
 assert.equal(targetId(token), token.target_id);
 assert.equal(createBookTarget("not-a-book"), null);
 assert.equal(createSourceTokenTarget("john:4:1", { token_index: 0 }), null);
+assert.deepEqual(resolveTextSpanAnchor(span, "When Jesus spoke"), {
+  status: "current",
+  char_start: 0,
+  char_end: 4,
+  text_snapshot: "When",
+});
+assert.deepEqual(resolveTextSpanAnchor(span, "Now When Jesus spoke"), {
+  status: "relocated",
+  char_start: 4,
+  char_end: 8,
+  text_snapshot: "When",
+});
+assert.equal(resolveTextSpanAnchor(span, "Then When and When").status, "ambiguous");
 
 const legacyAssertion = normalizeTagAssertion({
   id: "assertion:tag:john.4.1:positive_sentiment",
@@ -163,6 +178,13 @@ assert.equal(favoriteBook.tag_id, "tag:favorite");
 assert.equal(getTagTargets(state, "favorite").length, 6);
 assert.deepEqual(state.tagStore.verse_tags["john:4:1"], ["favorite"]);
 assert.deepEqual(getTargetTags(state, token), ["favorite"]);
+assert.deepEqual(
+  getTaggedTargetsForReference(state, "john:4:1", {
+    targetTypes: ["text_span"],
+    translationId: "bsb",
+  }).map((entry) => [entry.target.target_id, entry.tag_ids]),
+  [[span.target_id, ["favorite"]]],
+);
 assert.throws(
   () => setTagAssertion(state, book, "positive_sentiment", true),
   /cannot be applied to book/,
@@ -207,7 +229,7 @@ console.log(
       favorite_targets: getTagTargets(imported, "favorite").length,
       inquiry_jobs: inquiryJobs.length,
       graph_edges: graph.counts.edges,
-      assertions: 42,
+      assertions: 49,
     },
     null,
     2,

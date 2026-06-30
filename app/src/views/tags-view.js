@@ -9,8 +9,8 @@ import {
   setTagAssertion,
   setVerseTag,
   updateCustomTag,
-} from "../stores.js?v=tag-initiative-20260630";
-import { targetId } from "../semantic-targets.js?v=tag-initiative-20260630";
+} from "../stores.js?v=tag-spans-20260630";
+import { targetId } from "../semantic-targets.js?v=tag-spans-20260630";
 import { createVerseContextTabs } from "./verse-context-tabs.js?v=tag-initiative-20260630";
 
 function tagIcon(tag) {
@@ -25,10 +25,14 @@ export function createTagsView(ctx) {
     button.type = "button";
     const updateState = () => {
       button.className = [options.className || "favorite-button", active ? "active" : ""].filter(Boolean).join(" ");
-      button.textContent = active ? "★" : "☆";
+      button.textContent = options.showLabel ? `${active ? "★" : "☆"} Favorite` : active ? "★" : "☆";
       button.title = `${active ? "Remove" : "Add"} ${options.label || "target"} ${active ? "from" : "to"} favorites`;
       button.setAttribute("aria-label", button.title);
       button.setAttribute("aria-pressed", active ? "true" : "false");
+    };
+    button.refreshFavoriteState = () => {
+      active = id ? getTagTargets(ctx.state, "favorite").includes(id) : false;
+      updateState();
     };
     updateState();
     button.addEventListener("click", (event) => {
@@ -74,6 +78,7 @@ export function createTagsView(ctx) {
         button.setAttribute("aria-label", `${active ? "Remove" : "Add"} ${tag.label} tag`);
         button.addEventListener("click", () => {
           setTagAssertion(ctx.state, target, tag.id, !active);
+          options.onChange?.();
           showTargetTagEditor(target, { ...options, history: "replace", lock: true });
         });
         const icon = document.createElement("span");
@@ -86,6 +91,48 @@ export function createTagsView(ctx) {
       });
     wrap.append(group);
     setDetail("Tags", wrap, options);
+  }
+
+  function renderTargetTagBadges(target, options = {}) {
+    const tagIds = getTargetTags(ctx.state, target).filter(
+      (tagId) => options.includeFavorite || tagId !== "favorite",
+    );
+    if (!tagIds.length) return null;
+    const wrap = document.createElement("div");
+    wrap.className = ["target-tag-badges", options.className || "", options.compact ? "compact" : ""]
+      .filter(Boolean)
+      .join(" ");
+    tagIds.forEach((tagId) => {
+      const tag = ctx.state.tagStore.tags[tagId];
+      if (!tag) return;
+      const badge = document.createElement(options.interactive ? "button" : "span");
+      if (options.interactive) badge.type = "button";
+      badge.className = "target-tag-badge";
+      badge.style.setProperty("--tag-color", tag.color || "#696f78");
+      badge.title = [tag.label, tag.description].filter(Boolean).join(" - ");
+      badge.setAttribute("aria-label", `${options.label || "Tagged target"}: ${tag.label}. Edit tags`);
+      if (options.interactive) {
+        badge.addEventListener("click", (event) => {
+          event.stopPropagation();
+          showTargetTagEditor(target, {
+            label: options.label,
+            preview: options.preview,
+            forceHistory: true,
+            lock: true,
+            onChange: options.onChange,
+          });
+        });
+      }
+      const icon = document.createElement("span");
+      icon.className = "tag-badge-icon";
+      icon.textContent = tagIcon(tag);
+      const label = document.createElement("span");
+      label.className = "target-tag-badge-label";
+      label.textContent = tag.label;
+      badge.append(icon, label);
+      wrap.append(badge);
+    });
+    return wrap.childElementCount ? wrap : null;
   }
 
   function renderTagBadges(key) {
@@ -470,6 +517,7 @@ export function createTagsView(ctx) {
     createFavoriteButton,
     renderInlineTagPicker,
     renderTagBadges,
+    renderTargetTagBadges,
     showFavorites,
     showTargetTagEditor,
     showTagEditor,

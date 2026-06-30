@@ -4,11 +4,11 @@ import { setLanguageTextWithTooltips } from "../language-tooltips.js";
 import { referenceKey } from "../references.js";
 import { analyzeOriginalWord, summarizeHebrewGematriaTokens, wordHasLanguageScript } from "../language.js";
 import { resolveInterlinearVerseTokens } from "../strongs.js?v=interaction-qa-20260629";
-import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=tag-initiative-20260630";
+import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=tag-spans-20260630";
 import { createVerseContextTabs } from "./verse-context-tabs.js?v=tag-initiative-20260630";
 import { createStudyEmptyState } from "../study-empty-state.js";
 import { interlinearTokenIdentity } from "../ui-contracts.js";
-import { createSourceTokenTarget } from "../semantic-targets.js?v=tag-initiative-20260630";
+import { createSourceTokenTarget } from "../semantic-targets.js?v=tag-spans-20260630";
 
 function normalizeWordMapSpan(raw, bsbVerseText) {
   const start = Number(raw[2] || 0);
@@ -275,6 +275,8 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     if (sourceTarget) {
       const actions = document.createElement("div");
       actions.className = "token-tag-actions";
+      const controls = document.createElement("div");
+      controls.className = "token-tag-controls";
       const tokenLabel = `${ctx.currentReference(card.dataset.verse)} ${token.original || token.transliteration || "source token"}`;
       const favorite = ctx.detailViews.createFavoriteButton(sourceTarget, {
         className: "token-favorite-button",
@@ -285,6 +287,18 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
       tags.className = "token-tag-button";
       tags.textContent = "Tags";
       tags.setAttribute("aria-label", `Tag ${tokenLabel}`);
+      const refreshTargetActions = () => {
+        favorite.refreshFavoriteState?.();
+        actions.querySelector(".token-target-badges")?.remove();
+        const badges = ctx.detailViews.renderTargetTagBadges(sourceTarget, {
+          className: "token-target-badges",
+          interactive: true,
+          label: tokenLabel,
+          preview: [token.english, token.gloss].filter(Boolean).join(" — "),
+          onChange: refreshTargetActions,
+        });
+        if (badges) actions.insertBefore(badges, controls);
+      };
       tags.addEventListener("click", (event) => {
         event.stopPropagation();
         ctx.detailViews.showTargetTagEditor(sourceTarget, {
@@ -292,9 +306,12 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
           preview: [token.english, token.gloss].filter(Boolean).join(" — "),
           forceHistory: true,
           lock: true,
+          onChange: refreshTargetActions,
         });
       });
-      actions.append(favorite, tags);
+      controls.append(favorite, tags);
+      actions.append(controls);
+      refreshTargetActions();
       card.append(actions);
     }
     appendLanguageBreakdown(card, token);

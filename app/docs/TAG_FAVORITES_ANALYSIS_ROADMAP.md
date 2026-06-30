@@ -39,9 +39,8 @@ The guiding rules are:
 
 | Gap | Why it matters |
 |---|---|
-| Tag UI is verse-first | The target API supports broader scopes, but visible controls still expose verse tagging only. |
-| Favorites have no dedicated UI | `tag:favorite` exists, but book/chapter/verse stars and the Favorites panel remain to be built. |
-| Word/chunk target UI is missing | Source-token, source-token-span, and text-span targets exist in the data layer but need selection/tag controls. |
+| Source-token-span UI is missing | Single English spans and source tokens are taggable; contiguous multi-token Greek/Hebrew selection remains. |
+| Text-span drift requires review UI | Exact and uniquely relocated snapshots render safely; ambiguous or unresolved anchors need an explicit review surface. |
 | Inquiry processor is foundational | It records exact targets, notes, missing inputs, and a graph patch; richer same-source/same-English/scripture analysis remains Phase 4 work. |
 | Personal graph is not exposed as a user-facing view | The graph projection exists but needs a UI and graph-specific result types. |
 | Community graph is not modeled separately yet | Community participation must be optional and must not be required for personal features. |
@@ -314,10 +313,11 @@ Examples:
 | Favorites as tag definition | Implemented | `tag:favorite` supports all seven target types and quick-toggle behavior metadata. |
 | Book/chapter favorite buttons | Implemented | Current reading header exposes persistent accessible toggles. |
 | Verse favorite button | Implemented | Every verse row exposes a persistent accessible star. |
-| Word/source-token favorite | Planned | Needs source-token target and tag UI on reader/interlinear selections. |
-| Word chunk/text-span favorite | Planned | Needs text selection anchor and source-token-span target. |
+| Word/source-token favorite | Implemented | Interlinear cards use exact source-token identity and expose favorite/tag actions plus badges. |
+| English text-span favorite | Implemented | Reader selection uses exact rendered character boundaries, canonical targets, highlights, and editable badges. |
+| Source-token-span favorite | Planned | Requires contiguous source-token selection UI. |
 | Target-aware tag API | Implemented | `setTagAssertion` is canonical; `setVerseTag` is the compatibility wrapper. |
-| Word tag picker | Planned | Reuse current selection/follow context and Strong's/interlinear token identity. |
+| Word tag picker | Implemented | One target-aware editor filters tags by every target's allowed type. |
 | User inquiry tag (`tag:inquiry`) | Implemented | Separate from textual `tag:question`; rendered as `?`. |
 | `?` queues inquiry-analysis | Implemented in data layer | Trigger is idempotent per assertion revision; dedicated result UI remains planned. |
 | Deterministic inquiry-analysis processor | Foundation implemented | Produces target/source summary, warnings, and graph patch; full corpus comparisons remain planned. |
@@ -347,11 +347,13 @@ Completed: 2026-06-29.
 
 ### Phase 2: Favorites UI
 
+Completed: 2026-06-30.
+
 1. [x] Add favorite star for current book.
 2. [x] Add favorite star for current chapter.
 3. [x] Add favorite star for verse rows.
 4. [x] Add favorite action to verse context tabs.
-5. [ ] Add favorite action to reader text selection menu.
+5. [x] Add favorite action to reader text selection menu.
 6. [x] Add favorite action to interlinear/source-token cards.
 7. [x] Add Favorites panel grouped by book, chapter, verse, English span, source token, and source-token span.
 8. [x] Add data-layer tests for toggling favorites and preserving them through export/import.
@@ -359,13 +361,13 @@ Completed: 2026-06-29.
 
 ### Phase 3: Word and chunk tagging
 
-1. Reuse reader word-map spans for English text targets.
-2. Reuse interlinear token identity for source-token targets.
-3. Add source-token-span selection where contiguous token chunks are selected.
-4. Add a unified tag picker that receives a target object instead of a verse key.
-5. Show badges on reader spans and interlinear cards when tags exist.
-6. Add drift handling for text spans using existing text snapshot logic.
-7. Add tests for English word, Greek/Hebrew token, and chunk tags.
+1. [x] Use exact rendered verse character boundaries for English text targets. This supports arbitrary selections across word-map/Strong segments without first-match ambiguity.
+2. [x] Reuse interlinear token identity for source-token targets.
+3. [ ] Add source-token-span selection where contiguous token chunks are selected.
+4. [x] Add a unified tag picker that receives a target object instead of a verse key.
+5. [x] Show editable badges on reader spans and interlinear cards when tags exist.
+6. [x] Add drift handling for text spans using text snapshots. Exact and uniquely relocated anchors render; ambiguous/unresolved anchors do not attach to the wrong text.
+7. [ ] Add tests for English word, Greek/Hebrew token, and chunk tags. English spans and individual source tokens are covered; source-token chunks remain.
 
 ### Phase 4: Inquiry-analysis jobs
 
@@ -396,13 +398,12 @@ Completed: 2026-06-29.
 
 ## Immediate next task list
 
-1. Add favorite and tag actions to the reader text-selection menu using canonical text-span targets.
-2. Add visible tag badges to reader spans and Interlinear source-token cards.
-3. Add contiguous source-token-span selection and tests.
-4. Enrich `inquiry-analysis` with local corpus comparisons and render a dedicated Inquiry result view.
-5. Add personal graph projection/views for favorites and inquiries.
-6. Restore a green rendered desktop/mobile browser run for the committed interaction assertions.
-7. Only after the personal graph is solid, add community-cache schema and opt-in UI.
+1. Add contiguous source-token-span selection, favorite/tag actions, badges, and tests.
+2. Add an anchor-review surface for ambiguous or unresolved English text spans.
+3. Enrich `inquiry-analysis` with local corpus comparisons and render a dedicated Inquiry result view.
+4. Add personal graph projection/views for favorites and inquiries.
+5. Restore a green rendered desktop/mobile browser run for the committed interaction assertions.
+6. Only after the personal graph is solid, add community-cache schema and opt-in UI.
 
 ## Non-goals for the next build step
 
