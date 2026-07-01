@@ -332,9 +332,9 @@ button:disabled {
 
 .app-shell {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 400px;
+  grid-template-columns: minmax(0, 1fr) minmax(380px, 440px);
   gap: 16px;
-  width: min(1420px, calc(100% - 32px));
+  width: min(1760px, calc(100% - 32px));
   margin: 16px auto;
 }
 
@@ -495,16 +495,16 @@ button:disabled {
   position: relative;
   display: grid;
   place-items: center;
-  width: 34px;
-  min-width: 34px;
-  height: 34px;
-  min-height: 34px;
+  width: 20px;
+  min-width: 20px;
+  height: 56px;
+  min-height: 56px;
   padding: 0;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.48);
-  box-shadow: 0 6px 18px rgba(16, 24, 40, 0.1);
+  border-radius: 0 12px 12px 0;
+  background: color-mix(in srgb, var(--panel) 84%, transparent);
+  box-shadow: 0 4px 14px rgba(16, 24, 40, 0.12);
   color: var(--accent-dark);
-  font-size: 22px;
+  font-size: 18px;
   font-weight: 800;
   line-height: 1;
   opacity: 0.54;
@@ -516,24 +516,18 @@ button:disabled {
 }
 
 .reader-nav-arrow.previous-chapter {
-  left: 4px;
+  left: -10px;
   transform: none;
 }
 
 .reader-nav-arrow.next-chapter {
-  right: 4px;
+  right: -10px;
+  border-radius: 12px 0 0 12px;
   transform: none;
 }
 
 .reader-nav-arrow::after {
-  position: absolute;
-  top: 36px;
-  color: var(--muted);
-  content: "chapter";
-  font-size: 9px;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  content: none;
 }
 
 .reader-nav-arrow:hover,
@@ -586,7 +580,7 @@ button:disabled {
   display: flex;
   justify-content: flex-end;
   align-items: flex-start;
-  gap: 10px;
+  gap: 5px;
   flex-wrap: wrap;
   max-width: min(760px, 100%);
 }
@@ -595,10 +589,10 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  padding: 3px;
+  padding: 2px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.68);
+  background: color-mix(in srgb, var(--panel) 74%, transparent);
 }
 
 .toolbar-button {
@@ -606,13 +600,13 @@ button:disabled {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-height: 36px;
-  padding: 0 10px;
+  min-height: 30px;
+  padding: 0 8px;
   border: 0;
   border-radius: 6px;
   background: transparent;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
   transition: all 140ms ease;
@@ -656,8 +650,8 @@ button:disabled {
 .toolbar-icon {
   display: inline-grid;
   place-items: center;
-  width: 18px;
-  min-width: 18px;
+  width: 15px;
+  min-width: 15px;
   color: var(--accent-dark);
   font-weight: 800;
   line-height: 1;
@@ -831,7 +825,8 @@ button:disabled {
   color: var(--muted);
   font-size: 16px;
   line-height: 1;
-  opacity: 0.42;
+  opacity: 0;
+  visibility: hidden;
   transition:
     color 140ms ease,
     background 140ms ease,
@@ -846,6 +841,13 @@ button:disabled {
   background: color-mix(in srgb, #a66b00 10%, transparent);
   color: #a66b00;
   opacity: 1;
+  visibility: visible;
+}
+
+.verse-row:hover .verse-favorite-button,
+.verse-row:focus-within .verse-favorite-button {
+  opacity: 0.72;
+  visibility: visible;
 }
 
 .verse-row:hover .verse-study-button,
@@ -875,6 +877,11 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 }
 
 @media (hover: none) {
+  .verse-favorite-button {
+    opacity: 0.58;
+    visibility: visible;
+  }
+
   .verse-study-button {
     border-color: rgba(37, 99, 95, 0.16);
     background: rgba(255, 255, 255, 0.68);
@@ -1189,6 +1196,21 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   white-space: normal;
 }
 
+.reference-hover-tooltip-verse {
+  display: block;
+}
+
+.reference-hover-tooltip-verse + .reference-hover-tooltip-verse {
+  margin-top: 5px;
+}
+
+.reference-hover-tooltip-verse sup {
+  margin-right: 2px;
+  color: #d7e5e2;
+  font-size: 0.76em;
+  font-weight: 900;
+}
+
 .strong-token[data-tooltip][data-suppress-tooltip]::after,
 .strong-token[data-tooltip][data-suppress-tooltip]:hover::after,
 .strong-token[data-tooltip][data-suppress-tooltip]:focus-visible::after {
@@ -1236,8 +1258,9 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 
 .detail-pane {
   position: sticky;
-  top: 86px;
-  max-height: calc(100vh - 102px);
+  top: 76px;
+  height: calc(100dvh - 88px);
+  max-height: calc(100dvh - 88px);
   min-width: 0;
   overflow-x: hidden;
   overflow-y: hidden;
@@ -1754,18 +1777,14 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 }
 
 .strong-sticky-summary {
-  position: sticky;
-  top: 0;
-  z-index: 9;
+  position: static;
   display: grid;
   gap: 6px;
-  margin: -18px -18px 0;
-  padding: 18px 18px 10px;
+  margin: 0;
+  padding: 0 0 10px;
   border-bottom: 1px solid var(--line);
-  background: var(--panel);
-  box-shadow: var(--shadow-sm);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  background: transparent;
+  box-shadow: none;
 }
 
 .strong-overview {
@@ -3193,6 +3212,23 @@ button.target-tag-badge:focus-visible {
   }
 }
 
+@media (min-width: 641px) and (max-width: 1380px) {
+  .chapter-actions .toolbar-button {
+    width: 34px;
+    min-width: 34px;
+    padding: 0;
+  }
+
+  .chapter-actions .toolbar-button > span:not(.toolbar-icon) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
 @media (max-width: 640px) {
   .app-shell {
     width: 100%;
@@ -3366,9 +3402,55 @@ button.target-tag-badge:focus-visible {
 }
 
 :root[data-theme="dark"] .strong-sticky-summary {
-  background: var(--panel) !important;
+  background: transparent !important;
   border-bottom: 1px solid var(--line) !important;
   color: var(--text) !important;
+}
+
+:root[data-theme="dark"] .action-group {
+  border-color: var(--line) !important;
+  background: color-mix(in srgb, var(--panel) 72%, transparent) !important;
+}
+
+:root[data-theme="dark"] .toolbar-button {
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--muted) !important;
+}
+
+:root[data-theme="dark"] .toolbar-button:hover,
+:root[data-theme="dark"] .toolbar-button:focus-visible,
+:root[data-theme="dark"] .toolbar-button.primary-tool {
+  border: 0 !important;
+  background: rgba(148, 163, 184, 0.1) !important;
+  color: var(--text) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="dark"] .verse-context-tab {
+  border: 0 !important;
+  background: transparent !important;
+  color: var(--muted) !important;
+}
+
+:root[data-theme="dark"] .verse-context-tab:hover,
+:root[data-theme="dark"] .verse-context-tab:focus-visible,
+:root[data-theme="dark"] .verse-context-tab.active,
+:root[data-theme="dark"] .verse-context-tab.active:disabled {
+  border: 0 !important;
+  background: rgba(148, 163, 184, 0.14) !important;
+  color: var(--text) !important;
+  box-shadow: none !important;
+}
+
+:root[data-theme="dark"] .parallel-verse {
+  background: var(--panel-alt) !important;
+  border-color: var(--line) !important;
+}
+
+:root[data-theme="dark"] .parallel-verse.active {
+  background: rgba(148, 163, 184, 0.12) !important;
+  border-color: rgba(148, 163, 184, 0.42) !important;
 }
 
 :root[data-theme="dark"] input[type="text"],
@@ -3564,15 +3646,28 @@ button {
 }
 
 :root[data-theme="dark"] .reader-context-verse {
-  background: rgba(78, 205, 193, 0.15) !important;
+  background: rgba(148, 163, 184, 0.08) !important;
   box-shadow:
-    inset 3px 0 0 var(--accent),
-    0 0 0 2px rgba(78, 205, 193, 0.2) !important;
+    inset 2px 0 0 rgba(148, 163, 184, 0.62),
+    0 0 0 1px rgba(148, 163, 184, 0.16) !important;
 }
 
 :root[data-theme="dark"] .reader-context-word {
-  background: rgba(251, 191, 36, 0.25) !important;
-  outline-color: rgba(78, 205, 193, 0.6) !important;
+  background: rgba(180, 145, 92, 0.18) !important;
+  outline-color: rgba(180, 145, 92, 0.42) !important;
+}
+
+:root[data-theme="dark"] .reader-nav-arrow {
+  border-color: var(--line) !important;
+  background: color-mix(in srgb, var(--panel) 88%, transparent) !important;
+  color: var(--muted) !important;
+}
+
+:root[data-theme="dark"] .reader-nav-arrow:hover,
+:root[data-theme="dark"] .reader-nav-arrow:focus-visible {
+  background: var(--panel-alt) !important;
+  color: var(--text) !important;
+  box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.18) !important;
 }
 
 :root[data-theme="dark"] .detail-tool-button:hover,

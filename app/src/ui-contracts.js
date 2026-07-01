@@ -101,6 +101,11 @@ export function transitionPanelMode(mode, event) {
   return mode === PANEL_MODES.locked ? PANEL_MODES.locked : PANEL_MODES.follow;
 }
 
+export function chapterSwipeDirection({ deltaX = 0, deltaY = 0, threshold = 72 } = {}) {
+  if (Math.abs(deltaX) < threshold || Math.abs(deltaX) < Math.abs(deltaY) * 1.35) return 0;
+  return deltaX < 0 ? 1 : -1;
+}
+
 export function interlinearTokenIdentity({ verse, tokenIndex, strongCode } = {}) {
   const normalizedVerse = String(verse || "");
   const normalizedIndex = String(tokenIndex ?? "");

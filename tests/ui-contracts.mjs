@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import { CAPABILITY_REGISTRY } from "../app/src/capabilities.js";
 import {
+  chapterSwipeDirection,
   CONTROL_STATES,
   PANEL_EVENTS,
   PANEL_MODES,
@@ -31,6 +32,10 @@ assert.equal(transitionPanelMode(PANEL_MODES.follow, PANEL_EVENTS.activate), PAN
 assert.equal(transitionPanelMode(PANEL_MODES.locked, PANEL_EVENTS.hover), PANEL_MODES.locked);
 assert.equal(transitionPanelMode(PANEL_MODES.locked, PANEL_EVENTS.disengage), PANEL_MODES.follow);
 assert.equal(transitionPanelMode(PANEL_MODES.locked, PANEL_EVENTS.reset), PANEL_MODES.follow);
+assert.equal(chapterSwipeDirection({ deltaX: -90, deltaY: 10 }), 1);
+assert.equal(chapterSwipeDirection({ deltaX: 90, deltaY: 10 }), -1);
+assert.equal(chapterSwipeDirection({ deltaX: 60, deltaY: 5 }), 0);
+assert.equal(chapterSwipeDirection({ deltaX: 90, deltaY: 80 }), 0);
 
 assert.equal(
   interlinearTokenIdentity({ verse: "1", tokenIndex: 10, strongCode: "G3754" }),

@@ -1,6 +1,6 @@
 import { DEFAULT_ROUTE } from "./src/config.js?v=tag-phase-20260629";
 import { capabilityAvailable, resolveCapability } from "./src/capabilities.js";
-import { createChapterRenderer } from "./src/chapter-renderer.js?v=tag-spans-20260630";
+import { createChapterRenderer } from "./src/chapter-renderer.js?v=ui-polish-20260630";
 import { loadManifest, loadReaderBookData, translationCanLoadBook } from "./src/data-service.js";
 import { createDetailViews } from "./src/detail-views.js?v=tag-spans-20260630";
 import {
@@ -20,7 +20,7 @@ import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js
 import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js";
 import { getTagTargets, initStores, listenForUserDataChanges, setTagAssertion } from "./src/stores.js?v=tag-spans-20260630";
 import { studyUnavailableLabel } from "./src/study-empty-state.js";
-import { CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js";
+import { chapterSwipeDirection, CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js?v=ui-polish-20260630";
 
 const state = {
   manifest: null,
@@ -421,15 +421,19 @@ async function goToChapter(delta) {
 }
 
 function bindEvents() {
+  function disengageDetailFollow() {
+    setDetailHoverLocked(false);
+    detailViews.clearStrongPin();
+    clearReaderHighlight();
+  }
+
   function maybeDisengageLockedDetail(event) {
     if (
       !event.target.closest?.(
         "button, a, input, select, textarea, summary, label, [role='button'], .verse-context-tabs, .detail-floating-nav, .strong-token, .language-word-hover, .language-letter-hover, .letter-unit",
       )
     ) {
-      setDetailHoverLocked(false);
-      detailViews.clearStrongPin();
-      clearReaderHighlight();
+      disengageDetailFollow();
     }
   }
 
@@ -576,6 +580,26 @@ function bindEvents() {
   }, true);
 
   document.addEventListener("pointerdown", maybeDisengageLockedDetail, true);
+  document.addEventListener("click", maybeDisengageLockedDetail, true);
+
+  let readerSwipeStart = null;
+  els.content?.addEventListener("pointerdown", (event) => {
+    if (event.pointerType !== "touch" && event.pointerType !== "pen") return;
+    readerSwipeStart = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
+  });
+  els.content?.addEventListener("pointerup", (event) => {
+    if (!readerSwipeStart || event.pointerId !== readerSwipeStart.pointerId) return;
+    const deltaX = event.clientX - readerSwipeStart.x;
+    const deltaY = event.clientY - readerSwipeStart.y;
+    readerSwipeStart = null;
+    const direction = chapterSwipeDirection({ deltaX, deltaY });
+    if (!direction) return;
+    disengageDetailFollow();
+    void goToChapter(direction);
+  });
+  els.content?.addEventListener("pointercancel", () => {
+    readerSwipeStart = null;
+  });
 
   // Keyboard shortcuts
   document.addEventListener("keydown", (event) => {

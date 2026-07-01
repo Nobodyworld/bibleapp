@@ -197,11 +197,29 @@ export function createChapterRenderer(ctx) {
     layer.textContent = "";
   }
 
+  function renderReferenceHoverTooltip(layer, target) {
+    const verses = target?.__bibleAppReferencePreviewVerses;
+    if (!Array.isArray(verses) || !verses.length) {
+      layer.textContent = target?.dataset?.tooltip || "";
+      return;
+    }
+    const fragment = document.createDocumentFragment();
+    verses.forEach((item) => {
+      const line = document.createElement("span");
+      line.className = "reference-hover-tooltip-verse";
+      const number = document.createElement("sup");
+      number.textContent = item.verse;
+      line.append(number, document.createTextNode(` ${item.text}`));
+      fragment.append(line);
+    });
+    layer.replaceChildren(fragment);
+  }
+
   function refreshReferenceHoverTooltip(target) {
     if (!target || activeReferenceHoverTarget !== target) return;
     const text = target.dataset.tooltip || "";
     const layer = ensureReferenceHoverTooltipLayer();
-    layer.textContent = text;
+    renderReferenceHoverTooltip(layer, target);
     layer.hidden = !text;
     if (!layer.hidden) positionReferenceHoverTooltip(target);
   }
@@ -214,7 +232,7 @@ export function createChapterRenderer(ctx) {
     }
     const layer = ensureReferenceHoverTooltipLayer();
     activeReferenceHoverTarget = target;
-    layer.textContent = text;
+    renderReferenceHoverTooltip(layer, target);
     layer.hidden = false;
     layer.style.left = "0px";
     layer.style.top = "0px";
@@ -251,16 +269,7 @@ export function createChapterRenderer(ctx) {
   }
 
   function renderReferenceLabel(button, label) {
-    const text = String(label || "");
-    const match = text.match(/^(.*?\b\d+:)(\d+(?:-\d+)?)$/);
-    if (!match) {
-      button.textContent = text;
-      return;
-    }
-    const prefix = document.createTextNode(match[1]);
-    const superscript = document.createElement("sup");
-    superscript.textContent = match[2];
-    button.replaceChildren(prefix, superscript);
+    button.textContent = String(label || "");
   }
 
   function showSelectionMenuForVerse(reference, verse, verseText, body, key) {
@@ -346,18 +355,21 @@ export function createChapterRenderer(ctx) {
 
   function hydrateReferencePreview(button, location) {
     if (!location || button.dataset.previewLoaded === "true") return;
+    button.__bibleAppReferencePreviewVerses = null;
     button.dataset.tooltip = "Loading passage...";
     refreshReferenceHoverTooltip(button);
     resolvePassageText(ctx.state.translationId, location)
       .then((passage) => {
         if (!button.isConnected) return;
         button.dataset.previewLoaded = "true";
+        button.__bibleAppReferencePreviewVerses = passage?.verses || null;
         button.dataset.tooltip = passage?.text || "Referenced passage could not be loaded.";
         refreshReferenceHoverTooltip(button);
       })
       .catch(() => {
         if (!button.isConnected) return;
         button.dataset.previewLoaded = "true";
+        button.__bibleAppReferencePreviewVerses = null;
         button.dataset.tooltip = "Referenced passage could not be loaded.";
         refreshReferenceHoverTooltip(button);
       });
