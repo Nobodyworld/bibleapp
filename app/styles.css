@@ -155,13 +155,13 @@
 }
 
 html {
-  overflow-x: hidden;
+  overflow-x: clip;
 }
 
 body {
   margin: 0;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow-x: clip;
   background: var(--bg);
   color: var(--text);
   font-family:
@@ -3535,7 +3535,9 @@ button {
 :root[data-theme="dark"]
   button:not(.verse-study-button):not(.verse-number):not(
     .verse-number-menu
-  ):not(.link-button):not(.compact-link) {
+  ):not(.link-button):not(.compact-link):not(.toolbar-button):not(
+    .verse-context-tab
+  ):not(.parallel-verse) {
   background: var(--bg-elevated) !important;
   color: var(--text) !important;
   border-color: var(--accent) !important;
@@ -3545,11 +3547,15 @@ button {
 :root[data-theme="dark"]
   button:not(.verse-study-button):not(.verse-number):not(
     .verse-number-menu
-  ):not(.link-button):not(.compact-link):hover,
+  ):not(.link-button):not(.compact-link):not(.toolbar-button):not(
+    .verse-context-tab
+  ):not(.parallel-verse):hover,
 :root[data-theme="dark"]
   button:not(.verse-study-button):not(.verse-number):not(
     .verse-number-menu
-  ):not(.link-button):not(.compact-link):focus-visible {
+  ):not(.link-button):not(.compact-link):not(.toolbar-button):not(
+    .verse-context-tab
+  ):not(.parallel-verse):focus-visible {
   background: var(--panel) !important;
   border-color: var(--accent) !important;
   color: var(--text) !important;
