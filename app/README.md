@@ -23,7 +23,7 @@ Licensing and provenance details are documented in the license matrix as written
 
 ## Engineering Documentation
 
-Start with `docs/README.md`. The active status and design contracts are:
+Start with the root `../MASTER_STATUS_TRACKER.md` for the consolidated task and plan status. Detailed status and design contracts are:
 
 - `docs/CURRENT_WORK.md`: verified status, blockers, and next work boundary.
 - `docs/UI_FUNCTIONALITY_SCHEMA.md`: UI availability, panel, reference, and interlinear contracts.

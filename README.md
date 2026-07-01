@@ -4,6 +4,8 @@ This repository contains the private publish package for a static Bible reader a
 
 The active app is in `app/`. The `backup/` directory is local reference/archive material and is ignored from publishing.
 
+Repository-wide past, current, and future work is consolidated in `MASTER_STATUS_TRACKER.md`. Detailed documents under `app/docs/` remain supporting contracts and decision records.
+
 ## Current Package
 
 - Reader UI and local browser storage tools.

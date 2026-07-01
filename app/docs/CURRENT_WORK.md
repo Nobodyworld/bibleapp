@@ -33,7 +33,7 @@ Reviewed: 2026-07-01
 | Automated mobile browser suite | Environment-blocked | The Edge/CDP startup boundary prevents a reliable automated mobile result. |
 | `npm test` / `npm run verify` | Not currently green | Both include the blocked browser suites. |
 
-The 2026-07-01 full health review is recorded in `FULL_APP_HEALTH_AUDIT.md`. It is the active release-health and remediation task list.
+The root `MASTER_STATUS_TRACKER.md` is the repository-wide task source of truth. The 2026-07-01 detailed health evidence is recorded in `FULL_APP_HEALTH_AUDIT.md`.
 
 ## Known documentation and package follow-up
 
