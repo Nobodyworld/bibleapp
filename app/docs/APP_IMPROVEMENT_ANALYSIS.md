@@ -1,6 +1,8 @@
 # Bible App Improvement Analysis
 
-Reviewed: 2026-06-29
+Reviewed: 2026-06-30
+
+Status: Historical recommendation matrix. Use `FULL_APP_HEALTH_AUDIT.md` for current release health and `TAG_FAVORITES_ANALYSIS_ROADMAP.md` for current feature state.
 
 ## Purpose
 
@@ -26,7 +28,7 @@ The app has a substantial local-first reader and study baseline. It is suitable 
 | P0 | Automated desktop/mobile browser suites fail at the Edge/CDP `Page.enable` startup boundary. | Stable launch and green interaction suites in a reproducible environment. |
 | P0 | License/provenance records contain status language requiring dedicated review before public/commercial distribution. | One reviewed, internally consistent distribution decision per packaged dataset. |
 | P1 | Several restored package-manifest entries report zero files/bytes despite populated directories. | Regenerated accurate inventory and an assertion preventing stale counts. |
-| P1 | Tagging is verse-first even though the semantic model anticipates broader targets. | Versioned target-aware API, migrations, and tests before new tag UI. |
+| P1 | Important recovery/semantic/package tests are outside the default suite and have drifted. | Reconcile active tests, fix current failures, and include them in release verification. |
 
 ## Earlier recommendation status
 
@@ -40,9 +42,9 @@ The app has a substantial local-first reader and study baseline. It is suitable 
 | Interlinear layout and lazy loading | Implemented | Long-word constraints and verse-by-verse append are present. |
 | Search and quick navigation | Implemented | Search and keyboard shortcuts exist. |
 | Guided capability states | Implemented as a contract | Copy still matters for broken/disabled/empty packs. |
-| Favorites/bookmarks | Planned | Favorites will be a system tag across target scopes. |
-| Word/chunk tags | Planned | Requires target-aware assertions and selection anchors. |
-| User inquiry analysis | Planned | Must be distinct from tagging a textual/rhetorical question. |
+| Favorites/bookmarks | Implemented | System favorite tag spans book, chapter, verse, English span, and source-token scopes. |
+| Word/chunk tags | Partially implemented | English spans and individual source tokens work; contiguous source-token spans remain. |
+| User inquiry analysis | Foundation implemented | Inquiry is separate from textual question and queues an idempotent local analysis job; richer results remain. |
 | Personal graph UI | Planned | Existing assertion projection is a foundation, not a finished view. |
 | Community graph/contributions | Future | Must remain opt-in and separated from personal stores. |
 | Screenshot regression | Deferred | Add after tag/favorites visual structure stabilizes. |
@@ -90,4 +92,4 @@ New controls must:
 
 ## Next work
 
-The next authorized implementation unit is Phase 1 in `TAG_FAVORITES_ANALYSIS_ROADMAP.md`. Do not begin graph or community UI before target-aware assertion migration, compatibility, and job-idempotency tests pass.
+Phases 1 and 2 in `TAG_FAVORITES_ANALYSIS_ROADMAP.md` are complete. Resolve the release-health gates in `FULL_APP_HEALTH_AUDIT.md`, then continue the remaining Phase 3 source-token-span and anchor-review work. Do not begin community UI before personal graph workflows and release verification are stable.

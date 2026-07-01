@@ -1,9 +1,10 @@
 # App Documentation Index
 
-Reviewed: 2026-06-29
+Reviewed: 2026-06-30
 
 ## Active documents
 
+- `FULL_APP_HEALTH_AUDIT.md`: current full-app health verdict, evidence, prioritized findings, acceptance criteria, and task list.
 - `CURRENT_WORK.md`: verified implementation state, known blockers, and the next work boundary.
 - `UI_FUNCTIONALITY_SCHEMA.md`: control availability, panel locking, reference context, and interlinear synchronization contract.
 - `TAG_FAVORITES_ANALYSIS_ROADMAP.md`: approved design and phased task list for target-aware tags, favorites, inquiry jobs, personal graph, and optional community features.
@@ -21,7 +22,9 @@ Reviewed: 2026-06-29
 ## Source-of-truth rules
 
 1. Runtime behavior is defined by code and executable tests, not planning prose.
-2. `CURRENT_WORK.md` is the status source of truth and must not claim a browser suite passes unless it was run successfully in the current environment.
-3. Feature state changes must be reflected in the tag roadmap matrix when implementation lands.
-4. Packaged-data inventory comes from `../data/package-manifest.json`; licensing/provenance records come from `../LICENSES.md` and `../data/license-matrix.json`.
-5. A provenance record does not itself establish redistribution or commercial clearance.
+2. `FULL_APP_HEALTH_AUDIT.md` is the current release-health and remediation source of truth.
+3. `CURRENT_WORK.md` is the implementation-status source of truth and must not claim a browser suite passes unless it was run successfully in the current environment.
+4. Feature state changes must be reflected in the tag roadmap matrix when implementation lands.
+5. Packaged-data inventory is intended to come from `../data/package-manifest.json`; until audit item P1-1 is resolved, verify it against the filesystem.
+6. Licensing/provenance records come from `../LICENSES.md` and `../data/license-matrix.json`, but audit item P0-2 must be resolved before relying on them for distribution.
+7. A provenance record does not itself establish redistribution or commercial clearance.

@@ -30,20 +30,30 @@ Reviewed: 2026-06-30
 | Automated mobile browser suite | Environment-blocked | The same Edge/CDP startup boundary prevents a reliable mobile result. |
 | `npm test` / `npm run verify` | Not currently green | Both include the blocked browser suites. |
 
+The 2026-06-30 full health review is recorded in `FULL_APP_HEALTH_AUDIT.md`. It is the active release-health and remediation task list.
+
 ## Known documentation and package follow-up
 
 1. `data/package-manifest.json` declares restored study packs, but several large restored pack entries still report zero files/bytes. Regenerate package counts before treating the manifest as release metadata.
 2. `LICENSES.md` and the license matrix contain provenance/status language that requires a dedicated legal/data review before public or commercial distribution.
 3. Browser automation needs a stable Edge/CDP launch path; manual browser QA does not replace that regression suite.
 4. Screenshot-diff baselines remain deferred until the visual design stabilizes.
+5. Nineteen of twenty-one package-manifest rows have stale file or byte counts.
+6. Footnotes and other restored datasets are present at runtime while `LICENSES.md` still describes them as absent.
+7. Eleven executable test files are outside the default static suite; direct execution exposed stale contracts and five failing recovery scenarios.
+8. Hebrew interlinear `original` token fields contain transliteration rather than Hebrew script in the sampled first token for all 39 Old Testament books.
+9. Commentary HTML is inserted without an allowlist sanitizer or CSP.
 
 ## Next implementation boundary
 
-Phases 1 and 2 are complete. Continue Phase 3:
+Before continuing feature expansion, complete the release-health gates:
 
-1. Add contiguous source-token-span selection, actions, badges, and tests.
-2. Add review handling for ambiguous/unresolved English text anchors.
-3. Enrich the local inquiry-analysis result and then expose personal graph views.
+1. Reconcile package/license inventory and regenerate package counts.
+2. Restore a green desktop/mobile browser runner.
+3. Reconcile orphaned tests and fix or explicitly migrate the failing recovery contracts.
+4. Add CI enforcement.
+
+After those gates, continue Phase 3 with contiguous source-token-span selection and ambiguous-anchor review.
 
 ## Verification commands
 
