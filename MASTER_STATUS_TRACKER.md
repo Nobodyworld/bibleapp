@@ -26,16 +26,16 @@ Runtime behavior is established by code and executable tests. A task marked Comp
 
 The application is healthy for continued local development but is not release-ready.
 
-The core reader, study panels, semantic target model, Favorites UI, local inquiry foundation, packaged capability checks, and static suite are functional. The primary release gates are the broken official desktop/mobile browser runner, unresolved package/license records, inaccurate package inventory, orphaned recovery and schema tests, missing Hebrew-script token originals, and missing commentary sanitization.
+The core reader, study panels, semantic target model, Favorites UI, local inquiry foundation, package inventory, recovery/domain coverage, security boundary, CI, and desktop/mobile release suites are functional. The remaining release gates are external package/license review, missing Hebrew-script token originals, and an explicit minimum-package/performance strategy.
 
 ## Portfolio snapshot
 
 | Status | Tasks |
 |---|---:|
-| Complete | 51 |
-| Partial | 7 |
-| Blocked | 9 |
-| Planned | 58 |
+| Complete | 76 |
+| Partial | 6 |
+| Blocked | 4 |
+| Planned | 39 |
 | Future | 11 |
 | Ongoing | 7 |
 | Superseded | 1 |
@@ -64,11 +64,11 @@ The core reader, study panels, semantic target model, Favorites UI, local inquir
 | ID | Task or outcome | Status | Evidence or next action | Source |
 |---|---|---|---|---|
 | REL-001 | Maintain one static verification entry point. | Complete | `npm run test:static` covers integrity, data, contracts, accessibility, docs, and master-plan checks. | Health audit |
-| REL-002 | Repair or replace the Edge/CDP browser runner. | Blocked | Current runner fails at `Page.enable`; move to a maintained runner or repair the launcher. | Health audit; visual review |
-| REL-003 | Make desktop browser regression pass twice consecutively. | Blocked | Depends on REL-002. | Health audit |
-| REL-004 | Make mobile browser regression pass twice consecutively. | Blocked | Depends on REL-002; in-app Browser mobile QA was also controller-blocked on 2026-07-01. | Health audit; visual review |
-| REL-005 | Make `npm run verify` pass from a clean checkout. | Blocked | Static and structural audit pass; browser suites block completion. | Health audit |
-| REL-006 | Add continuous integration for maintained verification. | Planned | Add a workflow after runner commands are reproducible. | Health audit |
+| REL-002 | Repair or replace the Edge/CDP browser runner. | Complete | Replaced the raw CDP client with `playwright-core` using installed Edge. | Health audit; visual review |
+| REL-003 | Make desktop browser regression pass twice consecutively. | Complete | Desktop passed 31 checks twice; hostile commentary coverage later raised the suite to 32. | Health audit |
+| REL-004 | Make mobile browser regression pass twice consecutively. | Complete | Mobile passed 32 checks twice before hostile commentary coverage was added. | Health audit; visual review |
+| REL-005 | Make `npm run verify` pass from a clean checkout. | Complete | Full static, domain, inventory, desktop, mobile, and structural audit command passes. | Health audit |
+| REL-006 | Add continuous integration for maintained verification. | Complete | Windows GitHub Actions workflow runs `npm ci` and `npm run verify`. | Health audit |
 | REL-007 | Keep publish audit explicitly structural, not legal/runtime approval. | Complete | Current audit reports both limitations. | Test-mode decision |
 | REL-008 | Introduce multiple package test profiles. | Superseded | Do not split while only one full-study composition ships. Revisit only if multiple distributions are intentional. | Test-mode decision |
 | REL-009 | Define fixtures and browser workflows if package profiles return. | Future | Required only if REL-008 is reactivated. | Test-mode decision |
@@ -78,14 +78,14 @@ The core reader, study panels, semantic target model, Favorites UI, local inquir
 | ID | Task or outcome | Status | Evidence or next action | Source |
 |---|---|---|---|---|
 | PKG-001 | Reconcile packaged data with `LICENSES.md` and `license-matrix.json`. | Blocked | Requires authoritative dataset inventory plus legal/data review. | Health audit |
-| PKG-002 | List every runtime-loaded dataset in one authoritative package/license inventory. | Planned | Include footnotes and derived indexes currently mislabeled or omitted. | Health audit |
+| PKG-002 | List every runtime-loaded dataset in one authoritative package/license inventory. | Complete | Inventory now includes footnotes, presentation, language metadata, semantic seeds, and all reader study paths. | Health audit |
 | PKG-003 | Record reviewed public redistribution decisions for every dataset. | Blocked | Requires legal/data reviewer. | Health audit; license candidates |
 | PKG-004 | Record reviewed commercial-use and sale-with-app decisions. | Blocked | Requires legal/data reviewer. | Health audit; license candidates |
 | PKG-005 | Record exact attribution, modification, territory, version, and reviewer fields. | Planned | Use the candidate evaluation template. | License candidates |
-| PKG-006 | Regenerate actual package file counts and byte counts. | Planned | Nineteen of twenty-one feature-pack rows were stale in the latest audit. | Health audit; restoration record |
-| PKG-007 | Add gzip/compressed-size metadata. | Planned | Extend deterministic inventory generation. | Health audit |
-| PKG-008 | Separate or filter Hebrew and Greek interlinear inventory paths. | Planned | Current packs share a mixed directory. | Health audit |
-| PKG-009 | Add a package-manifest drift test. | Planned | Fail on missing paths or mismatched counts/sizes. | Health audit |
+| PKG-006 | Regenerate actual package file counts and byte counts. | Complete | Deterministic inventory records 25 packs and 2,672 unique package files. | Health audit; restoration record |
+| PKG-007 | Add gzip/compressed-size metadata. | Complete | Every pack and package records raw and per-file gzip totals. | Health audit |
+| PKG-008 | Separate or filter Hebrew and Greek interlinear inventory paths. | Complete | Inventory filters the shared directory into 39 Hebrew and 27 Greek book shards. | Health audit |
+| PKG-009 | Add a package-manifest drift test. | Complete | `npm run inventory:check` is part of `test:static`. | Health audit |
 | PKG-010 | Define minimum-reader versus optional-study distribution. | Planned | Include CDN, caching, versioning, and offline behavior. | Health audit |
 | PKG-011 | Add package and route-level size/request budgets. | Planned | Measure cold-start bytes and requests before setting limits. | Health audit |
 | PKG-012 | Review Strong's and lexicon source chain. | Planned | Highest provenance-review priority. | License candidates |
@@ -103,15 +103,15 @@ The core reader, study panels, semantic target model, Favorites UI, local inquir
 | TST-001 | Enforce one release query key for runtime modules. | Complete | `tests/module-singletons.mjs` is in `test:static`. | Health audit |
 | TST-002 | Enforce singleton URLs for stateful `dom.js` and `stores.js`. | Complete | Recursive import test prevents split module state. | Health audit |
 | TST-003 | Test that reader navigation clears stale detail content. | Complete | Source regression plus rendered desktop verification. | Health audit |
-| TST-004 | Triage all executable tests excluded from `test:static`. | Planned | Classify each as active, integration-only, replaced, or retired. | Health audit |
-| TST-005 | Resolve five failing user-data recovery scenarios. | Planned | Blocked/open, migration, quarantine, and legacy partial-export expectations currently fail. | Health audit |
-| TST-006 | Update semantic tests for `source_token_span`. | Planned | Existing excluded fixture rejects a supported target type. | Health audit |
-| TST-007 | Update package-planner fixtures. | Planned | Remove or define unknown `reader-bsb-minimal`. | Health audit |
-| TST-008 | Update search and performance fixtures. | Planned | Reconcile search-manifest schema and missing lexicon shard. | Health audit |
-| TST-009 | Update poll schema fixtures. | Planned | Reconcile missing poll-response schema expectation. | Health audit |
-| TST-010 | Update user-data semantic store-version fixtures. | Planned | Current excluded test expects an older version. | Health audit |
-| TST-011 | Make smoke tests self-contained. | Planned | Start their own server or require an explicit URL. | Health audit |
-| TST-012 | Add every maintained non-browser test to the default suite. | Planned | Perform after TST-004 through TST-011. | Health audit |
+| TST-004 | Triage all executable tests excluded from `test:static`. | Complete | `tests/TEST_INVENTORY.md` classifies eight promoted files and four retired/replaced scripts. | Health audit |
+| TST-005 | Resolve five failing user-data recovery scenarios. | Complete | All 10 recovery scenarios pass, including migration, fallback, quarantine, and legacy exports. | Health audit |
+| TST-006 | Update semantic tests for `source_token_span`. | Complete | Semantic test accepts all current target types. | Health audit |
+| TST-007 | Update package-planner fixtures. | Complete | Tests now use current `reader-texts` and feature-pack contracts. | Health audit |
+| TST-008 | Update search and performance fixtures. | Complete | Obsolete scripts were retired; runtime Search remains covered and new performance budgets stay separately planned. | Health audit |
+| TST-009 | Update poll schema fixtures. | Complete | Poll-response schema is committed and lifecycle tests pass. | Health audit |
+| TST-010 | Update user-data semantic store-version fixtures. | Complete | Current store v4 and canonical graph IDs are covered. | Health audit |
+| TST-011 | Make smoke tests self-contained. | Complete | Obsolete smoke script was replaced by the self-starting interaction suite. | Health audit |
+| TST-012 | Add every maintained non-browser test to the default suite. | Complete | Seven domain suites run through `npm run test:domain` inside `test:static`. | Health audit |
 | TST-013 | Add stable screenshot-diff baselines. | Planned | Defer until tag/favorites visual structure is stable and browser runner works. | Health audit; visual review |
 | TST-014 | Maintain source checks for accessibility contracts. | Ongoing | Static test covers names, keyboard/touch hooks, focus styles, themes, motion, and contrast. | UI contract |
 | TST-015 | Add rendered focus-restoration and 200% zoom checks. | Planned | Static checks are insufficient for acceptance. | Health audit; visual review |
@@ -152,7 +152,7 @@ The core reader, study panels, semantic target model, Favorites UI, local inquir
 | TAG-004 | Generate deterministic target and assertion IDs. | Complete | Covered by tag tests. | Tag roadmap phase 1 |
 | TAG-005 | Use `setTagAssertion` as canonical API with `setVerseTag` compatibility. | Complete | Current store API and tests. | Tag roadmap phase 1 |
 | TAG-006 | Migrate legacy verse assertions and system IDs. | Complete | Versioned migration exists. | Tag roadmap phase 1 |
-| TAG-007 | Quarantine invalid imported target records. | Partial | Normalization supports quarantine, but excluded recovery scenario still fails its current assertion. | Tag roadmap; health audit |
+| TAG-007 | Quarantine invalid imported target records. | Complete | Recovery and user-data semantic suites verify one quarantine record without double counting. | Tag roadmap; health audit |
 | TAG-008 | Keep target indexes and verse compatibility projection rebuildable. | Complete | Current store model and tests. | Tag roadmap phase 1 |
 | TAG-009 | Deduplicate behavior-trigger jobs by assertion/job/revision. | Complete | Tag tests cover duplicate prevention. | Tag roadmap phase 1 |
 | TAG-010 | Add current-book Favorite action. | Complete | Persistent accessible toggle exists. | Tag roadmap phase 2 |
@@ -164,7 +164,7 @@ The core reader, study panels, semantic target model, Favorites UI, local inquir
 | TAG-016 | Group Favorites by target type in one panel. | Complete | Current Favorites panel covers all supported types. | Tag roadmap phase 2 |
 | TAG-017 | Preserve Favorites through export/import. | Complete | Data-layer tests pass. | Tag roadmap phase 2 |
 | TAG-018 | Commit rendered Favorite interaction assertions. | Complete | Assertions exist in `interaction-test.mjs`. | Tag roadmap phase 2 |
-| TAG-019 | Obtain green rendered Favorite desktop/mobile runs. | Blocked | Assertions cannot complete until REL-002. | Tag roadmap phase 2 |
+| TAG-019 | Obtain green rendered Favorite desktop/mobile runs. | Complete | Favorite flows pass in both maintained rendered suites. | Tag roadmap phase 2 |
 | TAG-020 | Build one target-aware tag picker. | Complete | Picker filters definitions by allowed target type. | Tag roadmap phase 3 |
 | TAG-021 | Show editable badges on English spans and source tokens. | Complete | Current reader and Interlinear UI. | Tag roadmap phase 3 |
 | TAG-022 | Resolve exact or uniquely relocated English span anchors safely. | Complete | Ambiguous/unresolved anchors do not attach to arbitrary text. | Tag roadmap phase 3 |
@@ -226,9 +226,9 @@ The core reader, study panels, semantic target model, Favorites UI, local inquir
 | DAT-002 | Preserve transliteration separately from source script. | Planned | Required during interlinear regeneration. | Health audit |
 | DAT-003 | Define source-text-to-interlinear token alignment. | Planned | Must precede safe Hebrew token regeneration. | Health audit |
 | DAT-004 | Validate Hebrew and Greek script against declared language. | Planned | Add per-book assertions. | Health audit |
-| SEC-001 | Sanitize packaged commentary HTML with a strict allowlist. | Planned | Current direct `innerHTML` boundary trusts data. | Health audit |
-| SEC-002 | Add malicious commentary fixtures. | Planned | Cover scripts, handlers, unsafe URLs, SVG, and malformed markup. | Health audit |
-| SEC-003 | Add a Content Security Policy. | Planned | Coordinate with static assets and local runtime. | Health audit |
+| SEC-001 | Sanitize packaged commentary HTML with a strict allowlist. | Complete | Commentary rendering now strips active content, attributes, and unsafe URLs. | Health audit |
+| SEC-002 | Add malicious commentary fixtures. | Complete | Desktop/mobile interaction suite covers script, handlers, JavaScript URLs, SVG, classes, and safe links. | Health audit |
+| SEC-003 | Add a Content Security Policy. | Complete | Static app shell limits scripts/styles/connections to self and blocks objects/forms/base changes. | Health audit |
 | SEC-004 | Evaluate Trusted Types after sanitization/CSP design. | Planned | Defense-in-depth, not a sanitizer replacement. | Health audit |
 
 ### 10. Accessibility, responsive UI, and visual QA
@@ -238,9 +238,9 @@ The core reader, study panels, semantic target model, Favorites UI, local inquir
 | A11Y-001 | Provide explicit accessible names and button types. | Complete | Static accessibility audit passes. | Improvement analysis |
 | A11Y-002 | Expose toggle state through `aria-pressed`. | Complete | Favorite/tag/context controls covered. | Improvement analysis |
 | A11Y-003 | Support keyboard activation and visible focus. | Complete | Source contracts pass; rendered coverage remains under TST-015. | Improvement analysis |
-| A11Y-004 | Provide touch alternatives to hover-only behavior. | Partial | Touch hooks and mobile Study launcher exist; full rendered mobile QA is blocked. | Improvement analysis |
+| A11Y-004 | Provide touch alternatives to hover-only behavior. | Partial | Touch emulation and mobile Study access pass; a real-pointer focus-restoration sweep remains. | Improvement analysis |
 | A11Y-005 | Respect reduced motion and forced colors. | Complete | Static CSS audit passes. | Improvement analysis |
-| A11Y-006 | Prevent mobile horizontal overflow. | Partial | Responsive CSS exists; complete mobile rendered sweep is blocked. | Visual review |
+| A11Y-006 | Prevent mobile horizontal overflow. | Complete | Mobile release suite asserts document width at a 390×844 touch viewport. | Visual review |
 | A11Y-007 | Restore focus after temporary menus/panels close. | Partial | Contract exists; rendered verification remains. | Visual review |
 | VIS-001 | Exercise mobile panel open/close, scroll, focus, and token selection. | Blocked | Requires working in-app or automated mobile browser path. | Visual review |
 | VIS-002 | Add visual coverage for Favorites. | Planned | Couple with screenshot baseline work. | Visual review |
@@ -254,7 +254,7 @@ The core reader, study panels, semantic target model, Favorites UI, local inquir
 | DOC-001 | Establish one repository-wide plan/status source of truth. | Complete | This root MST consolidates all current plan sources. | Master consolidation |
 | DOC-002 | Preserve detailed design documents as evidence and decision records. | Ongoing | Detailed contracts remain under `app/docs`. | Documentation index |
 | DOC-003 | Update the MST whenever task status changes. | Ongoing | Enforced structurally by test and review policy. | Master consolidation |
-| DOC-004 | Resolve factual license/package drift in documentation. | Planned | Depends on PKG-001 through PKG-009. | Health audit |
+| DOC-004 | Resolve factual license/package drift in documentation. | Partial | Package presence/count drift is corrected; final source-rights decisions remain external. | Health audit |
 | DOC-005 | Keep historical recommendations labeled historical or superseded. | Complete | Plan registry distinguishes active and historical sources. | Documentation index |
 | DOC-006 | Keep source code free of undocumented TODO/FIXME backlog. | Ongoing | 2026-07-01 scan found no source TODO/FIXME markers outside documentation/data. | Master consolidation |
 
@@ -284,4 +284,4 @@ npm run test:static
 npm run audit
 ```
 
-`npm run verify` remains the intended release command. It must not be reported as green until both desktop and mobile browser suites pass.
+`npm run verify` is green and remains the technical release command. Legal approval is a separate external gate.

@@ -35,11 +35,10 @@ npm run test:browser:mobile
 npm run audit
 ```
 
-The static suite passes. The browser scripts contain broad desktop/mobile interaction coverage, but Edge/CDP currently fails during `Page.enable` before navigation in this environment. They must not be reported as passing until that runner failure is resolved.
+The static suite passes. The hand-written CDP transport was replaced with `playwright-core` using installed Edge. Desktop and mobile interaction suites each passed twice consecutively on 2026-07-01.
 
 ## Remaining visual QA
 
-1. Resolve automated browser startup and run the complete desktop/mobile suites.
-2. Exercise mobile panel open/close, scrolling, focus restoration, and token selection manually if automation remains unavailable.
-3. Add screenshot-diff baselines only after the tag/favorites controls settle.
-4. Add visual coverage for Favorites, inquiry results, and scoped personal graph views as those phases land.
+1. Exercise mobile panel open/close and focus restoration with real pointer interactions in addition to the automated DOM-driven flow.
+2. Add screenshot-diff baselines only after the tag/favorites controls settle.
+3. Add visual coverage for inquiry results and scoped personal graph views as those phases land.

@@ -40,7 +40,7 @@ Packaged data can still be missing, disabled, invalid, or out of scope for a ref
 
 ## Remaining work
 
-1. Regenerate accurate package-manifest file/byte counts for restored study datasets.
-2. Restore reliable automated desktop and mobile browser execution.
-3. Implement the target-aware tag and favorites plan in `TAG_FAVORITES_ANALYSIS_ROADMAP.md`.
+1. Complete external source-chain and distribution-rights review for packaged study datasets.
+2. Restore Hebrew script in Old Testament Interlinear token originals after defining alignment.
+3. Complete the remaining source-token-span, inquiry-result, and personal-graph phases in `TAG_FAVORITES_ANALYSIS_ROADMAP.md`.
 4. Revisit optional package profiles only if the project intentionally ships multiple compositions.

@@ -4,6 +4,7 @@
 /.edge-cdp-profile*/
 /.tmp*/
 /.vscode/
+/node_modules/
 
 /app/server.err.log
 /app/server.out.log
@@ -15,6 +16,14 @@
 !/app/scripts/accessibility-test.mjs
 !/app/scripts/doc-consistency-test.mjs
 !/app/scripts/interaction-test.mjs
+!/app/scripts/job-processor-test.mjs
+!/app/scripts/package-planner-test.mjs
+!/app/scripts/package-state-test.mjs
+!/app/scripts/poll-response-test.mjs
+!/app/scripts/recovery-scenarios-test.mjs
+!/app/scripts/schema-validation.mjs
+!/app/scripts/semantic-test.mjs
+!/app/scripts/user-data-semantic-test.mjs
 /app/scripts/__pycache__/
 *.pyc
 

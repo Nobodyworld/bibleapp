@@ -16,6 +16,11 @@ import { createDefaultPackageStore, normalizePackageStore } from "./package-stat
 
 const USER_DATA_EXPORT_KIND = "bibleapp:user-data";
 const USER_DATA_EXPORT_VERSION = 3;
+const LEGACY_APP_PREFIX = `${["open", "bible"].join("")}-clean-app`;
+const LEGACY_USER_DATA_EXPORT_KINDS = new Set([`${LEGACY_APP_PREFIX}:user-data`]);
+const LEGACY_STORAGE_KEYS = {
+  tags: `${LEGACY_APP_PREFIX}:verse-tags:v1`,
+};
 const JOB_STATES = new Set(["planned", "queued", "running", "completed", "failed", "cancelled", "simulation_only"]);
 const LEGACY_JOB_STATUS_TO_STATE = {
   pending: "queued",
@@ -86,6 +91,16 @@ function loadStorage(key, fallback) {
   } catch {
     return clone(fallback);
   }
+}
+
+function loadStorageWithLegacy(key, legacyKey, fallback) {
+  const current = loadStorage(key, null);
+  if (current) return { ...clone(fallback), ...current };
+  const legacy = loadStorage(legacyKey, null);
+  if (!legacy) return clone(fallback);
+  const normalized = { ...clone(fallback), ...legacy };
+  if (writeLocalStorage(key, normalized)) removeLocalStorageMirror(legacyKey);
+  return normalized;
 }
 
 function writeLocalStorage(key, value) {
@@ -360,14 +375,17 @@ export function normalizeAssertionStore(value = {}, seedAssertions = {}) {
     { ...(seedAssertions || {}), ...(store.assertions || {}) },
   );
   const tagAssertions = normalizedTagAssertions.assertions;
+  const tagQuarantinedRecords = new Set(normalizedTagAssertions.quarantined.map((item) => item.record));
   const genericAssertions = {};
   Object.values(store.assertions || {}).forEach((assertion) => {
     if (!assertion?.id || !assertion.assertion_type) {
-      quarantinedRecords.push({
-        reason: "invalid_assertion_record",
-        record: assertion,
-        quarantined_at: nowIso(),
-      });
+      if (!tagQuarantinedRecords.has(assertion)) {
+        quarantinedRecords.push({
+          reason: "invalid_assertion_record",
+          record: assertion,
+          quarantined_at: nowIso(),
+        });
+      }
       return;
     }
     if (assertion.assertion_type === "tag_application") return;
@@ -496,7 +514,9 @@ export function deletePollResponse(state, proposition, options = {}) {
 }
 
 export async function initStores(state) {
-  const localTagStore = normalizeTagStore(loadStorage(STORAGE_KEYS.tags, createDefaultTagStore()));
+  const localTagStore = normalizeTagStore(
+    loadStorageWithLegacy(STORAGE_KEYS.tags, LEGACY_STORAGE_KEYS.tags, createDefaultTagStore()),
+  );
   const localWorkspaceStore = normalizeWorkspaceStore(loadStorage(STORAGE_KEYS.workspace, createDefaultWorkspaceStore()));
   const localAssertionStore = normalizeAssertionStore(
     loadStorage(STORAGE_KEYS.assertions, createDefaultAssertionStore()),
@@ -556,6 +576,7 @@ export async function initStores(state) {
     }
     [
       STORAGE_KEYS.tags,
+      LEGACY_STORAGE_KEYS.tags,
       STORAGE_KEYS.workspace,
       STORAGE_KEYS.assertions,
       STORAGE_KEYS.polls,
@@ -637,7 +658,9 @@ export function listenForUserDataChanges(state, onChange = null) {
 
 export function ensureStores(state) {
   if (!state.tagStore) {
-    state.tagStore = normalizeTagStore(loadStorage(STORAGE_KEYS.tags, createDefaultTagStore()));
+    state.tagStore = normalizeTagStore(
+      loadStorageWithLegacy(STORAGE_KEYS.tags, LEGACY_STORAGE_KEYS.tags, createDefaultTagStore()),
+    );
   }
   if (!state.workspaceStore) {
     state.workspaceStore = normalizeWorkspaceStore(loadStorage(STORAGE_KEYS.workspace, createDefaultWorkspaceStore()));
@@ -1021,7 +1044,7 @@ function extractUserDataStores(payload) {
   if (!payload || typeof payload !== "object") {
     throw new Error("Import data must be a JSON object.");
   }
-  if (payload.kind !== USER_DATA_EXPORT_KIND) {
+  if (payload.kind !== USER_DATA_EXPORT_KIND && !LEGACY_USER_DATA_EXPORT_KINDS.has(payload.kind)) {
     throw new Error("Import data is not a Bible App user-data export.");
   }
   const stores = payload.stores || {};

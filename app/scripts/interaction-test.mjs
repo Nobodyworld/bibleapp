@@ -1,13 +1,12 @@
 #!/usr/bin/env node
 
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { createServer as createHttpServer } from "node:http";
-import { tmpdir } from "node:os";
-import { dirname, extname, join, resolve, sep } from "node:path";
-import { spawn, spawnSync } from "node:child_process";
+import { dirname, extname, resolve, sep } from "node:path";
 import { createServer } from "node:net";
 import { fileURLToPath } from "node:url";
+import { chromium } from "playwright-core";
 
 const cliArgs = process.argv.slice(2);
 let baseUrl = cliArgs.find((argument) => !argument.startsWith("--")) || "";
@@ -91,183 +90,58 @@ function findEdgePath() {
   return found;
 }
 
-async function waitForJson(url, timeoutMs = 10000) {
-  const deadline = Date.now() + timeoutMs;
-  let lastError;
-  while (Date.now() < deadline) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 1000);
-    try {
-      const response = await fetch(url, { signal: controller.signal });
-      if (response.ok) return response.json();
-      lastError = new Error(`${url} returned ${response.status}`);
-    } catch (error) {
-      lastError = error;
-    } finally {
-      clearTimeout(timer);
-    }
-    await delay(150);
-  }
-  throw lastError || new Error(`Timed out waiting for ${url}`);
-}
-
-class CdpClient {
-  constructor(wsUrl) {
-    this.nextId = 1;
-    this.pending = new Map();
-    this.events = new Map();
-    this.ws = new WebSocket(wsUrl);
-  }
-
-  async open(timeoutMs = 10000) {
-    if (this.ws.readyState === WebSocket.OPEN) return;
-    await new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        cleanup();
-        reject(new Error("Timed out opening CDP WebSocket."));
-      }, timeoutMs);
-      const cleanup = () => {
-        clearTimeout(timer);
-        this.ws.removeEventListener("open", onOpen);
-        this.ws.removeEventListener("error", onError);
-        this.ws.removeEventListener("close", onClose);
-      };
-      const onOpen = () => {
-        cleanup();
-        resolve();
-      };
-      const onError = (event) => {
-        cleanup();
-        reject(event?.error || new Error(event?.message || "CDP WebSocket error."));
-      };
-      const onClose = () => {
-        cleanup();
-        reject(new Error("CDP WebSocket closed before opening."));
-      };
-      this.ws.addEventListener("open", onOpen, { once: true });
-      this.ws.addEventListener("error", onError, { once: true });
-      this.ws.addEventListener("close", onClose, { once: true });
-    });
-    this.ws.addEventListener("message", (event) => {
-      const message = JSON.parse(event.data);
-      if (process.env.OPENBIBLE_QA_DEBUG === "1") {
-        const label = message.id ? `response:${message.id}` : message.method || "message";
-        console.error(`[qa:cdp] ${label}${message.sessionId ? ` session=${message.sessionId}` : ""}`);
-      }
-      if (message.id && this.pending.has(message.id)) {
-        const { resolve, reject } = this.pending.get(message.id);
-        this.pending.delete(message.id);
-        if (message.error) reject(new Error(message.error.message || JSON.stringify(message.error)));
-        else resolve(message.result);
-        return;
-      }
-      if (message.method && this.events.has(message.method)) {
-        for (const handler of this.events.get(message.method)) handler(message.params || {});
-      }
-    });
-  }
-
-  send(method, params = {}, timeoutMs = 10000, sessionId = null) {
-    const id = this.nextId++;
-    const message = { id, method, params };
-    if (sessionId) message.sessionId = sessionId;
-    this.ws.send(JSON.stringify(message));
-    return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => {
-        this.pending.delete(id);
-        reject(new Error(`Timed out waiting for CDP response: ${method}`));
-      }, timeoutMs);
-      this.pending.set(id, {
-        resolve: (value) => {
-          clearTimeout(timer);
-          resolve(value);
-        },
-        reject: (error) => {
-          clearTimeout(timer);
-          reject(error);
-        },
-      });
-    });
-  }
-
-  on(method, handler) {
-    if (!this.events.has(method)) this.events.set(method, new Set());
-    this.events.get(method).add(handler);
-  }
-
-  close() {
-    this.ws.close();
-  }
-}
-
 async function launchBrowser() {
   const edgePath = findEdgePath();
   debugQa(`Edge path: ${edgePath}`);
-  const port = await findFreePort();
-  debugQa(`CDP port: ${port}`);
-  const profile = await mkdtemp(join(tmpdir(), "openbible-edge-"));
-  debugQa(`Profile: ${profile}`);
-  const args = [
-    "--headless=new",
-    "--disable-gpu",
-    "--disable-dev-shm-usage",
-    "--disable-background-networking",
-    "--disable-extensions",
-    "--no-first-run",
-    "--no-default-browser-check",
-    `--remote-debugging-port=${port}`,
-    `--user-data-dir=${profile}`,
-    "about:blank",
-  ];
-  const child = spawn(edgePath, args, { stdio: "ignore", windowsHide: true });
-  debugQa(`Spawned Edge PID: ${child.pid || "unknown"}`);
-  let pageClient;
-  try {
-    await waitForJson(`http://127.0.0.1:${port}/json/version`);
-    debugQa("Loaded CDP version.");
-    const targets = await waitForJson(`http://127.0.0.1:${port}/json/list`);
-    const pageTarget = targets.find((candidate) => candidate.type === "page" && candidate.webSocketDebuggerUrl);
-    if (!pageTarget?.webSocketDebuggerUrl) {
-      throw new Error("Could not resolve initial page target WebSocket.");
-    }
-    pageClient = new CdpClient(pageTarget.webSocketDebuggerUrl);
-    await pageClient.open();
-    debugQa(`Opened page-level WebSocket for target: ${pageTarget.id}`);
-    const page = {
-      send(method, params = {}, timeoutMs = 10000) {
-        return pageClient.send(method, params, timeoutMs);
-      },
-      close() {
-        pageClient.close();
-      },
-    };
-    await page.send("Page.enable");
-    await page.send("Runtime.enable");
-    if (qaDevice === "mobile") {
-      await page.send("Emulation.setDeviceMetricsOverride", {
-        width: 390,
-        height: 844,
-        deviceScaleFactor: 3,
-        mobile: true,
-      });
-      await page.send("Emulation.setTouchEmulationEnabled", {
-        enabled: true,
-        maxTouchPoints: 5,
-      });
-      await page.send("Emulation.setUserAgentOverride", {
-        userAgent:
-          "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36 OpenBibleQA",
-      });
-    }
-    return { page, child, profile };
-  } catch (error) {
-    pageClient?.close();
-    if (child.pid) {
-      spawnSync("taskkill", ["/PID", String(child.pid), "/T", "/F"], { stdio: "ignore" });
-    }
-    await rm(profile, { recursive: true, force: true });
-    throw error;
-  }
+  const browser = await chromium.launch({
+    executablePath: edgePath,
+    headless: true,
+    args: [
+      "--disable-gpu",
+      "--disable-dev-shm-usage",
+      "--disable-background-networking",
+      "--disable-extensions",
+      "--no-first-run",
+      "--no-default-browser-check",
+    ],
+  });
+  const mobile = qaDevice === "mobile";
+  const context = await browser.newContext({
+    viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 720 },
+    deviceScaleFactor: mobile ? 3 : 1,
+    isMobile: mobile,
+    hasTouch: mobile,
+    userAgent: mobile
+      ? "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0 Mobile Safari/537.36 BibleAppQA"
+      : undefined,
+  });
+  const playwrightPage = await context.newPage();
+  const page = {
+    async send(method, params = {}) {
+      if (method === "Page.enable" || method === "Runtime.enable") return {};
+      if (method === "Page.navigate") {
+        await playwrightPage.goto(params.url, { waitUntil: "load" });
+        return {};
+      }
+      if (method === "Page.addScriptToEvaluateOnNewDocument") {
+        await playwrightPage.addInitScript({ content: params.source });
+        return {};
+      }
+      if (method === "Runtime.evaluate") {
+        try {
+          const value = await playwrightPage.evaluate((expression) => (0, eval)(expression), params.expression);
+          return { result: { value } };
+        } catch (error) {
+          return { exceptionDetails: { text: error?.message || String(error) } };
+        }
+      }
+      throw new Error(`Unsupported browser command: ${method}`);
+    },
+    async close() {
+      await playwrightPage.close();
+    },
+  };
+  return { page, browser };
 }
 
 async function navigate(page, url) {
@@ -576,15 +450,15 @@ async function runQa(page) {
     state.detailText.includes("KJV - King James Version") && state.detailText.includes("The LORD is my shepherd"),
     "parallel verse panel missing expected translation text",
   );
-  await click(page, "#detailContent .verse-context-favorite-button");
+  await click(page, "#detailContext .verse-context-favorite-button");
   await waitFor(
     page,
-    "document.querySelector('#detailContent .verse-context-favorite-button')?.getAttribute('aria-pressed') === 'true'",
+    "document.querySelector('#detailContext .verse-context-favorite-button')?.getAttribute('aria-pressed') === 'true'",
   );
-  await click(page, "#detailContent .verse-context-favorite-button");
+  await click(page, "#detailContext .verse-context-favorite-button");
   await waitFor(
     page,
-    "document.querySelector('#detailContent .verse-context-favorite-button')?.getAttribute('aria-pressed') === 'false'",
+    "document.querySelector('#detailContext .verse-context-favorite-button')?.getAttribute('aria-pressed') === 'false'",
   );
   pass("verse context favorite toggle");
   pass("parallel translations by verse number");
@@ -633,6 +507,8 @@ async function runQa(page) {
 
   await selectValue(page, "#bookSelect", "proverbs");
   await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('Proverbs 1')");
+  await click(page, ".verse-number");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Parallel'");
   await clickButtonByText(page, "Cmt", { index: 0 });
   await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Commentary'");
   await waitFor(
@@ -643,6 +519,41 @@ async function runQa(page) {
   state = await getQaState(page);
   assert(state.detailText.includes("Ellicott") || state.detailText.includes("Pulpit"), "commentary panel missing source entries");
   pass("commentary panel");
+
+  const sanitizerResult = await evaluate(
+    page,
+    `(async () => {
+      const { setSanitizedCommentaryHtml } = await import('/src/sanitize-commentary.js');
+      const fixture = document.createElement('div');
+      setSanitizedCommentaryHtml(
+        fixture,
+        '<p onclick="window.__unsafe = true">Safe <strong>text</strong><script>window.__unsafe = true</script>' +
+          '<a href="javascript:alert(1)" onmouseover="window.__unsafe = true">unsafe</a>' +
+          '<a href="http://example.test/insecure">insecure</a>' +
+          '<a href="../../par/john/1-1.htm" class="bad" title="Reference">reference</a>' +
+          '<span class="bld unknown">bold</span><svg onload="window.__unsafe = true"><circle /></svg></p>'
+      );
+      return {
+        html: fixture.innerHTML,
+        scripts: fixture.querySelectorAll('script,svg,iframe,object,embed,form').length,
+        eventAttributes: fixture.querySelectorAll('[onclick],[onmouseover],[onload]').length,
+        unsafeHref: fixture.querySelector('a[href^="javascript:"]')?.getAttribute('href') || null,
+        insecureHref: fixture.querySelector('a[href^="http:"]')?.getAttribute('href') || null,
+        safeHref: fixture.querySelector('a[href^="../../"]')?.getAttribute('href') || null,
+        spanClass: fixture.querySelector('span')?.className || '',
+        unsafeExecuted: Boolean(window.__unsafe)
+      };
+    })()`,
+  );
+  assert(sanitizerResult.scripts === 0, "commentary sanitizer retained active embedded content");
+  assert(sanitizerResult.eventAttributes === 0, "commentary sanitizer retained event attributes");
+  assert(
+    !sanitizerResult.unsafeHref && !sanitizerResult.insecureHref && !sanitizerResult.unsafeExecuted,
+    "commentary sanitizer retained an unsafe URL or executed markup",
+  );
+  assert(sanitizerResult.safeHref === "../../par/john/1-1.htm", "commentary sanitizer removed a safe internal link");
+  assert(sanitizerResult.spanClass === "bld", "commentary sanitizer did not constrain presentation classes");
+  pass("commentary hostile markup sanitization");
 
   const commentaryHasLink = await evaluate(page, "Boolean(document.querySelector('.commentary-body a'))");
   assert(commentaryHasLink, "commentary body has no internal links");
@@ -1189,20 +1100,8 @@ try {
 } catch (error) {
   runError = error;
 } finally {
-  if (browser?.page) browser.page.close();
-  if (browser?.child?.pid) {
-    spawnSync("taskkill", ["/PID", String(browser.child.pid), "/T", "/F"], { stdio: "ignore" });
-  }
-  if (browser?.profile) {
-    for (let attempt = 0; attempt < 5; attempt += 1) {
-      try {
-        await rm(browser.profile, { recursive: true, force: true });
-        break;
-      } catch {
-        await delay(250);
-      }
-    }
-  }
+  if (browser?.page) await browser.page.close();
+  if (browser?.browser) await browser.browser.close();
   if (localServer?.server) {
     await new Promise((resolveClose) => localServer.server.close(resolveClose));
   }

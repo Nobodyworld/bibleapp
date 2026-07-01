@@ -3,6 +3,7 @@ import { createDetailList, setDetail, setDetailMessage } from "../dom.js?v=full-
 import { capabilityMessage } from "../capabilities.js";
 import { makeInternalLinksNavigable } from "../references.js";
 import { createStudyEmptyState } from "../study-empty-state.js";
+import { setSanitizedCommentaryHtml } from "../sanitize-commentary.js?v=full-audit-20260701";
 import { createVerseContextTabs } from "./verse-context-tabs.js?v=full-audit-20260701";
 
 export function createCommentaryOutlineViews(ctx) {
@@ -58,7 +59,7 @@ export function createCommentaryOutlineViews(ctx) {
       title.textContent = entry.source_name || entry.source_id || "Commentary";
       const body = document.createElement("div");
       body.className = "commentary-body";
-      body.innerHTML = resolved.commentary_html || "No commentary body found.";
+      setSanitizedCommentaryHtml(body, resolved.commentary_html || "No commentary body found.");
       makeInternalLinksNavigable(body, ctx.findBook, ctx.goToLocation);
       article.append(title, body);
       wrap.append(article);

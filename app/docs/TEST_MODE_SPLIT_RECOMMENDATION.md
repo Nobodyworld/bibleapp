@@ -30,7 +30,7 @@ npm run audit
 | Mobile browser | Responsive layout, touch emulation, study-panel reachability, and the shared interaction flow. |
 | Publish audit | Structural package checks only; it does not establish runtime or legal readiness. |
 
-The desktop and mobile browser scripts are currently blocked in this environment by Edge/CDP failing at `Page.enable` before navigation. This is not a reason to weaken or skip their assertions.
+The raw CDP transport was replaced on 2026-07-01. The maintained desktop and mobile Playwright/Edge suites now pass and retain the same broad interaction assertions.
 
 ## When to revisit profiles
 

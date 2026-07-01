@@ -58,7 +58,7 @@ From the repository root:
 npm run verify
 ```
 
-This runs static integrity, accessibility, documentation, desktop browser, mobile browser, and structural package checks. See `docs/CURRENT_WORK.md` for the latest verified result and any environment-specific browser-runner blocker.
+This runs static integrity, domain/recovery coverage, package inventory drift, accessibility, documentation, desktop browser, mobile browser, and structural package checks. See `docs/CURRENT_WORK.md` for the latest verified result and non-technical release gates.
 
 ## Generate Analysis Packs
 

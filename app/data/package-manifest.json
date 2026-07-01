@@ -1,1 +1,637 @@
-{"schema_version":1,"generated_at":"2026-06-22T20:44:02.022Z","distribution":"clean-recorded-license","license_matrix":"data/license-matrix.json","note":"Package manifest retains licensing notes as written record metadata only; no runtime or release gating is enforced by license fields.","packages":[{"id":"reader-texts","label":"Reader texts","description":"Static Bible reader with retained text editions and private Strong's word-study data.","feature_pack_ids":["translation-bsb","translation-kjv","translation-wbt","translation-asv","translation-erv","translation-web","translation-dbt","translation-drb","translation-slt","translation-ylt","bsb-strongs-overlay","hebrew-lexicon","greek-lexicon","crossrefs-basic","commentary-verse-index","outlines","search-verses","hebrew-interlinear","greek-interlinear","analysis-word-map","analysis-graph"]}],"feature_packs":[{"id":"translation-bsb","label":"BSB text","description":"Berean Study Bible verse text shards.","dependencies":[],"files":66,"bytes":0,"gzip_bytes":0,"license_note":"Public domain as of 2023-04-30 per Berean Bible free licensing.","paths":["data/verses/bsb"]},{"id":"translation-kjv","label":"KJV text","description":"King James Version verse text shards.","dependencies":[],"files":66,"bytes":0,"gzip_bytes":0,"license_note":"Public domain in the United States.","paths":["data/verses/kjv"]},{"id":"translation-wbt","label":"WBT text","description":"Webster Bible Translation verse text shards.","dependencies":[],"files":66,"bytes":0,"gzip_bytes":0,"license_note":"Public domain in the United States.","paths":["data/verses/wbt"]},{"id":"translation-asv","label":"ASV text","description":"American Standard Version verse text shards.","dependencies":[],"files":66,"bytes":0,"gzip_bytes":0,"license_note":"Public domain in the United States.","paths":["data/verses/asv"]},{"id":"translation-erv","label":"ERV text","description":"English Revised Version verse text shards.","dependencies":[],"files":66,"bytes":0,"gzip_bytes":0,"license_note":"Public domain in the United States.","paths":["data/verses/erv"]},{"id":"translation-web","label":"WEB text","description":"World English Bible verse text shards.","dependencies":[],"files":66,"bytes":0,"gzip_bytes":0,"license_note":"Public domain per eBible.org / World English Bible copyright notice.","paths":["data/verses/web"]},{"id":"translation-dbt","label":"DBT text","description":"Darby Bible Translation verse text shards.","dependencies":[],"files":66,"bytes":0,"gzip_bytes":0,"license_note":"Public domain in the United States.","paths":["data/verses/dbt"]},{"id":"translation-drb","label":"DRB text","description":"Douay-Rheims Bible verse text shards.","dependencies":[],"files":66,"bytes":0,"gzip_bytes":0,"license_note":"Public domain in the United States.","paths":["data/verses/drb"]},{"id":"translation-slt","label":"SLT text","description":"Smith's Literal Translation verse text shards.","dependencies":[],"files":66,"bytes":0,"gzip_bytes":0,"license_note":"Public domain in the United States.","paths":["data/verses/slt"]},{"id":"translation-ylt","label":"YLT text","description":"Young's Literal Translation verse text shards.","dependencies":[],"files":66,"bytes":0,"gzip_bytes":0,"license_note":"Public domain in the United States.","paths":["data/verses/ylt"]},{"id":"bsb-strongs-overlay","label":"BSB Strong's overlay","description":"Token-level Strong's mappings for the Berean Study Bible reader.","dependencies":["translation-bsb"],"files":67,"bytes":0,"gzip_bytes":0,"license_note":"Licensing/provenance notes retained in data/license-matrix.json as written record metadata.","paths":["data/strongs/bsb"]},{"id":"hebrew-lexicon","label":"Hebrew lexicon","description":"Chunked Hebrew Strong's lexicon entries for word-study panels.","dependencies":[],"files":9,"bytes":0,"gzip_bytes":0,"license_note":"Licensing/provenance notes retained in data/license-matrix.json as written record metadata.","paths":["data/lexicon/hebrew"]},{"id":"greek-lexicon","label":"Greek lexicon","description":"Chunked Greek Strong's lexicon entries for word-study panels.","dependencies":[],"files":6,"bytes":0,"gzip_bytes":0,"license_note":"Licensing/provenance notes retained in data/license-matrix.json as written record metadata.","paths":["data/lexicon/greek"]},{"id":"crossrefs-basic","label":"Cross references","description":"Book-level cross-reference datasets used in verse study tabs.","dependencies":[],"files":0,"bytes":0,"gzip_bytes":0,"license_note":"Licensing/provenance notes retained in data/license-matrix.json as written record metadata.","paths":["data/crossrefs"]},{"id":"commentary-verse-index","label":"Commentary verse index","description":"Aggregated and source-backed commentary links keyed by verse.","dependencies":[],"files":0,"bytes":0,"gzip_bytes":0,"license_note":"Licensing/provenance notes retained in data/license-matrix.json as written record metadata.","paths":["data/commentaries"]},{"id":"outlines","label":"Book outlines","description":"Structured section outlines for each book.","dependencies":[],"files":66,"bytes":546579,"gzip_bytes":85592,"license_note":"Licensing/provenance notes retained in data/license-matrix.json as written record metadata.","paths":["data/outlines/books"]},{"id":"search-verses","label":"Search indexes","description":"Generated verse and study search shards and manifest.","dependencies":[],"files":0,"bytes":0,"gzip_bytes":0,"license_note":"Generated local index data retained for app functionality.","paths":["data/search"]},{"id":"hebrew-interlinear","label":"Hebrew interlinear","description":"Token-level Hebrew interlinear dataset used by interlinear views.","dependencies":[],"files":0,"bytes":0,"gzip_bytes":0,"license_note":"Derived interlinear data retained with provenance notes in data/license-matrix.json.","paths":["data/interlinear/books"]},{"id":"greek-interlinear","label":"Greek interlinear","description":"Token-level Greek interlinear dataset used by interlinear views.","dependencies":[],"files":0,"bytes":0,"gzip_bytes":0,"license_note":"Derived interlinear data retained with provenance notes in data/license-matrix.json.","paths":["data/interlinear/books"]},{"id":"analysis-word-map","label":"Word-map analysis","description":"Canonical word-map spans generated from packaged Strong's overlays and verse text.","dependencies":["hebrew-interlinear","greek-interlinear","bsb-strongs-overlay"],"files":66,"bytes":4445457,"gzip_bytes":948252,"license_note":"Generated from packaged datasets for reproducible local analysis workflows.","paths":["data/analysis/word-map/bsb","data/analysis/manifest.json"]},{"id":"analysis-graph","label":"Graph analysis","description":"Cross-reference graph summaries generated per book and globally.","dependencies":["crossrefs-basic"],"files":67,"bytes":176879,"gzip_bytes":41652,"license_note":"Generated from packaged datasets for reproducible local analysis workflows.","paths":["data/analysis/graph/books","data/analysis/graph/summary.json"]}]}
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-01T19:59:31.239Z",
+  "distribution": "clean-recorded-license",
+  "license_matrix": "data/license-matrix.json",
+  "note": "Package manifest retains licensing notes as written record metadata only; no runtime or release gating is enforced by license fields.",
+  "packages": [
+    {
+      "id": "reader-texts",
+      "label": "Reader texts",
+      "description": "Static Bible reader with retained text editions and private Strong's word-study data.",
+      "feature_pack_ids": [
+        "translation-bsb",
+        "translation-kjv",
+        "translation-wbt",
+        "translation-asv",
+        "translation-erv",
+        "translation-web",
+        "translation-dbt",
+        "translation-drb",
+        "translation-slt",
+        "translation-ylt",
+        "bsb-strongs-overlay",
+        "hebrew-lexicon",
+        "greek-lexicon",
+        "crossrefs-basic",
+        "commentary-verse-index",
+        "outlines",
+        "search-verses",
+        "hebrew-interlinear",
+        "greek-interlinear",
+        "analysis-word-map",
+        "analysis-graph",
+        "footnotes-bsb",
+        "presentation-bsb",
+        "language-metadata",
+        "semantic-seeds"
+      ],
+      "files": 2672,
+      "bytes": 942267732,
+      "mb": 898.62,
+      "gzip_bytes": 177303217,
+      "gzip_mb": 169.09,
+      "sha256": "sha256:1a647471e56d2288d120fb0a6b5735b25aa80848b68017fec6d4ca59fc83171d",
+      "largest_shard": {
+        "path": "data/search/commentaries/gill/psalms.json",
+        "bytes": 10293768
+      }
+    }
+  ],
+  "feature_packs": [
+    {
+      "id": "translation-bsb",
+      "label": "BSB text",
+      "description": "Berean Study Bible verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 4167156,
+      "gzip_bytes": 1354289,
+      "license_note": "Public domain as of 2023-04-30 per Berean Bible free licensing.",
+      "paths": [
+        "data/verses/bsb"
+      ],
+      "mb": 3.97,
+      "gzip_mb": 1.29,
+      "sha256": "sha256:5a1acdc025e31bf5817befd05f1a5d966ff37a493c38bd5882f85ed5189e4da7",
+      "largest_shard": {
+        "path": "data/verses/bsb/psalms.json",
+        "bytes": 229658
+      }
+    },
+    {
+      "id": "translation-kjv",
+      "label": "KJV text",
+      "description": "King James Version verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 4455517,
+      "gzip_bytes": 1365173,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/kjv"
+      ],
+      "mb": 4.25,
+      "gzip_mb": 1.3,
+      "sha256": "sha256:d2e2ee02d1e70478894fcb249aa1e5aaa0702477ca1d3c20bac77d24dd1c8f4a",
+      "largest_shard": {
+        "path": "data/verses/kjv/psalms.json",
+        "bytes": 251696
+      }
+    },
+    {
+      "id": "translation-wbt",
+      "label": "WBT text",
+      "description": "Webster Bible Translation verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 4606572,
+      "gzip_bytes": 1353533,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/wbt"
+      ],
+      "mb": 4.39,
+      "gzip_mb": 1.29,
+      "sha256": "sha256:10d391b3b81f6adc6465392f8a4739e91e5a27c1b880e385ff84f988fede3433",
+      "largest_shard": {
+        "path": "data/verses/wbt/psalms.json",
+        "bytes": 266153
+      }
+    },
+    {
+      "id": "translation-asv",
+      "label": "ASV text",
+      "description": "American Standard Version verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 4454869,
+      "gzip_bytes": 1363669,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/asv"
+      ],
+      "mb": 4.25,
+      "gzip_mb": 1.3,
+      "sha256": "sha256:0332d5c44a72c905ad5db346ce38e13ccfdf10adcdc3452b6730ca5dcdca8338",
+      "largest_shard": {
+        "path": "data/verses/asv/psalms.json",
+        "bytes": 247916
+      }
+    },
+    {
+      "id": "translation-erv",
+      "label": "ERV text",
+      "description": "English Revised Version verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 4462777,
+      "gzip_bytes": 1362646,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/erv"
+      ],
+      "mb": 4.26,
+      "gzip_mb": 1.3,
+      "sha256": "sha256:480420b4d2a0c1acfb108ab33d5a13b8ccbf34db65cd1ecc65f22f89b86a12db",
+      "largest_shard": {
+        "path": "data/verses/erv/psalms.json",
+        "bytes": 252746
+      }
+    },
+    {
+      "id": "translation-web",
+      "label": "WEB text",
+      "description": "World English Bible verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 4547953,
+      "gzip_bytes": 1348857,
+      "license_note": "Public domain per eBible.org / World English Bible copyright notice.",
+      "paths": [
+        "data/verses/web"
+      ],
+      "mb": 4.34,
+      "gzip_mb": 1.29,
+      "sha256": "sha256:6f16e44c49dd92574bc0d4b2bbae5193be858c7ecbdb333330193e825d625d0e",
+      "largest_shard": {
+        "path": "data/verses/web/psalms.json",
+        "bytes": 260370
+      }
+    },
+    {
+      "id": "translation-dbt",
+      "label": "DBT text",
+      "description": "Darby Bible Translation verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 4419445,
+      "gzip_bytes": 1371833,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/dbt"
+      ],
+      "mb": 4.21,
+      "gzip_mb": 1.31,
+      "sha256": "sha256:30469680f42c37fd2379033eb0e87cf50068e89609ad8ffb52f38364e7f45045",
+      "largest_shard": {
+        "path": "data/verses/dbt/psalms.json",
+        "bytes": 252203
+      }
+    },
+    {
+      "id": "translation-drb",
+      "label": "DRB text",
+      "description": "Douay-Rheims Bible verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 4377035,
+      "gzip_bytes": 1368225,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/drb"
+      ],
+      "mb": 4.17,
+      "gzip_mb": 1.3,
+      "sha256": "sha256:cad8cd387bc64f45ae13007ba60e3e9287d752000e597e7f70715e82ac89c1c7",
+      "largest_shard": {
+        "path": "data/verses/drb/psalms.json",
+        "bytes": 254747
+      }
+    },
+    {
+      "id": "translation-slt",
+      "label": "SLT text",
+      "description": "Smith's Literal Translation verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 4507942,
+      "gzip_bytes": 1278139,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/slt"
+      ],
+      "mb": 4.3,
+      "gzip_mb": 1.22,
+      "sha256": "sha256:129b1dcdcb1d88a883d3c7827c7bcf6bf87dd49a5ef1b472b5051b3a716d14fe",
+      "largest_shard": {
+        "path": "data/verses/slt/psalms.json",
+        "bytes": 258834
+      }
+    },
+    {
+      "id": "translation-ylt",
+      "label": "YLT text",
+      "description": "Young's Literal Translation verse text shards.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 4457104,
+      "gzip_bytes": 1358575,
+      "license_note": "Public domain in the United States.",
+      "paths": [
+        "data/verses/ylt"
+      ],
+      "mb": 4.25,
+      "gzip_mb": 1.3,
+      "sha256": "sha256:da7e333cc87a7ba24487683fc668b9d06d0e604e635a3305a42840edbdb97ebc",
+      "largest_shard": {
+        "path": "data/verses/ylt/psalms.json",
+        "bytes": 241533
+      }
+    },
+    {
+      "id": "bsb-strongs-overlay",
+      "label": "Reader Strong's overlays",
+      "description": "Token-level Strong's mappings loaded by the BSB, KJV, and YLT reader routes.",
+      "dependencies": [
+        "translation-bsb"
+      ],
+      "files": 199,
+      "bytes": 119648580,
+      "gzip_bytes": 21968124,
+      "license_note": "Licensing/provenance notes retained in data/license-matrix.json as written record metadata.",
+      "paths": [
+        "data/strongs"
+      ],
+      "mb": 114.11,
+      "gzip_mb": 20.95,
+      "sha256": "sha256:726b46190f445eea5c137ef13d399d26c26622e42532781b70190ca32a2cb9cb",
+      "largest_shard": {
+        "path": "data/strongs/bsb/books/jeremiah.json",
+        "bytes": 3307325
+      }
+    },
+    {
+      "id": "hebrew-lexicon",
+      "label": "Hebrew lexicon",
+      "description": "Chunked Hebrew Strong's lexicon entries for word-study panels.",
+      "dependencies": [],
+      "files": 9,
+      "bytes": 19752401,
+      "gzip_bytes": 4582503,
+      "license_note": "Licensing/provenance notes retained in data/license-matrix.json as written record metadata.",
+      "paths": [
+        "data/lexicon/hebrew"
+      ],
+      "mb": 18.84,
+      "gzip_mb": 4.37,
+      "sha256": "sha256:d08fb9c2fcbf09fab7a24bcee571ee31a7087ead5e60377c1af792f4eabd3569",
+      "largest_shard": {
+        "path": "data/lexicon/hebrew/3000.json",
+        "bytes": 2510048
+      }
+    },
+    {
+      "id": "greek-lexicon",
+      "label": "Greek lexicon",
+      "description": "Chunked Greek Strong's lexicon entries for word-study panels.",
+      "dependencies": [],
+      "files": 6,
+      "bytes": 13614325,
+      "gzip_bytes": 3198453,
+      "license_note": "Licensing/provenance notes retained in data/license-matrix.json as written record metadata.",
+      "paths": [
+        "data/lexicon/greek"
+      ],
+      "mb": 12.98,
+      "gzip_mb": 3.05,
+      "sha256": "sha256:610f223ef7da5cdde6d5174339d84c34d4ceac36cd0c5b21a97f2100aabc06d5",
+      "largest_shard": {
+        "path": "data/lexicon/greek/1000.json",
+        "bytes": 2607048
+      }
+    },
+    {
+      "id": "crossrefs-basic",
+      "label": "Cross references",
+      "description": "Book-level cross-reference datasets used in verse study tabs.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 89509336,
+      "gzip_bytes": 18600898,
+      "license_note": "Licensing/provenance notes retained in data/license-matrix.json as written record metadata.",
+      "paths": [
+        "data/crossrefs"
+      ],
+      "mb": 85.36,
+      "gzip_mb": 17.74,
+      "sha256": "sha256:a0d42ad6751b986dbc2d7750effeecb0cd8aa818826eca4c30c9233e8aa7e5c0",
+      "largest_shard": {
+        "path": "data/crossrefs/psalms.json",
+        "bytes": 7338730
+      }
+    },
+    {
+      "id": "commentary-verse-index",
+      "label": "Commentary verse index",
+      "description": "Aggregated and source-backed commentary links keyed by verse.",
+      "dependencies": [],
+      "files": 331,
+      "bytes": 213363527,
+      "gzip_bytes": 56401689,
+      "license_note": "Licensing/provenance notes retained in data/license-matrix.json as written record metadata.",
+      "paths": [
+        "data/commentaries"
+      ],
+      "mb": 203.48,
+      "gzip_mb": 53.79,
+      "sha256": "sha256:165ea24456897c1ba55bdc01c3587d4ae6c3b14fb6e1d28bac155ae753f9d24a",
+      "largest_shard": {
+        "path": "data/commentaries/source/gill/psalms.json",
+        "bytes": 5870427
+      }
+    },
+    {
+      "id": "outlines",
+      "label": "Book outlines",
+      "description": "Structured section outlines for each book.",
+      "dependencies": [],
+      "files": 66,
+      "bytes": 546579,
+      "gzip_bytes": 85592,
+      "license_note": "Licensing/provenance notes retained in data/license-matrix.json as written record metadata.",
+      "paths": [
+        "data/outlines/books"
+      ],
+      "mb": 0.52,
+      "gzip_mb": 0.08,
+      "sha256": "sha256:9d4b7be0a49e42da62ff7b5f7e7cc1394b0d2f543efba04e0179d9f64b5611ef",
+      "largest_shard": {
+        "path": "data/outlines/books/2_kings.json",
+        "bytes": 28530
+      }
+    },
+    {
+      "id": "search-verses",
+      "label": "Search indexes",
+      "description": "Generated verse and study search shards and manifest.",
+      "dependencies": [],
+      "files": 993,
+      "bytes": 357669706,
+      "gzip_bytes": 43781568,
+      "license_note": "Generated local index data retained for app functionality.",
+      "paths": [
+        "data/search"
+      ],
+      "mb": 341.1,
+      "gzip_mb": 41.75,
+      "sha256": "sha256:d0b687f760e261a5849ebfcad43fa9a962e86c275b11665e226576cf3e5edd6e",
+      "largest_shard": {
+        "path": "data/search/commentaries/gill/psalms.json",
+        "bytes": 10293768
+      }
+    },
+    {
+      "id": "hebrew-interlinear",
+      "label": "Hebrew interlinear",
+      "description": "Token-level Hebrew interlinear dataset used by interlinear views.",
+      "dependencies": [],
+      "files": 39,
+      "bytes": 51410549,
+      "gzip_bytes": 9746097,
+      "license_note": "Derived interlinear data retained with provenance notes in data/license-matrix.json.",
+      "paths": [
+        "data/interlinear/books"
+      ],
+      "include_book_ids": [
+        "genesis",
+        "exodus",
+        "leviticus",
+        "numbers",
+        "deuteronomy",
+        "joshua",
+        "judges",
+        "ruth",
+        "1_samuel",
+        "2_samuel",
+        "1_kings",
+        "2_kings",
+        "1_chronicles",
+        "2_chronicles",
+        "ezra",
+        "nehemiah",
+        "esther",
+        "job",
+        "psalms",
+        "proverbs",
+        "ecclesiastes",
+        "songs",
+        "isaiah",
+        "jeremiah",
+        "lamentations",
+        "ezekiel",
+        "daniel",
+        "hosea",
+        "joel",
+        "amos",
+        "obadiah",
+        "jonah",
+        "micah",
+        "nahum",
+        "habakkuk",
+        "zephaniah",
+        "haggai",
+        "zechariah",
+        "malachi"
+      ],
+      "mb": 49.03,
+      "gzip_mb": 9.29,
+      "sha256": "sha256:da830a543276f664adb239800d458025d7515e5ed138d406cd6614cf5a97b06c",
+      "largest_shard": {
+        "path": "data/interlinear/books/jeremiah.json",
+        "bytes": 3658418
+      }
+    },
+    {
+      "id": "greek-interlinear",
+      "label": "Greek interlinear",
+      "description": "Token-level Greek interlinear dataset used by interlinear views.",
+      "dependencies": [],
+      "files": 27,
+      "bytes": 20561051,
+      "gzip_bytes": 3726677,
+      "license_note": "Derived interlinear data retained with provenance notes in data/license-matrix.json.",
+      "paths": [
+        "data/interlinear/books"
+      ],
+      "include_book_ids": [
+        "matthew",
+        "mark",
+        "luke",
+        "john",
+        "acts",
+        "romans",
+        "1_corinthians",
+        "2_corinthians",
+        "galatians",
+        "ephesians",
+        "philippians",
+        "colossians",
+        "1_thessalonians",
+        "2_thessalonians",
+        "1_timothy",
+        "2_timothy",
+        "titus",
+        "philemon",
+        "hebrews",
+        "james",
+        "1_peter",
+        "2_peter",
+        "1_john",
+        "2_john",
+        "3_john",
+        "jude",
+        "revelation"
+      ],
+      "mb": 19.61,
+      "gzip_mb": 3.55,
+      "sha256": "sha256:3a113aac19743be25af9e8fb93bc8ebeb0a17d9f6693463f498ad8190f9d3c05",
+      "largest_shard": {
+        "path": "data/interlinear/books/luke.json",
+        "bytes": 2886598
+      }
+    },
+    {
+      "id": "analysis-word-map",
+      "label": "Word-map analysis",
+      "description": "Canonical word-map spans generated from packaged Strong's overlays and verse text.",
+      "dependencies": [
+        "hebrew-interlinear",
+        "greek-interlinear",
+        "bsb-strongs-overlay"
+      ],
+      "files": 67,
+      "bytes": 4480288,
+      "gzip_bytes": 952383,
+      "license_note": "Generated from packaged datasets for reproducible local analysis workflows.",
+      "paths": [
+        "data/analysis/word-map/bsb",
+        "data/analysis/manifest.json"
+      ],
+      "mb": 4.27,
+      "gzip_mb": 0.91,
+      "sha256": "sha256:9f28fd0761a76556a2836d73339bad07219c97e35ab0b10f6666b5c0e1c42fd1",
+      "largest_shard": {
+        "path": "data/analysis/word-map/bsb/psalms.json",
+        "bytes": 541406
+      }
+    },
+    {
+      "id": "analysis-graph",
+      "label": "Graph analysis",
+      "description": "Cross-reference graph summaries generated per book and globally.",
+      "dependencies": [
+        "crossrefs-basic"
+      ],
+      "files": 67,
+      "bytes": 176879,
+      "gzip_bytes": 41652,
+      "license_note": "Generated from packaged datasets for reproducible local analysis workflows.",
+      "paths": [
+        "data/analysis/graph/books",
+        "data/analysis/graph/summary.json"
+      ],
+      "mb": 0.17,
+      "gzip_mb": 0.04,
+      "sha256": "sha256:78a74f2a7234d68feac1705935584b8b6d309896d71aa55e6d66cb8554ea8cc6",
+      "largest_shard": {
+        "path": "data/analysis/graph/summary.json",
+        "bytes": 14103
+      }
+    },
+    {
+      "id": "footnotes-bsb",
+      "label": "BSB footnotes",
+      "description": "Inline BSB footnote records loaded by reader routes.",
+      "dependencies": [
+        "translation-bsb"
+      ],
+      "paths": [
+        "data/footnotes/bsb"
+      ],
+      "license_note": "Packaged runtime data; distribution rights require explicit review.",
+      "files": 66,
+      "bytes": 861760,
+      "mb": 0.82,
+      "gzip_bytes": 165384,
+      "gzip_mb": 0.16,
+      "sha256": "sha256:5ac920d42504143b44d6d05823547af4ade34db44fdc42ef17f0e95c6e050ff0",
+      "largest_shard": {
+        "path": "data/footnotes/bsb/psalms.json",
+        "bytes": 53113
+      }
+    },
+    {
+      "id": "presentation-bsb",
+      "label": "BSB presentation metadata",
+      "description": "Headings, paragraph structure, poetry layout, and presentation metadata loaded by the reader.",
+      "dependencies": [
+        "translation-bsb"
+      ],
+      "paths": [
+        "data/presentation/bsb"
+      ],
+      "license_note": "Packaged runtime data; distribution rights require explicit review.",
+      "files": 67,
+      "bytes": 6184552,
+      "mb": 5.9,
+      "gzip_bytes": 520353,
+      "gzip_mb": 0.5,
+      "sha256": "sha256:ea74b2fb8ca4ef76d485f04fe2c4c988ce30bd4eebf8bae66619292acc92bf21",
+      "largest_shard": {
+        "path": "data/presentation/bsb/books/psalms.json",
+        "bytes": 709473
+      }
+    },
+    {
+      "id": "language-metadata",
+      "label": "Hebrew and Greek language metadata",
+      "description": "Alphabet and mark metadata used by original-language tooltips.",
+      "dependencies": [],
+      "paths": [
+        "data/language"
+      ],
+      "license_note": "Application metadata packaged for original-language UI.",
+      "files": 5,
+      "bytes": 24426,
+      "mb": 0.02,
+      "gzip_bytes": 4905,
+      "gzip_mb": 0,
+      "sha256": "sha256:57b611745e64f90415ecb025ff3d4f02d5b38dbcb8b1d9a6912710058ac39c80",
+      "largest_shard": {
+        "path": "data/language/hebrew/marks.json",
+        "bytes": 9938
+      }
+    },
+    {
+      "id": "semantic-seeds",
+      "label": "Semantic definitions and propositions",
+      "description": "Packaged tag definitions, relations, and starter interpretation propositions.",
+      "dependencies": [],
+      "paths": [
+        "data/semantic"
+      ],
+      "license_note": "Application semantic metadata.",
+      "files": 4,
+      "bytes": 7403,
+      "mb": 0.01,
+      "gzip_bytes": 2000,
+      "gzip_mb": 0,
+      "sha256": "sha256:c23adf0c6c3a0be7c3c3f9d38eec7338fcbc4f9dd7017373f3364c7953e5eef2",
+      "largest_shard": {
+        "path": "data/semantic/tag-definitions.json",
+        "bytes": 3691
+      }
+    }
+  ]
+}

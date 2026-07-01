@@ -40,7 +40,9 @@ assert(
   /resetDetailForNavigation\(\)/.test(app),
   "Book, chapter, and translation navigation must clear stale detail-panel content.",
 );
+assert(/Content-Security-Policy/.test(index), "App shell must declare a Content Security Policy.");
+assert(/object-src 'none'/.test(index), "Content Security Policy must block embedded objects.");
 assert(/line\.append\(number,\s*document\.createTextNode/.test(renderer), "Reference preview verse numbers must render as superscripts.");
 assert(/button\.textContent =/.test(renderer), "Cross-reference button labels must remain plain text.");
 
-console.log(JSON.stringify({ status: "ok", assertions: 18 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 20 }, null, 2));

@@ -1,8 +1,8 @@
 # Retained Data Licenses
 
-This package includes reader code, local user-data tools, retained Bible text editions, and Strong's/lexicon study data needed for reader word-study behavior. Commentary, cross-references, footnotes, interlinear data, outlines, generated search shards, and generated analysis/provenance dumps are not packaged in `app/data`.
+This package includes reader code, local user-data tools, retained Bible text editions, Strong's/lexicon study data, commentary, cross references, BSB footnotes and presentation metadata, interlinear data, outlines, language metadata, semantic seeds, generated search shards, word maps, and graph analysis.
 
-The machine-readable retained-data matrix is `data/license-matrix.json`.
+The machine-readable retained-data matrix is `data/license-matrix.json`. Presence in the package does not establish public redistribution or commercial-sale clearance.
 
 ## Retained Text Editions
 
@@ -19,22 +19,24 @@ The machine-readable retained-data matrix is `data/license-matrix.json`.
 | `slt` | Smith's Literal Translation | Public domain in the United States | Allowed in the United States | Allowed in the United States | Historical 19th-century translation. |
 | `ylt` | Young's Literal Translation | Public domain in the United States | Allowed in the United States | Allowed in the United States | Historical 1862/1898 translation. |
 
-## Not Currently Packaged
+## Packaged Data Requiring Review
 
-The following data categories are currently not packaged:
+The following packaged categories require explicit source/provenance or legal review before public or commercial distribution:
 
-- Footnotes from non-retained sources.
-- Generated search, graph, word-map, performance, recovery, and provenance artifacts derived from removed datasets.
+- Strong's overlays and Hebrew/Greek lexicon aggregations.
+- Commentary, cross-reference, outline, BSB footnote, and BSB presentation records.
+- Hebrew/Greek interlinear data and generated search/analysis artifacts whose clearance depends on their inputs.
+- Hebrew/Greek alphabet and mark metadata.
 
-Licensing/provenance details are tracked in `data/license-matrix.json` as written record metadata.
+Performance reports, recovery reports, and provenance work products are not runtime feature packs. Licensing/provenance details for packaged data are tracked in `data/license-matrix.json` as written record metadata.
 
 ## Study Data With Recorded Provenance Notes
 
 | ID | Dataset | Status | Public redistribution | Commercial sale | Source / note |
 | --- | --- | --- | --- | --- | --- |
-| `bsb-strongs-overlay` | BSB Strong's overlay mappings | Source/provenance notes recorded | Allowed | Allowed | Generated from local extracted study data. Bible Hub terms reference: https://biblehub.com/terms.htm |
-| `hebrew-lexicon` | Hebrew Strong's/BDB-style lexicon chunks | Source/provenance notes recorded | Allowed | Allowed | Mixed historical/public-domain source material with extracted aggregation notes retained. |
-| `greek-lexicon` | Greek Strong's/Thayer-style lexicon chunks | Source/provenance notes recorded | Allowed | Allowed | Mixed historical/public-domain source material with extracted aggregation notes retained. |
+| `bsb-strongs-overlay` | Reader Strong's overlay mappings | Source rights unclear; private package only pending review | Unclear | Unclear | Generated from local extracted study data. Bible Hub terms reference: https://biblehub.com/terms.htm |
+| `hebrew-lexicon` | Hebrew Strong's/BDB-style lexicon chunks | Mixed historical material; aggregation rights unclear | Unclear | Unclear | Explicit source-chain review required. |
+| `greek-lexicon` | Greek Strong's/Thayer-style lexicon chunks | Mixed historical material; aggregation rights unclear | Unclear | Unclear | Explicit source-chain review required. |
 
 ## Record-Keeping Fields
 

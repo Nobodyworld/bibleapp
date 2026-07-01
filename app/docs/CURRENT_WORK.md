@@ -23,38 +23,32 @@ Reviewed: 2026-07-01
 
 | Check | Status | Evidence |
 |---|---|---|
-| Static suite | Passing | `npm run test:static` passed on 2026-07-01, including module-singleton and navigation-reset regressions. |
+| Static suite | Passing | Includes seven maintained domain suites, ten recovery scenarios, package inventory drift, module identity, accessibility, and documentation checks. |
 | Documentation consistency | Passing | Included in the static suite. |
 | Manual desktop browser QA | Passing for exercised flows | On 2026-07-01, Psalms 14 and John 4 exercised Strong's lock/reset, Search navigation, panel history, stale-panel reset, Interlinear lazy loading, long-token wrapping, source-token Tags history, corrected `because` rendering, dark theme, and console health. |
 | In-app Browser tag QA | Passing for exercised flow | On 2026-06-30, John 4 Interlinear source-token tagging, badge persistence/editing, dark-theme layout, corrected `because` rendering, and console health passed. Direct drag selection could not be synthesized by the Browser controller. |
-| Committed favorite interaction assertions | Implemented, full run blocked | `app/scripts/interaction-test.mjs` covers reader text spans, header/verse-context/source-token favorites and tags, badges, Favorites grouping, panel history, and cleanup. The standalone Edge/CDP runner remains blocked before app navigation. |
-| Automated desktop browser suite | Environment-blocked | Edge/CDP fails during `Page.enable` before app navigation in this environment. This is a runner problem, not a passing app result. |
-| In-app Browser mobile QA | Environment-blocked | The Browser controller blocked further localhost actions after the desktop pass. No mobile result is claimed. |
-| Automated mobile browser suite | Environment-blocked | The Edge/CDP startup boundary prevents a reliable automated mobile result. |
-| `npm test` / `npm run verify` | Not currently green | Both include the blocked browser suites. |
+| Automated desktop browser suite | Passing twice consecutively | Maintained Playwright/Edge suite covers reader, study, Favorites, tags, jobs, persistence, search, and hostile commentary markup. |
+| Automated mobile browser suite | Passing twice consecutively | The same journey passes with touch/mobile emulation and overflow assertions. |
+| Package inventory | Passing | Twenty-five packs, language-specific Interlinear counts, raw/gzip bytes, hashes, and largest shards are drift-checked. |
+| `npm run verify` | Passing | Full static, domain, inventory, desktop, mobile, and structural package checks pass. |
 
 The root `MASTER_STATUS_TRACKER.md` is the repository-wide task source of truth. The 2026-07-01 detailed health evidence is recorded in `FULL_APP_HEALTH_AUDIT.md`.
 
 ## Known documentation and package follow-up
 
-1. `data/package-manifest.json` declares restored study packs, but several large restored pack entries still report zero files/bytes. Regenerate package counts before treating the manifest as release metadata.
-2. `LICENSES.md` and the license matrix contain provenance/status language that requires a dedicated legal/data review before public or commercial distribution.
-3. Browser automation needs a stable Edge/CDP launch path; manual browser QA does not replace that regression suite.
-4. Screenshot-diff baselines remain deferred until the visual design stabilizes.
-5. Nineteen of twenty-one package-manifest rows have stale file or byte counts.
-6. Footnotes and other restored datasets are present at runtime while `LICENSES.md` still describes them as absent.
-7. Eleven executable test files are outside the default static suite; direct execution exposed stale contracts and five failing recovery scenarios.
-8. Hebrew interlinear `original` token fields contain transliteration rather than Hebrew script in the sampled first token for all 39 Old Testament books.
-9. Commentary HTML is inserted without an allowlist sanitizer or CSP.
+1. `LICENSES.md` and the license matrix contain provenance/status language that requires a dedicated legal/data review before public or commercial distribution.
+2. The deterministic inventory establishes package presence and size, not legal clearance.
+3. Screenshot-diff baselines remain deferred until the visual design stabilizes.
+4. Hebrew interlinear `original` token fields contain transliteration rather than Hebrew script in the sampled first token for all 39 Old Testament books.
+5. Minimum-reader versus optional-study distribution and route-level performance budgets remain undefined.
 
 ## Next implementation boundary
 
 Before continuing feature expansion, complete the release-health gates:
 
-1. Reconcile package/license inventory and regenerate package counts.
-2. Restore a green desktop/mobile browser runner.
-3. Reconcile orphaned tests and fix or explicitly migrate the failing recovery contracts.
-4. Add CI enforcement.
+1. Complete external package/license source-chain review.
+2. Define Hebrew source-text/token alignment, then restore actual Hebrew Unicode token originals.
+3. Define minimum-reader versus optional-study distribution and performance budgets.
 
 After those gates, continue Phase 3 with contiguous source-token-span selection and ambiguous-anchor review.
 
@@ -67,4 +61,4 @@ npm run test:browser:mobile
 npm run audit
 ```
 
-`npm run verify` is the intended release-validation entry point, but it must not be reported as passing until both browser commands complete successfully.
+`npm run verify` is the release-validation entry point. Legal approval remains separate from this technical command.

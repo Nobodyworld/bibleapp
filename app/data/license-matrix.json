@@ -162,13 +162,13 @@
       "category": "strongs_overlay",
       "name": "BSB Strong's overlay mappings",
       "paths": [
-        "data/strongs/bsb"
+        "data/strongs"
       ],
       "license_status": "source_rights_unclear_private_package_only",
       "source_url": "https://biblehub.com/terms.htm",
-      "public_redistribution": "allowed",
-      "commercial_use": "allowed",
-      "sale_with_app": "allowed",
+      "public_redistribution": "unclear",
+      "commercial_use": "unclear",
+      "sale_with_app": "unclear",
       "required_attribution": "Keep provenance notes in this file for reference.",
       "notes": "Restored for private reader functionality. Overlay was generated from local extracted study data; Bible Hub terms reserve rights and require prior written consent for commercial use of site content. Licensing notes are retained as a written record and are not runtime-enforced."
     },
@@ -181,9 +181,9 @@
       ],
       "license_status": "mixed_public_domain_source_rights_unclear_private_package_only",
       "source_url": "https://biblehub.com/terms.htm",
-      "public_redistribution": "allowed",
-      "commercial_use": "allowed",
-      "sale_with_app": "allowed",
+      "public_redistribution": "unclear",
+      "commercial_use": "unclear",
+      "sale_with_app": "unclear",
       "required_attribution": "Keep provenance notes in this file for reference.",
       "notes": "Contains Strong's/BDB-style material generated from local extracted study data. Underlying historical works may be public domain in the United States, but this extracted aggregation/source path is not cleared for public redistribution or sale. Licensing notes are retained as a written record and are not runtime-enforced."
     },
@@ -196,9 +196,9 @@
       ],
       "license_status": "mixed_public_domain_source_rights_unclear_private_package_only",
       "source_url": "https://biblehub.com/terms.htm",
-      "public_redistribution": "allowed",
-      "commercial_use": "allowed",
-      "sale_with_app": "allowed",
+      "public_redistribution": "unclear",
+      "commercial_use": "unclear",
+      "sale_with_app": "unclear",
       "required_attribution": "Keep provenance notes in this file for reference.",
       "notes": "Contains Strong's/Thayer-style material generated from local extracted study data. Underlying historical works may be public domain in the United States, but this extracted aggregation/source path is not cleared for public redistribution or sale. Licensing notes are retained as a written record and are not runtime-enforced."
     },
@@ -293,6 +293,66 @@
       "notes": "Interlinear tokens generated from packaged Strong's overlay data for runtime views."
     },
     {
+      "id": "footnotes-bsb",
+      "category": "footnotes",
+      "name": "BSB footnotes",
+      "paths": [
+        "data/footnotes/bsb"
+      ],
+      "license_status": "review_required",
+      "source_url": null,
+      "public_redistribution": "unclear",
+      "commercial_use": "unclear",
+      "sale_with_app": "unclear",
+      "required_attribution": "Pending explicit source and rights review.",
+      "notes": "Footnotes are packaged and loaded by the BSB reader. This row records their presence without claiming redistribution or commercial clearance."
+    },
+    {
+      "id": "presentation-bsb",
+      "category": "presentation_metadata",
+      "name": "BSB presentation metadata",
+      "paths": [
+        "data/presentation/bsb"
+      ],
+      "license_status": "review_required",
+      "source_url": null,
+      "public_redistribution": "unclear",
+      "commercial_use": "unclear",
+      "sale_with_app": "unclear",
+      "required_attribution": "Pending explicit source and rights review.",
+      "notes": "Presentation records are packaged and loaded by the BSB reader. This row records their presence without claiming redistribution or commercial clearance."
+    },
+    {
+      "id": "language-metadata",
+      "category": "language_metadata",
+      "name": "Hebrew and Greek language metadata",
+      "paths": [
+        "data/language"
+      ],
+      "license_status": "review_required",
+      "source_url": null,
+      "public_redistribution": "unclear",
+      "commercial_use": "unclear",
+      "sale_with_app": "unclear",
+      "required_attribution": "Pending explicit source and rights review.",
+      "notes": "Alphabet and mark metadata are packaged for original-language UI. Provenance and distribution terms require explicit review."
+    },
+    {
+      "id": "semantic-seeds",
+      "category": "application_metadata",
+      "name": "Semantic tag and proposition seeds",
+      "paths": [
+        "data/semantic"
+      ],
+      "license_status": "application_authored",
+      "source_url": null,
+      "public_redistribution": "allowed",
+      "commercial_use": "allowed",
+      "sale_with_app": "allowed",
+      "required_attribution": "None.",
+      "notes": "Application-authored tag definitions, relations, and starter interpretation propositions."
+    },
+    {
       "id": "analysis-word-map",
       "category": "analysis",
       "name": "Word-map analysis",
@@ -326,11 +386,6 @@
     }
   ],
   "not_packaged_categories": [
-    {
-      "category": "footnotes",
-      "status": "not_packaged",
-      "restore_rule": "Record provenance details in this matrix if restored."
-    },
     {
       "category": "generated_analysis_search_performance_recovery_provenance",
       "status": "partially_packaged",

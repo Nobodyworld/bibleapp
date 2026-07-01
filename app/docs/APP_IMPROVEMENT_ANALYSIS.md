@@ -25,10 +25,9 @@ The app has a substantial local-first reader and study baseline. It is suitable 
 
 | Priority | Problem | Required outcome |
 |---|---|---|
-| P0 | Automated desktop/mobile browser suites fail at the Edge/CDP `Page.enable` startup boundary. | Stable launch and green interaction suites in a reproducible environment. |
 | P0 | License/provenance records contain status language requiring dedicated review before public/commercial distribution. | One reviewed, internally consistent distribution decision per packaged dataset. |
-| P1 | Several restored package-manifest entries report zero files/bytes despite populated directories. | Regenerated accurate inventory and an assertion preventing stale counts. |
-| P1 | Important recovery/semantic/package tests are outside the default suite and have drifted. | Reconcile active tests, fix current failures, and include them in release verification. |
+| P1 | Hebrew Interlinear `original` fields contain transliteration instead of Hebrew script. | Defined alignment and regenerated source-script tokens with validation. |
+| P1 | Minimum-reader versus optional-study packaging and route budgets are undefined. | Explicit distribution and performance budgets. |
 
 ## Earlier recommendation status
 
@@ -36,7 +35,7 @@ The app has a substantial local-first reader and study baseline. It is suitable 
 |---|---|---|
 | Dark mode | Implemented | Explicit theme control, persistence, and contrast overrides exist. |
 | Responsive reader/detail layout | Implemented | Includes mobile Study panel access. |
-| Touch and keyboard equivalents | Partially implemented | Static accessibility checks exist; full mobile browser validation remains blocked. |
+| Touch and keyboard equivalents | Partially implemented | Static and mobile emulation coverage exists; real-pointer focus restoration remains to be exercised. |
 | Outline/Interlinear placement | Implemented | Side-panel-only, removing chapter-toolbar duplication. |
 | Panel locking and follow mode | Implemented | Covered by executable transition tests and manual QA. |
 | Interlinear layout and lazy loading | Implemented | Long-word constraints and verse-by-verse append are present. |

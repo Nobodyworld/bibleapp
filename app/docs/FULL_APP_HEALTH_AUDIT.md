@@ -6,7 +6,7 @@ Reviewed: 2026-07-01
 
 Overall status: **healthy for continued local development, not release-ready**.
 
-The core reader, packaged study capabilities, local semantic model, and static data checks are substantial and functional. A rendered desktop audit on 2026-07-01 found and fixed a module-identity defect that split detail history and persistence state across duplicate ES module instances, plus stale detail content after reader navigation. The main remaining risks are outside the basic reading flow: release metadata is inaccurate, licensing documentation contradicts the packaged runtime, the official browser verification command is not green, multiple executable tests are excluded from the default suite and have drifted, and Hebrew interlinear token records do not contain Hebrew script in the field presented as the original word.
+The core reader, packaged study capabilities, local semantic model, maintained domain tests, and desktop/mobile interaction suites are functional. The 2026-07-01 stabilization replaced the failed raw-CDP runner, repaired recovery contracts, generated accurate package inventory, added CI, and secured commentary rendering. The main remaining release risks are external license/provenance review, Hebrew interlinear token records that lack Hebrew script in the field presented as the original word, and an undefined minimum-package/performance strategy.
 
 Do not describe the app as fully verified or distribution-ready until the P0 release gates in this document are complete.
 
@@ -40,10 +40,24 @@ This review covered:
 | Reader/detail interaction | Pass after correction | Strong's lock/reset, Search navigation, panel Back/Forward, navigation reset, source-token Tags history, and reader/interlinear follow behavior passed in the rendered desktop app. |
 | Interlinear runtime | Pass for exercised Hebrew and Greek verses | Psalms 14:1 rendered 13 cards and lazy-loaded verse 2; John 4:1 rendered 18 cards without horizontal overflow. Both `hoti` records were checked, including the token rendered as “because.” |
 | Runtime module identity | Pass | A new recursive test enforces one cache key for all versioned imports and singleton URLs for `dom.js` and `stores.js`. |
-| Official release command | Fail | `npm run verify` stops in `test:browser` at Edge/CDP `Page.enable`. Mobile never runs. |
-| Package audit | Conditional pass | Structure passes, but the tool reports `license_review_required: true` and does not check runtime readiness. |
-| Additional executable tests | Fail/drifted | 11 test files are not included in `test:static`; only `job-processor-test.mjs` passed when run directly. |
-| Mobile visual QA | Blocked | The in-app Browser controller blocked further localhost access after the desktop checks. No substitute browser result is claimed. |
+| Desktop interaction suite | Pass twice consecutively | Maintained Playwright/Edge suite covers 32 rendered flows after security coverage was added. |
+| Mobile interaction suite | Pass twice consecutively | Mobile/touch suite covers 33 rendered flows after security coverage was added. |
+| Full technical release command | Pass | `npm run verify` completes static, domain, inventory, desktop, mobile, and structural audit checks. |
+| Package audit | Conditional pass | Twenty-five feature packs map to twenty-five license rows; legal approval remains explicitly external. |
+| Package inventory | Pass | Deterministic drift check records 2,672 unique files, 942,267,732 bytes, and 177,303,217 gzip bytes. |
+| Additional executable tests | Pass/classified | Seven maintained domain suites are committed and green; four obsolete scripts are explicitly retired/replaced. |
+| Recovery scenarios | Pass | All 10 IndexedDB/localStorage/import/quarantine scenarios pass. |
+
+## 2026-07-01 release stabilization
+
+- Replaced the hand-written Edge CDP client with `playwright-core` while continuing to use installed Edge.
+- Corrected two stale interaction-suite selectors and made the self-starting desktop/mobile journeys green.
+- Promoted maintained package, poll, semantic, job, user-data, and recovery suites into `test:static`.
+- Added a poll-response schema and repaired legacy user-data import/storage migration.
+- Added deterministic package inventory with language-specific Interlinear accounting and drift enforcement.
+- Added missing footnote, presentation, language, and semantic feature-pack/license rows without claiming unresolved rights.
+- Added strict commentary HTML sanitization, malicious-content fixtures, and a Content Security Policy.
+- Added a Windows GitHub Actions workflow for `npm run verify`.
 
 ## 2026-07-01 rendered audit corrections
 
@@ -81,19 +95,21 @@ Cross-reference tooltip activation could not be synthesized reliably through the
 | Core reader and study UI | Green | The exercised reader, side panel, theme, and interlinear flow rendered correctly. |
 | Packaged capability/data presence | Green | Required book-level artifacts exist and configured integrity checks pass. |
 | Semantic tags and favorites | Green/Yellow | Core schema and current UI exist; source-token spans, anchor review, richer inquiry results, and graph UI remain planned. |
-| Persistence and recovery | Yellow/Red | Main tests pass, but the excluded recovery suite has 5 failing scenarios. |
-| Automated browser regression | Red | The intended desktop/mobile release suites do not start reliably. |
-| Release metadata and licensing | Red | Package counts are inaccurate and licensing documents contradict actual packaged/runtime data. |
-| Security hardening | Yellow | Local-first architecture limits exposure, but commentary HTML is inserted unsanitized and no CSP is declared. |
+| Persistence and recovery | Green | Ten recovery scenarios and current semantic/user-data contracts pass. |
+| Automated browser regression | Green | Desktop and mobile suites pass twice consecutively through maintained Playwright/Edge execution. |
+| Release metadata and licensing | Yellow/Red | Package inventory is accurate and enforced; legal/source-rights decisions remain unresolved. |
+| Security hardening | Green/Yellow | Commentary is allowlist-sanitized and CSP-protected; Trusted Types remains optional defense-in-depth planning. |
 | Performance/distribution | Yellow | Runtime data is sharded/lazy, but the packaged data directory is approximately 919.68 MB without an enforced size budget. |
 | Accessibility | Yellow/Green | Strong static coverage exists; complete mobile, zoom, focus-restoration, and rendered assistive QA remains outstanding. |
 | Documentation | Yellow | Active roadmap documents are useful, but several status/license statements have drifted from the code and packaged files. |
 
 ## Findings and solutions
 
-### P0-1: The release verification command is not green
+### Resolved P0-1: The release verification command was not green
 
-**Problem**
+Resolved 2026-07-01 by replacing the raw CDP transport with `playwright-core`; desktop and mobile suites then passed twice consecutively.
+
+**Historical problem**
 
 `npm run verify` passes its static phase and then fails before app navigation:
 
@@ -123,7 +139,9 @@ The failure reproduced with debug output. `npm run test:browser:mobile` is there
 - `npm run test:browser:mobile` passes twice consecutively.
 - `npm run verify` exits zero from a clean checkout.
 
-### P0-2: Licensing/provenance documentation contradicts the package
+### Partial P0-2: Licensing/provenance review remains
+
+Package presence is now reconciled: missing runtime rows were added and `LICENSES.md` no longer claims present datasets are absent. Explicit legal/source-chain approval remains unresolved.
 
 **Problem**
 
@@ -157,7 +175,9 @@ Some Strong's and lexicon records also combine unclear/private-package status la
 - Public redistribution and commercial-use fields are internally consistent.
 - Legal/data review is recorded separately from automated structural validation.
 
-### P1-1: Package-manifest inventory is materially inaccurate
+### Resolved P1-1: Package-manifest inventory was materially inaccurate
+
+Resolved 2026-07-01 with deterministic file, byte, gzip, hash, and largest-shard inventory plus a committed drift check.
 
 **Problem**
 
@@ -184,7 +204,9 @@ The Hebrew and Greek interlinear packs also point at the same mixed directory, s
 3. Record actual bytes and gzip bytes.
 4. Add a test that fails on count/size drift and missing declared paths.
 
-### P1-2: Important test files are outside the default suite and have drifted
+### Resolved P1-2: Important test files were outside the default suite
+
+Resolved 2026-07-01. Seven maintained domain suites were updated and promoted; four obsolete scripts were classified as retired/replaced in `tests/TEST_INVENTORY.md`.
 
 **Problem**
 
@@ -243,7 +265,9 @@ This prevents token-level Hebrew letter analysis and verse gematria from running
 4. Add per-book assertions that Hebrew originals contain Hebrew script and Greek originals contain Greek script.
 5. Define how source-text tokens align with BSB/Strong token indexes before regenerating.
 
-### P1-4: Commentary HTML is trusted without sanitization
+### Resolved P1-4: Commentary HTML was trusted without sanitization
+
+Resolved 2026-07-01 with an element/attribute/URL allowlist, hostile rendered fixtures, and a Content Security Policy.
 
 **Problem**
 
@@ -260,7 +284,9 @@ A compromised or newly imported commentary dataset could execute markup/script i
 3. Add a CSP appropriate for a static application.
 4. Add malicious-fixture tests for scripts, event handlers, unsafe URLs, SVG, and malformed markup.
 
-### P1-5: There is no continuous-integration workflow
+### Resolved P1-5: There was no continuous-integration workflow
+
+Resolved 2026-07-01 with a Windows GitHub Actions workflow running the supported release command.
 
 **Problem**
 
@@ -360,32 +386,33 @@ Recent dark-theme and sticky-panel regressions came from interactions between br
 
 ### Release gates
 
-- [ ] Repair or replace the Edge/CDP browser runner.
-- [ ] Make desktop and mobile browser suites green twice consecutively.
+- [x] Repair or replace the Edge/CDP browser runner.
+- [x] Make desktop and mobile browser suites green twice consecutively.
 - [ ] Reconcile packaged data with `LICENSES.md` and `license-matrix.json`.
-- [ ] Add footnotes and every runtime-loaded dataset to authoritative package/license inventory.
+- [x] Add footnotes and every runtime-loaded dataset to authoritative package/license inventory.
 - [ ] Record explicit reviewed redistribution/commercial decisions.
-- [ ] Regenerate package file/byte/gzip counts.
-- [ ] Make `npm run verify` pass from a clean checkout.
+- [x] Regenerate package file/byte/gzip counts.
+- [x] Make `npm run verify` pass from a clean checkout.
 
 ### Test and recovery stabilization
 
 - [x] Enforce a single release query key and singleton identity for stateful runtime modules.
 - [x] Add a regression contract that navigation clears stale detail-panel content.
-- [ ] Triage all 11 uninvoked tests.
-- [ ] Fix the 5 failing user-data recovery scenarios or update obsolete expectations with documented migrations.
-- [ ] Update semantic tests for `source_token_span`.
-- [ ] Update package, search, poll, performance, and user-data fixtures.
-- [ ] Make smoke tests self-contained.
-- [ ] Add all active tests to the default suite.
-- [ ] Add CI.
+- [x] Triage all uninvoked tests.
+- [x] Fix the 5 failing user-data recovery scenarios or update obsolete expectations with documented migrations.
+- [x] Update semantic tests for `source_token_span`.
+- [x] Update or explicitly retire obsolete package, search, poll, performance, and user-data fixtures.
+- [x] Replace the stale smoke test with the self-contained interaction suite.
+- [x] Add all active tests to the default suite.
+- [x] Add CI.
 
 ### Data correctness and security
 
 - [ ] Restore actual Hebrew Unicode token originals for all 39 Old Testament books.
 - [ ] Add language-script validation for Hebrew and Greek interlinear tokens.
-- [ ] Sanitize commentary HTML with an allowlist.
-- [ ] Add CSP/Trusted Types planning and malicious-content tests.
+- [x] Sanitize commentary HTML with an allowlist.
+- [x] Add CSP and malicious-content tests.
+- [ ] Evaluate Trusted Types as optional defense in depth.
 
 ### Performance and maintainability
 
@@ -425,4 +452,4 @@ npm run audit
 node app/scripts/*test.mjs  # executed individually for the orphan-test inventory
 ```
 
-The release command failed at the desktop browser startup boundary. The configured static suite and publish-structure audit passed with the limitations documented above.
+The full technical release command now passes. Package/source-rights approval remains explicitly outside the automated result.

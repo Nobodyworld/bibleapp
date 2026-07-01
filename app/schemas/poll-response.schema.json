@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "poll-response.schema.json",
+  "title": "Bible App local poll response",
+  "type": "object",
+  "required": [
+    "id",
+    "schema_version",
+    "proposition_id",
+    "proposition_version",
+    "proposition_target",
+    "actor",
+    "response",
+    "status",
+    "confidence",
+    "visibility",
+    "viewed_aggregate_before_response",
+    "created_at",
+    "updated_at"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^poll-response:"
+    },
+    "schema_version": {
+      "const": 1
+    },
+    "proposition_id": {
+      "type": "string",
+      "pattern": "^proposition:"
+    },
+    "proposition_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "proposition_target": {
+      "type": "object"
+    },
+    "actor": {
+      "type": "object",
+      "required": [
+        "actor_type",
+        "actor_id"
+      ],
+      "properties": {
+        "actor_type": {
+          "type": "string"
+        },
+        "actor_id": {
+          "type": "string"
+        }
+      }
+    },
+    "response": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "active",
+        "deleted"
+      ]
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "visibility": {
+      "enum": [
+        "private",
+        "shared",
+        "public"
+      ]
+    },
+    "viewed_aggregate_before_response": {
+      "type": "boolean"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    },
+    "supersedes": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  }
+}

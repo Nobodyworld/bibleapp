@@ -18,7 +18,7 @@ The prior audit focused on absent study packs. Those datasets have since been re
 | Dark outline navigation highlight obscures text | Resolved | Dark-theme highlight colors preserve readable contrast. |
 | Missing capability messaging is technical | Contract retained | Use the fallback matrix when a pack is missing, disabled, corrupt, or has no scoped data. |
 | Translation control has stale internal `showProverbs` identifier | Open maintenance issue | Rename when touching the translation launcher; runtime label is already correct. |
-| Automated mobile and desktop regression execution | Blocked | Edge/CDP fails before app navigation in the current environment. |
+| Automated mobile and desktop regression execution | Resolved | Maintained Playwright/Edge suites pass for desktop and mobile. |
 
 ## Interaction rules that must not regress
 

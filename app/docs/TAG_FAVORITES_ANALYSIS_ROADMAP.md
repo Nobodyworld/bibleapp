@@ -357,7 +357,7 @@ Completed: 2026-06-30.
 6. [x] Add favorite action to interlinear/source-token cards.
 7. [x] Add Favorites panel grouped by book, chapter, verse, English span, source token, and source-token span.
 8. [x] Add data-layer tests for toggling favorites and preserving them through export/import.
-9. [x] Add committed rendered browser assertions for favorite controls and panel persistence. The assertions are in `app/scripts/interaction-test.mjs`; a green rendered run remains blocked by the current browser-runner connection failure.
+9. [x] Add committed rendered browser assertions for favorite controls and panel persistence. The assertions pass in maintained desktop and mobile Playwright/Edge suites.
 
 ### Phase 3: Word and chunk tagging
 
@@ -402,7 +402,7 @@ Completed: 2026-06-30.
 2. Add an anchor-review surface for ambiguous or unresolved English text spans.
 3. Enrich `inquiry-analysis` with local corpus comparisons and render a dedicated Inquiry result view.
 4. Add personal graph projection/views for favorites and inquiries.
-5. Restore a green rendered desktop/mobile browser run for the committed interaction assertions.
+5. Preserve green rendered desktop/mobile interaction suites as feature work lands.
 6. Only after the personal graph is solid, add community-cache schema and opt-in UI.
 
 ## Non-goals for the next build step
