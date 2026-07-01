@@ -1,6 +1,6 @@
 # Current Work
 
-Reviewed: 2026-06-30
+Reviewed: 2026-07-01
 
 ## Current implementation
 
@@ -15,22 +15,25 @@ Reviewed: 2026-06-30
 - Interlinear source-token cards expose a target-aware tag editor, persistent editable badges, and canonical source-token assertions.
 - Reader selections use exact rendered character boundaries, create canonical text-span targets, and expose favorite/tag actions, highlights, and editable badges.
 - Text-span snapshots render at their original range or one unique relocated range. Ambiguous/unresolved snapshots are not attached to potentially wrong text.
+- All versioned runtime imports share one release key. Stateful `dom.js` and `stores.js` imports are tested as singleton module URLs so panel history and persistence state cannot split across query-string module instances.
+- Translation, book, and chapter navigation clears stale detail content and panel history while preserving reader-location Back/Forward history.
 - Contiguous source-token-span selection is the remaining word/chunk tagging boundary.
 
 ## Verification status
 
 | Check | Status | Evidence |
 |---|---|---|
-| Static suite | Passing | `npm run test:static` passed on 2026-06-30. |
+| Static suite | Passing | `npm run test:static` passed on 2026-07-01, including module-singleton and navigation-reset regressions. |
 | Documentation consistency | Passing | Included in the static suite. |
-| Manual desktop browser QA | Passing for exercised flows | Reader navigation, Outline, Interlinear, lazy loading, Strong's panel history, dark Hebrew contrast, and console health were exercised on 2026-06-29. |
+| Manual desktop browser QA | Passing for exercised flows | On 2026-07-01, Psalms 14 and John 4 exercised Strong's lock/reset, Search navigation, panel history, stale-panel reset, Interlinear lazy loading, long-token wrapping, source-token Tags history, corrected `because` rendering, dark theme, and console health. |
 | In-app Browser tag QA | Passing for exercised flow | On 2026-06-30, John 4 Interlinear source-token tagging, badge persistence/editing, dark-theme layout, corrected `because` rendering, and console health passed. Direct drag selection could not be synthesized by the Browser controller. |
 | Committed favorite interaction assertions | Implemented, full run blocked | `app/scripts/interaction-test.mjs` covers reader text spans, header/verse-context/source-token favorites and tags, badges, Favorites grouping, panel history, and cleanup. The standalone Edge/CDP runner remains blocked before app navigation. |
 | Automated desktop browser suite | Environment-blocked | Edge/CDP fails during `Page.enable` before app navigation in this environment. This is a runner problem, not a passing app result. |
-| Automated mobile browser suite | Environment-blocked | The same Edge/CDP startup boundary prevents a reliable mobile result. |
+| In-app Browser mobile QA | Environment-blocked | The Browser controller blocked further localhost actions after the desktop pass. No mobile result is claimed. |
+| Automated mobile browser suite | Environment-blocked | The Edge/CDP startup boundary prevents a reliable automated mobile result. |
 | `npm test` / `npm run verify` | Not currently green | Both include the blocked browser suites. |
 
-The 2026-06-30 full health review is recorded in `FULL_APP_HEALTH_AUDIT.md`. It is the active release-health and remediation task list.
+The 2026-07-01 full health review is recorded in `FULL_APP_HEALTH_AUDIT.md`. It is the active release-health and remediation task list.
 
 ## Known documentation and package follow-up
 

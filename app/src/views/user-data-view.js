@@ -1,5 +1,5 @@
-import { createUserDataExport, getUserDataSummary, importUserData, setPackageStore } from "../stores.js?v=tag-phase-20260629";
-import { setDetail } from "../dom.js?v=interaction-qa-20260629";
+import { createUserDataExport, getUserDataSummary, importUserData, setPackageStore } from "../stores.js?v=full-audit-20260701";
+import { setDetail } from "../dom.js?v=full-audit-20260701";
 import { resolveCapabilities } from "../capabilities.js";
 import { setCapabilityDisabled } from "../package-state.js";
 

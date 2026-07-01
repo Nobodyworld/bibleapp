@@ -36,7 +36,11 @@ assert(
     /chapterSwipeDirection/.test(app),
   "Reader must retain touch chapter swiping.",
 );
+assert(
+  /resetDetailForNavigation\(\)/.test(app),
+  "Book, chapter, and translation navigation must clear stale detail-panel content.",
+);
 assert(/line\.append\(number,\s*document\.createTextNode/.test(renderer), "Reference preview verse numbers must render as superscripts.");
 assert(/button\.textContent =/.test(renderer), "Cross-reference button labels must remain plain text.");
 
-console.log(JSON.stringify({ status: "ok", assertions: 17 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 18 }, null, 2));

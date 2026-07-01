@@ -1,6 +1,6 @@
 # UI Functionality Contract
 
-Reviewed: 2026-06-30
+Reviewed: 2026-07-01
 
 ## Control placement
 
@@ -38,8 +38,12 @@ Transitions:
 - Activating a chapter tool, side-panel tool, verse action, context tab, Strong's token, or detail action enters `locked`.
 - Hover alone never enters `locked`.
 - Clicking a disengage/background target, clearing the panel, or resetting it returns to `follow`.
-- Changing translation, book, or chapter returns to `follow` and clears the Strong's pin.
+- Changing translation, book, or chapter returns to `follow`, clears the Strong's pin and stale detail content, and preserves reader-location Back/Forward history.
 - Panel Back/Forward restores the saved panel and mode. Restoring an Interlinear verse view must re-arm its lazy loader.
+
+## Runtime module identity
+
+All versioned static JavaScript imports use one release query key. Stateful modules, especially `dom.js` and `stores.js`, must resolve to one URL throughout the runtime graph. Different query strings create independent browser module instances and would split panel history, lock state, or persistence authority.
 
 ## Interlinear rendering and synchronization
 
@@ -92,4 +96,6 @@ IndexedDB initialization and migration have a three-second boundary. If the brow
 - `tests/ui-contracts.mjs`: availability, panel transitions, control schema, token identity.
 - `tests/reference-context.mjs`: hierarchy normalization and stable keys.
 - `tests/interlinear.mjs`: packaged interlinear data contracts.
+- `tests/module-singletons.mjs`: one release key and singleton URLs for stateful runtime modules.
+- `tests/reader-ui-regressions.mjs`: source-level reader layout and navigation-reset regressions.
 - `app/scripts/interaction-test.mjs`: rendered interaction behavior, including reader text-span selection, favorite controls, editable target badges, source-token tagging, Favorites grouping, panel history, and cleanup, when the browser runner is available.

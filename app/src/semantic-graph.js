@@ -1,4 +1,4 @@
-import { targetId } from "./semantic-targets.js?v=tag-phase-20260629";
+import { targetId } from "./semantic-targets.js?v=full-audit-20260701";
 
 function targetNodeId(target) {
   if (!target) return null;

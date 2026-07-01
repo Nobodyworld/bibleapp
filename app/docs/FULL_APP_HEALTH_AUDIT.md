@@ -1,12 +1,12 @@
 # Full App Health Audit
 
-Reviewed: 2026-06-30
+Reviewed: 2026-07-01
 
 ## Executive verdict
 
 Overall status: **healthy for continued local development, not release-ready**.
 
-The core reader, packaged study capabilities, local semantic model, and static data checks are substantial and functional. The main risks are outside the basic reading flow: release metadata is inaccurate, licensing documentation contradicts the packaged runtime, the official browser verification command is not green, multiple executable tests are excluded from the default suite and have drifted, and Hebrew interlinear token records do not contain Hebrew script in the field presented as the original word.
+The core reader, packaged study capabilities, local semantic model, and static data checks are substantial and functional. A rendered desktop audit on 2026-07-01 found and fixed a module-identity defect that split detail history and persistence state across duplicate ES module instances, plus stale detail content after reader navigation. The main remaining risks are outside the basic reading flow: release metadata is inaccurate, licensing documentation contradicts the packaged runtime, the official browser verification command is not green, multiple executable tests are excluded from the default suite and have drifted, and Hebrew interlinear token records do not contain Hebrew script in the field presented as the original word.
 
 Do not describe the app as fully verified or distribution-ready until the P0 release gates in this document are complete.
 
@@ -37,11 +37,42 @@ This review covered:
 | Tag/favorite model | Pass in configured tests | 7 target types, migrations, favorites, inquiry job, and graph projection assertions passed. |
 | Initial desktop runtime | Pass for exercised route | Psalms 14 rendered with meaningful content and no framework overlay. |
 | Browser console | Pass for exercised route | No warning or error entries were reported. |
-| Interlinear runtime | Pass for exercised Hebrew verse | Psalms 14:1 loaded lazily and rendered 13 token cards. |
+| Reader/detail interaction | Pass after correction | Strong's lock/reset, Search navigation, panel Back/Forward, navigation reset, source-token Tags history, and reader/interlinear follow behavior passed in the rendered desktop app. |
+| Interlinear runtime | Pass for exercised Hebrew and Greek verses | Psalms 14:1 rendered 13 cards and lazy-loaded verse 2; John 4:1 rendered 18 cards without horizontal overflow. Both `hoti` records were checked, including the token rendered as “because.” |
+| Runtime module identity | Pass | A new recursive test enforces one cache key for all versioned imports and singleton URLs for `dom.js` and `stores.js`. |
 | Official release command | Fail | `npm run verify` stops in `test:browser` at Edge/CDP `Page.enable`. Mobile never runs. |
 | Package audit | Conditional pass | Structure passes, but the tool reports `license_review_required: true` and does not check runtime readiness. |
 | Additional executable tests | Fail/drifted | 11 test files are not included in `test:static`; only `job-processor-test.mjs` passed when run directly. |
-| Mobile visual QA | Not completed in this run | Further localhost navigation was blocked by the Browser controller after the desktop checks. |
+| Mobile visual QA | Blocked | The in-app Browser controller blocked further localhost access after the desktop checks. No substitute browser result is claimed. |
+
+## 2026-07-01 rendered audit corrections
+
+### Fixed: duplicate stateful ES modules
+
+Runtime modules were imported with several query versions such as `tag-phase-20260629`, `tag-spans-20260630`, and `interaction-qa`. Browsers treat each query-string URL as a separate ES module. Consequently, one detail view could push history into one `dom.js` instance while the Back control read another instance. `stores.js` had the same duplication risk for persistence state.
+
+All versioned runtime imports now use `full-audit-20260701`, including the root `app.js` URL. `tests/module-singletons.mjs` recursively prevents mixed release keys and duplicate stateful-module identities. Rendered verification confirmed:
+
+- Outline → Search → Back restores Outline and enables Forward.
+- Interlinear token → Tags → Back restores the same Interlinear verse.
+- The John 4:1 token translated “because” remains correct after history restoration.
+
+### Fixed: stale detail content after navigation
+
+Changing translation, book, or chapter could leave the prior chapter's Outline or Interlinear content visible. Navigation now clears detail content, history, and lock state through `resetDetailForNavigation()` while preserving reader-location history. Rendered verification confirmed John 4 → John 3 resets the panel to Details, and reader Back returns to John 4 without restoring stale panel content.
+
+### Verified desktop interaction details
+
+- Psalms 14 loaded in dark theme at a 1280×720 viewport with reader and detail panel side by side.
+- The exercised console contained no warnings or errors.
+- Clicking a Strong's token locked the detail panel; clicking reader background returned it to follow mode and cleared highlights.
+- Search for “God” returned results and navigated to Psalms 46:1.
+- Psalms 14 Interlinear appended verse 2 when the panel approached the bottom of verse 1.
+- John 4:1 Interlinear displayed 18 cards; the long `Pharisaioi` card stayed within its column.
+- The two `hoti` records were distinct: one rendered “that” and the later conjunction rendered “because.”
+- Hebrew-only gematria did not appear in the Greek view.
+
+Cross-reference tooltip activation could not be synthesized reliably through the Browser event layer, but the rendered reference button label was plain text and the committed static regression test verifies that superscript formatting belongs to preview verse numbers. Mobile rendered QA was not completed because the Browser controller rejected subsequent localhost actions.
 
 ## Health scorecard
 
@@ -339,6 +370,8 @@ Recent dark-theme and sticky-panel regressions came from interactions between br
 
 ### Test and recovery stabilization
 
+- [x] Enforce a single release query key and singleton identity for stateful runtime modules.
+- [x] Add a regression contract that navigation clears stale detail-panel content.
 - [ ] Triage all 11 uninvoked tests.
 - [ ] Fix the 5 failing user-data recovery scenarios or update obsolete expectations with documented migrations.
 - [ ] Update semantic tests for `source_token_span`.

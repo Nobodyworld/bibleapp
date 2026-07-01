@@ -1,6 +1,6 @@
-import { createDetailList, setDetail } from "../dom.js?v=interaction-qa-20260629";
-import { canRunJob, runJob } from "../job-processor.js?v=tag-phase-20260629";
-import { completeJob, getAllJobEvents, updateJobStatus } from "../stores.js?v=tag-phase-20260629";
+import { createDetailList, setDetail } from "../dom.js?v=full-audit-20260701";
+import { canRunJob, runJob } from "../job-processor.js?v=full-audit-20260701";
+import { completeJob, getAllJobEvents, updateJobStatus } from "../stores.js?v=full-audit-20260701";
 
 export function createJobsView(ctx) {
   return function showJobs() {

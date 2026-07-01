@@ -1,26 +1,27 @@
-import { DEFAULT_ROUTE } from "./src/config.js?v=tag-phase-20260629";
+import { DEFAULT_ROUTE } from "./src/config.js?v=full-audit-20260701";
 import { capabilityAvailable, resolveCapability } from "./src/capabilities.js";
-import { createChapterRenderer } from "./src/chapter-renderer.js?v=ui-polish-20260630";
+import { createChapterRenderer } from "./src/chapter-renderer.js?v=full-audit-20260701";
 import { loadManifest, loadReaderBookData, translationCanLoadBook } from "./src/data-service.js";
-import { createDetailViews } from "./src/detail-views.js?v=tag-spans-20260630";
+import { createDetailViews } from "./src/detail-views.js?v=full-audit-20260701";
 import {
   els,
   goBackDetail,
   goForwardDetail,
   option,
   resetDetail,
+  resetDetailForNavigation,
   setDetailHoverLocked,
   setStatus,
   sortedNumericKeys,
   trackReaderLocation,
-} from "./src/dom.js?v=tag-phase-20260629";
+} from "./src/dom.js?v=full-audit-20260701";
 import { createReferenceButton as makeReferenceButton, referenceKey, refDomId } from "./src/references.js";
 import { buildReferenceContext, referenceContextKey } from "./src/reference-context.js";
-import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js?v=tag-spans-20260630";
+import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js?v=full-audit-20260701";
 import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js";
-import { getTagTargets, initStores, listenForUserDataChanges, setTagAssertion } from "./src/stores.js?v=tag-spans-20260630";
+import { getTagTargets, initStores, listenForUserDataChanges, setTagAssertion } from "./src/stores.js?v=full-audit-20260701";
 import { studyUnavailableLabel } from "./src/study-empty-state.js";
-import { chapterSwipeDirection, CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js?v=ui-polish-20260630";
+import { chapterSwipeDirection, CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js?v=full-audit-20260701";
 
 const state = {
   manifest: null,
@@ -367,6 +368,7 @@ async function navigateToRoute(route, options = {}) {
     ctx.studyContext = {};
     setDetailHoverLocked(false);
     detailViews.clearStrongPin();
+    resetDetailForNavigation();
   }
 
   state.translationId = next.translationId;

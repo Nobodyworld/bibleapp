@@ -1,6 +1,6 @@
-import { JOB_TYPES } from "./config.js?v=tag-phase-20260629";
+import { JOB_TYPES } from "./config.js?v=full-audit-20260701";
 import { fetchWordMapBook } from "./data-service.js";
-import { parseReferenceKey, referenceKeyFromTarget, targetId } from "./semantic-targets.js?v=tag-phase-20260629";
+import { parseReferenceKey, referenceKeyFromTarget, targetId } from "./semantic-targets.js?v=full-audit-20260701";
 
 const PROCESSOR_VERSIONS = {
   [JOB_TYPES.tagIndexRefresh]: "tag-index-refresh-v1",

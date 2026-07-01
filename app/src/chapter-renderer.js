@@ -1,4 +1,4 @@
-import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=interaction-qa-20260629";
+import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=full-audit-20260701";
 import { resolvePassageText } from "./data-service.js";
 import { referenceKey, refDomId, parseLocationFromHref } from "./references.js";
 import {
@@ -6,12 +6,12 @@ import {
   ensureStores,
   getRedLetterRanges,
   getTaggedTargetsForReference,
-} from "./stores.js?v=tag-spans-20260630";
+} from "./stores.js?v=full-audit-20260701";
 import {
   createTextSpanTarget,
   createVerseTarget,
   resolveTextSpanAnchor,
-} from "./semantic-targets.js?v=tag-spans-20260630";
+} from "./semantic-targets.js?v=full-audit-20260701";
 import { mapStrongChapterRanges } from "./strongs.js";
 import { createStudyEmptyState, studyUnavailableLabel } from "./study-empty-state.js";
 import { interlinearTokenIdentity } from "./ui-contracts.js";

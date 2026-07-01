@@ -253,12 +253,9 @@ export function goForwardDetail() {
   return nextLocation;
 }
 
-export function resetDetail(title = "Details", message = defaultDetailText) {
+function resetDetailContent(title, message) {
   detailHistory.length = 0;
   detailForwardHistory.length = 0;
-  readerLocationHistory.length = 0;
-  readerLocationForwardHistory.length = 0;
-  lastTrackedLocation = null;
   transientBase = null;
   currentDetailTransient = false;
   detailPanelMode = transitionPanelMode(detailPanelMode, PANEL_EVENTS.reset);
@@ -267,6 +264,17 @@ export function resetDetail(title = "Details", message = defaultDetailText) {
   els.detail.textContent = message;
   els.detailPane?.classList.remove("visible");
   updateDetailHistoryButtons();
+}
+
+export function resetDetailForNavigation(title = "Details", message = defaultDetailText) {
+  resetDetailContent(title, message);
+}
+
+export function resetDetail(title = "Details", message = defaultDetailText) {
+  readerLocationHistory.length = 0;
+  readerLocationForwardHistory.length = 0;
+  lastTrackedLocation = null;
+  resetDetailContent(title, message);
 }
 
 // Track reader location changes for back/forward navigation

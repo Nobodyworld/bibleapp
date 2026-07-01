@@ -1,14 +1,14 @@
 import { fetchVerseBook, fetchWordMapBook, loadLanguageMetadata, loadOriginalSourceTexts } from "../data-service.js";
-import { createDetailList, els, setDetail, setDetailMessage, textNode } from "../dom.js?v=interaction-qa-20260629";
+import { createDetailList, els, setDetail, setDetailMessage, textNode } from "../dom.js?v=full-audit-20260701";
 import { setLanguageTextWithTooltips } from "../language-tooltips.js";
 import { referenceKey } from "../references.js";
 import { analyzeOriginalWord, summarizeHebrewGematriaTokens, wordHasLanguageScript } from "../language.js";
-import { resolveInterlinearVerseTokens } from "../strongs.js?v=interaction-qa-20260629";
-import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=tag-spans-20260630";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=tag-initiative-20260630";
+import { resolveInterlinearVerseTokens } from "../strongs.js?v=full-audit-20260701";
+import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=full-audit-20260701";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=full-audit-20260701";
 import { createStudyEmptyState } from "../study-empty-state.js";
 import { interlinearTokenIdentity } from "../ui-contracts.js";
-import { createSourceTokenTarget } from "../semantic-targets.js?v=tag-spans-20260630";
+import { createSourceTokenTarget } from "../semantic-targets.js?v=full-audit-20260701";
 
 function normalizeWordMapSpan(raw, bsbVerseText) {
   const start = Number(raw[2] || 0);

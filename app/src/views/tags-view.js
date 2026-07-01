@@ -1,4 +1,4 @@
-import { createDetailList, setDetail } from "../dom.js?v=interaction-qa-20260629";
+import { createDetailList, setDetail } from "../dom.js?v=full-audit-20260701";
 import { referenceKey } from "../references.js";
 import {
   createCustomTag,
@@ -9,9 +9,9 @@ import {
   setTagAssertion,
   setVerseTag,
   updateCustomTag,
-} from "../stores.js?v=tag-spans-20260630";
-import { targetId } from "../semantic-targets.js?v=tag-spans-20260630";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=tag-initiative-20260630";
+} from "../stores.js?v=full-audit-20260701";
+import { targetId } from "../semantic-targets.js?v=full-audit-20260701";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=full-audit-20260701";
 
 function tagIcon(tag) {
   return String(tag?.icon || tag?.label?.slice(0, 1) || "*").slice(0, 3);
