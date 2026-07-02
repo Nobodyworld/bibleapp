@@ -645,6 +645,11 @@ async function runQa(page) {
       if (!node || !surface) return null;
       const foregroundStyle = getComputedStyle(node);
       const backgroundStyle = getComputedStyle(surface);
+      const renderings = document.querySelector('.translation-renderings');
+      const renderingRow = document.querySelector('.translation-rendering-row');
+      const markWord = document.querySelector('.mark-study-word');
+      const markList = document.querySelector('.language-breakdown.hebrew .mark-list');
+      const summaryHeading = document.querySelector('.strong-sticky-summary > h3');
       const rgb = (value) => (value.match(/[\\d.]+/g) || []).slice(0, 3).map(Number);
       const luminance = (values) => {
         const channels = values.map((value) => {
@@ -658,11 +663,30 @@ async function runQa(page) {
       return {
         color: foregroundStyle.color,
         background: backgroundStyle.backgroundColor,
-        ratio: (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05)
+        ratio: (Math.max(foreground, background) + 0.05) / (Math.min(foreground, background) + 0.05),
+        renderingsBackground: renderings ? getComputedStyle(renderings).backgroundColor : '',
+        renderingRowBackground: renderingRow ? getComputedStyle(renderingRow).backgroundColor : '',
+        markWordAlignment: markWord ? getComputedStyle(markWord).textAlign : '',
+        markListAlignment: markList ? getComputedStyle(markList).justifyContent : '',
+        headingBorder: summaryHeading ? getComputedStyle(summaryHeading).borderBottomWidth : '',
+        headingPaddingBottom: summaryHeading ? getComputedStyle(summaryHeading).paddingBottom : ''
       };
     })()`,
   );
   assert(darkHebrewContrast?.ratio >= 4.5, `dark Hebrew source contrast is too low: ${JSON.stringify(darkHebrewContrast)}`);
+  assert(
+    darkHebrewContrast?.renderingsBackground !== "rgb(255, 255, 255)" &&
+      darkHebrewContrast?.renderingRowBackground !== "rgb(255, 255, 255)",
+    `translation renderings retain a white dark-theme surface: ${JSON.stringify(darkHebrewContrast)}`,
+  );
+  assert(
+    darkHebrewContrast?.markWordAlignment === "center" && darkHebrewContrast?.markListAlignment === "center",
+    `Hebrew marks are not centered beneath their source word: ${JSON.stringify(darkHebrewContrast)}`,
+  );
+  assert(
+    darkHebrewContrast?.headingBorder !== "0px" && Number.parseFloat(darkHebrewContrast?.headingPaddingBottom || "0") >= 8,
+    `Strong's heading lacks visual separation: ${JSON.stringify(darkHebrewContrast)}`,
+  );
   await click(page, ".hebrew-rtl-note");
   await waitFor(
     page,

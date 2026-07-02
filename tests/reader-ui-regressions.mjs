@@ -61,5 +61,19 @@ assert(
     /rtlExplanation\.hidden = expanded/.test(strongsView),
   "Hebrew reading-direction affordance must behave as an expandable control.",
 );
+assert(
+  /\.mark-study \.mark-study-word\s*{[\s\S]*?text-align:\s*center;/.test(css) &&
+    /\.language-breakdown\.hebrew \.mark-list\s*{[\s\S]*?justify-content:\s*center;/.test(css),
+  "Hebrew marks must remain centered beneath the analyzed source word.",
+);
+assert(
+  /:root\[data-theme="dark"\] \.translation-renderings\s*{[\s\S]*?background:\s*var\(--bg-elevated\)\s*!important;/.test(css) &&
+    /:root\[data-theme="dark"\] \.translation-rendering-row\s*{[\s\S]*?background:\s*var\(--panel\)\s*!important;/.test(css),
+  "Translation rendering surfaces must respect dark theme colors.",
+);
+assert(
+  /\.strong-sticky-summary > h3\s*{[\s\S]*?border-bottom:\s*1px solid var\(--line\);/.test(css),
+  "Strong's summary heading must retain its separator.",
+);
 
-console.log(JSON.stringify({ status: "ok", assertions: 23 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 26 }, null, 2));
