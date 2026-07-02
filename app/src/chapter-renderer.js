@@ -20,6 +20,7 @@ export function createChapterRenderer(ctx) {
   let selectionMenu = null;
   let referenceHoverTooltipLayer = null;
   let activeReferenceHoverTarget = null;
+  let referenceHoverHideTimer = null;
 
   function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
@@ -164,8 +165,24 @@ export function createChapterRenderer(ctx) {
     referenceHoverTooltipLayer.className = "reference-hover-tooltip-layer";
     referenceHoverTooltipLayer.setAttribute("role", "tooltip");
     referenceHoverTooltipLayer.hidden = true;
+    referenceHoverTooltipLayer.addEventListener("mouseenter", cancelReferenceHoverTooltipHide);
+    referenceHoverTooltipLayer.addEventListener("mouseleave", scheduleReferenceHoverTooltipHide);
     document.body.append(referenceHoverTooltipLayer);
     return referenceHoverTooltipLayer;
+  }
+
+  function cancelReferenceHoverTooltipHide() {
+    if (!referenceHoverHideTimer) return;
+    window.clearTimeout(referenceHoverHideTimer);
+    referenceHoverHideTimer = null;
+  }
+
+  function scheduleReferenceHoverTooltipHide() {
+    cancelReferenceHoverTooltipHide();
+    referenceHoverHideTimer = window.setTimeout(() => {
+      referenceHoverHideTimer = null;
+      hideReferenceHoverTooltip();
+    }, 140);
   }
 
   function positionReferenceHoverTooltip(target) {
@@ -191,6 +208,7 @@ export function createChapterRenderer(ctx) {
 
   function hideReferenceHoverTooltip(target = null) {
     if (target && activeReferenceHoverTarget !== target) return;
+    cancelReferenceHoverTooltipHide();
     const layer = ensureReferenceHoverTooltipLayer();
     activeReferenceHoverTarget = null;
     layer.hidden = true;
@@ -230,6 +248,7 @@ export function createChapterRenderer(ctx) {
       hideReferenceHoverTooltip(target);
       return;
     }
+    cancelReferenceHoverTooltipHide();
     const layer = ensureReferenceHoverTooltipLayer();
     activeReferenceHoverTarget = target;
     renderReferenceHoverTooltip(layer, target);
@@ -578,8 +597,8 @@ export function createChapterRenderer(ctx) {
           button.addEventListener("mouseover", showPreview);
           button.addEventListener("pointerenter", showPreview);
           button.addEventListener("focus", showPreview);
-          button.addEventListener("mouseleave", () => hideReferenceHoverTooltip(button));
-          button.addEventListener("blur", () => hideReferenceHoverTooltip(button));
+          button.addEventListener("mouseleave", scheduleReferenceHoverTooltipHide);
+          button.addEventListener("blur", scheduleReferenceHoverTooltipHide);
           window.setTimeout(() => hydrateReferencePreview(button, location), 0);
         }
         button.addEventListener("click", () => {

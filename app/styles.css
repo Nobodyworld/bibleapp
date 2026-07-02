@@ -1183,7 +1183,10 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 .reference-hover-tooltip-layer {
   position: fixed;
   z-index: 30;
+  max-height: calc(100dvh - 20px);
   max-width: min(360px, calc(100vw - 20px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 7px 9px;
   border-radius: 5px;
   background: rgba(24, 28, 33, 0.96);
@@ -1192,7 +1195,8 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   font-size: 12px;
   font-weight: 600;
   line-height: 1.35;
-  pointer-events: none;
+  pointer-events: auto;
+  scrollbar-width: thin;
   white-space: normal;
 }
 

@@ -44,5 +44,14 @@ assert(/Content-Security-Policy/.test(index), "App shell must declare a Content 
 assert(/object-src 'none'/.test(index), "Content Security Policy must block embedded objects.");
 assert(/line\.append\(number,\s*document\.createTextNode/.test(renderer), "Reference preview verse numbers must render as superscripts.");
 assert(/button\.textContent =/.test(renderer), "Cross-reference button labels must remain plain text.");
+assert(
+  /\.reference-hover-tooltip-layer\s*{[\s\S]*?max-height:\s*calc\(100dvh - 20px\);[\s\S]*?overflow-y:\s*auto;[\s\S]*?pointer-events:\s*auto;/.test(css),
+  "Reference hover previews must stay inside the viewport and support scrolling.",
+);
+assert(
+  /referenceHoverTooltipLayer\.addEventListener\("mouseenter",\s*cancelReferenceHoverTooltipHide\)/.test(renderer) &&
+    /button\.addEventListener\("mouseleave",\s*scheduleReferenceHoverTooltipHide\)/.test(renderer),
+  "Reference hover previews must remain open while the user scrolls them.",
+);
 
-console.log(JSON.stringify({ status: "ok", assertions: 20 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 22 }, null, 2));
