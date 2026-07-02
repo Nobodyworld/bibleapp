@@ -3,11 +3,12 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [index, css, app, renderer] = await Promise.all([
+const [index, css, app, renderer, strongsView] = await Promise.all([
   readFile(new URL("../app/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/styles.css", import.meta.url), "utf8"),
   readFile(new URL("../app/app.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/chapter-renderer.js", import.meta.url), "utf8"),
+  readFile(new URL("../app/src/views/strongs-view.js", import.meta.url), "utf8"),
 ]);
 
 const chapterTools = index.match(/<div class="chapter-actions"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/)?.[0] || "";
@@ -54,4 +55,11 @@ assert(
   "Reference hover previews must remain open while the user scrolls them.",
 );
 
-console.log(JSON.stringify({ status: "ok", assertions: 22 }, null, 2));
+assert(
+  /rtlNote\.setAttribute\("aria-expanded",\s*"false"\)/.test(strongsView) &&
+    /rtlNote\.addEventListener\("click"/.test(strongsView) &&
+    /rtlExplanation\.hidden = expanded/.test(strongsView),
+  "Hebrew reading-direction affordance must behave as an expandable control.",
+);
+
+console.log(JSON.stringify({ status: "ok", assertions: 23 }, null, 2));

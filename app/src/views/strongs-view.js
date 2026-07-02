@@ -555,11 +555,25 @@ export function createStrongsView(ctx = null) {
     rtlNote.type = "button";
     rtlNote.className = "hebrew-rtl-note";
     rtlNote.textContent = "!";
-    rtlNote.title = "Hebrew words are read and presented from right to left.";
+    rtlNote.title = "Explain Hebrew reading direction";
     rtlNote.setAttribute("aria-label", rtlNote.title);
+    rtlNote.setAttribute("aria-expanded", "false");
+    rtlNote.setAttribute("aria-controls", "strongHebrewRtlExplanation");
     rtlNote.hidden = true;
 
     primary.append(rtlNote, sourceWordDisplay, translit);
+
+    const rtlExplanation = document.createElement("p");
+    rtlExplanation.id = "strongHebrewRtlExplanation";
+    rtlExplanation.className = "hebrew-rtl-explanation";
+    rtlExplanation.textContent =
+      "Hebrew is displayed from right to left. Begin with the character on the right; the transliteration remains left to right.";
+    rtlExplanation.hidden = true;
+    rtlNote.addEventListener("click", () => {
+      const expanded = rtlNote.getAttribute("aria-expanded") === "true";
+      rtlNote.setAttribute("aria-expanded", String(!expanded));
+      rtlExplanation.hidden = expanded;
+    });
 
     const gloss = document.createElement("p");
     gloss.className = "strong-overview-gloss";
@@ -590,6 +604,10 @@ export function createStrongsView(ctx = null) {
       const isHebrew = language === "hebrew";
       overview.classList.toggle("hebrew", isHebrew);
       rtlNote.hidden = !isHebrew || !sourceWord;
+      if (rtlNote.hidden) {
+        rtlNote.setAttribute("aria-expanded", "false");
+        rtlExplanation.hidden = true;
+      }
       setOptionalLine(sourceWordDisplay, sourceWord);
       if (sourceWord) {
         sourceWordDisplay.classList.toggle("rtl-text", isHebrew);
@@ -603,7 +621,7 @@ export function createStrongsView(ctx = null) {
     }
 
     renderOverview();
-    overview.append(primary, meta, gloss);
+    overview.append(primary, rtlExplanation, meta, gloss);
     stickySummary.append(heading, overview);
     wrap.append(stickySummary);
     if (options.verseContext && !options.hover && ctx) {

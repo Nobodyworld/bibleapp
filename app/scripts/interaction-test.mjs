@@ -663,6 +663,23 @@ async function runQa(page) {
     })()`,
   );
   assert(darkHebrewContrast?.ratio >= 4.5, `dark Hebrew source contrast is too low: ${JSON.stringify(darkHebrewContrast)}`);
+  await click(page, ".hebrew-rtl-note");
+  await waitFor(
+    page,
+    "document.querySelector('.hebrew-rtl-note')?.getAttribute('aria-expanded') === 'true' && !document.querySelector('.hebrew-rtl-explanation')?.hidden",
+  );
+  assert(
+    (await evaluate(page, "document.querySelector('.hebrew-rtl-explanation')?.textContent || ''")).includes(
+      "Begin with the character on the right",
+    ),
+    "Hebrew reading-direction control did not reveal its explanation",
+  );
+  await click(page, ".hebrew-rtl-note");
+  await waitFor(
+    page,
+    "document.querySelector('.hebrew-rtl-note')?.getAttribute('aria-expanded') === 'false' && document.querySelector('.hebrew-rtl-explanation')?.hidden",
+  );
+  pass("Hebrew reading-direction explanation");
   if (themeBeforeHebrew !== "dark") {
     await click(page, "#themeToggle");
     await waitFor(page, `document.documentElement.getAttribute('data-theme') === ${JSON.stringify(themeBeforeHebrew)}`);

@@ -1868,7 +1868,27 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   border-color: rgba(37, 99, 95, 0.5);
 }
 
+.hebrew-rtl-note[aria-expanded="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
 .hebrew-rtl-note[hidden] {
+  display: none;
+}
+
+.hebrew-rtl-explanation {
+  padding: 8px 10px;
+  border-left: 3px solid var(--accent);
+  border-radius: 4px;
+  background: rgba(37, 99, 95, 0.08);
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.hebrew-rtl-explanation[hidden] {
   display: none;
 }
 
