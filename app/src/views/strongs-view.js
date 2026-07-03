@@ -7,6 +7,7 @@ import {
 import { isDetailHoverLocked, setDetail, textNode } from "../dom.js?v=full-audit-20260701";
 import { capabilityMessage } from "../capabilities.js";
 import { languageUnitTooltip, setLanguageTextWithTooltips } from "../language-tooltips.js";
+import { setMorphologyHelp } from "../morphology-tooltips.js?v=full-audit-20260701";
 import { analyzeOriginalWord, gematriaValueForUnit, wordHasLanguageScript } from "../language.js";
 import { createVerseContextTabs } from "./verse-context-tabs.js?v=full-audit-20260701";
 
@@ -615,7 +616,9 @@ export function createStrongsView(ctx = null) {
       }
       const translitText = token.transliteration || entry?.transliteration || "";
       setOptionalLine(translit, translitText && translitText !== sourceWord ? translitText : "");
-      setOptionalLine(pos, token.morphology || entry?.part_of_speech || "");
+      const morphology = token.morphology || entry?.part_of_speech || "";
+      pos.hidden = !morphology;
+      if (morphology) setMorphologyHelp(pos, morphology, language);
       codeText.textContent = token.strong_code || "No Strong's number";
       gloss.textContent = token.gloss || compactDefinition(entry) || (entry ? "No short definition available." : "Loading lexical summary...");
     }

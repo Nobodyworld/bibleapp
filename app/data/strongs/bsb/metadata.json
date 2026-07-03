@@ -16,5 +16,5 @@
     "morphology",
     "gloss"
   ],
-  "provenance_note": "Restored from local private study-data backup; source rights are recorded as restricted in data/license-matrix.json."
+  "provenance_note": "Derived from the verified OpenBible source package; see data/source-manifest.json."
 }

@@ -217,11 +217,19 @@ export function createChapterRenderer(ctx) {
 
   function renderReferenceHoverTooltip(layer, target) {
     const verses = target?.__bibleAppReferencePreviewVerses;
+    const fragment = document.createDocumentFragment();
+    const title = document.createElement("strong");
+    title.className = "reference-hover-tooltip-title";
+    title.textContent = target?.dataset?.referenceLabel || "Referenced passage";
+    fragment.append(title);
     if (!Array.isArray(verses) || !verses.length) {
-      layer.textContent = target?.dataset?.tooltip || "";
+      const status = document.createElement("span");
+      status.className = "reference-hover-tooltip-status";
+      status.textContent = target?.dataset?.tooltip || "";
+      fragment.append(status);
+      layer.replaceChildren(fragment);
       return;
     }
-    const fragment = document.createDocumentFragment();
     verses.forEach((item) => {
       const line = document.createElement("span");
       line.className = "reference-hover-tooltip-verse";
@@ -586,6 +594,7 @@ export function createChapterRenderer(ctx) {
         button.type = "button";
         button.className = "mini-button reference-hover";
         renderReferenceLabel(button, ref.label);
+        button.dataset.referenceLabel = ref.label;
         const location = locationWithLabelRange(parseLocationFromHref(ref.href, ctx.findBook), ref.label);
         if (location) {
           button.dataset.tooltip = "Hover preview";

@@ -1,6 +1,7 @@
 import { fetchVerseBook, fetchWordMapBook, loadLanguageMetadata, loadOriginalSourceTexts } from "../data-service.js";
 import { createDetailList, els, setDetail, setDetailMessage, textNode } from "../dom.js?v=full-audit-20260701";
 import { setLanguageTextWithTooltips } from "../language-tooltips.js";
+import { setMorphologyHelp } from "../morphology-tooltips.js?v=full-audit-20260701";
 import { referenceKey } from "../references.js";
 import { analyzeOriginalWord, summarizeHebrewGematriaTokens, wordHasLanguageScript } from "../language.js";
 import { resolveInterlinearVerseTokens } from "../strongs.js?v=full-audit-20260701";
@@ -247,7 +248,13 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
         showStrong(token, { pin: true, verseContext: tokenVerseContext });
       });
     }
-    meta.append(strong, textNode(token.morphology ? ` / ${token.morphology}` : ""));
+    meta.append(strong);
+    if (token.morphology) {
+      meta.append(textNode(" / "));
+      const morphology = document.createElement("span");
+      setMorphologyHelp(morphology, token.morphology, token.language);
+      meta.append(morphology);
+    }
 
     const english = document.createElement("div");
     english.className = "token-english";

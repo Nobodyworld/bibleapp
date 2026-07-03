@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-01T19:59:31.239Z",
-  "distribution": "clean-recorded-license",
-  "license_matrix": "data/license-matrix.json",
-  "note": "Package manifest retains licensing notes as written record metadata only; no runtime or release gating is enforced by license fields.",
+  "generated_at": "2026-07-03T02:44:40.091Z",
+  "distribution": "source-notices-retained",
+  "source_manifest": "data/source-manifest.json",
+  "note": "Package inventory for the local-first application. Bundled-data rights and provenance are recorded in data/source-manifest.json.",
   "packages": [
     {
       "id": "reader-texts",
@@ -37,11 +37,11 @@
         "semantic-seeds"
       ],
       "files": 2672,
-      "bytes": 942267732,
+      "bytes": 942267872,
       "mb": 898.62,
-      "gzip_bytes": 177303217,
+      "gzip_bytes": 177303170,
       "gzip_mb": 169.09,
-      "sha256": "sha256:1a647471e56d2288d120fb0a6b5735b25aa80848b68017fec6d4ca59fc83171d",
+      "sha256": "sha256:8f9cd125c7b0380d29b5d81545db39054b8f4b11589bfa9d765361f8142651b5",
       "largest_shard": {
         "path": "data/search/commentaries/gill/psalms.json",
         "bytes": 10293768
@@ -257,15 +257,15 @@
         "translation-bsb"
       ],
       "files": 199,
-      "bytes": 119648580,
-      "gzip_bytes": 21968124,
-      "license_note": "Licensing/provenance notes retained in data/license-matrix.json as written record metadata.",
+      "bytes": 119648546,
+      "gzip_bytes": 21968107,
+      "license_note": "Bundled-data provenance is recorded in data/source-manifest.json.",
       "paths": [
         "data/strongs"
       ],
       "mb": 114.11,
       "gzip_mb": 20.95,
-      "sha256": "sha256:726b46190f445eea5c137ef13d399d26c26622e42532781b70190ca32a2cb9cb",
+      "sha256": "sha256:f758437292b03e23391a60ef04fbe7d2e12dfa1a7dcace564653ed70181198bb",
       "largest_shard": {
         "path": "data/strongs/bsb/books/jeremiah.json",
         "bytes": 3307325
@@ -279,7 +279,7 @@
       "files": 9,
       "bytes": 19752401,
       "gzip_bytes": 4582503,
-      "license_note": "Licensing/provenance notes retained in data/license-matrix.json as written record metadata.",
+      "license_note": "Bundled-data provenance is recorded in data/source-manifest.json.",
       "paths": [
         "data/lexicon/hebrew"
       ],
@@ -299,7 +299,7 @@
       "files": 6,
       "bytes": 13614325,
       "gzip_bytes": 3198453,
-      "license_note": "Licensing/provenance notes retained in data/license-matrix.json as written record metadata.",
+      "license_note": "Bundled-data provenance is recorded in data/source-manifest.json.",
       "paths": [
         "data/lexicon/greek"
       ],
@@ -319,7 +319,7 @@
       "files": 66,
       "bytes": 89509336,
       "gzip_bytes": 18600898,
-      "license_note": "Licensing/provenance notes retained in data/license-matrix.json as written record metadata.",
+      "license_note": "Bundled-data provenance is recorded in data/source-manifest.json.",
       "paths": [
         "data/crossrefs"
       ],
@@ -337,15 +337,15 @@
       "description": "Aggregated and source-backed commentary links keyed by verse.",
       "dependencies": [],
       "files": 331,
-      "bytes": 213363527,
-      "gzip_bytes": 56401689,
-      "license_note": "Licensing/provenance notes retained in data/license-matrix.json as written record metadata.",
+      "bytes": 213363701,
+      "gzip_bytes": 56401659,
+      "license_note": "Bundled-data provenance is recorded in data/source-manifest.json.",
       "paths": [
         "data/commentaries"
       ],
       "mb": 203.48,
       "gzip_mb": 53.79,
-      "sha256": "sha256:165ea24456897c1ba55bdc01c3587d4ae6c3b14fb6e1d28bac155ae753f9d24a",
+      "sha256": "sha256:7eba35fd6937ce00e56b319aad433bf096561b7d09f2b0647ca4e34034b6fb93",
       "largest_shard": {
         "path": "data/commentaries/source/gill/psalms.json",
         "bytes": 5870427
@@ -359,7 +359,7 @@
       "files": 66,
       "bytes": 546579,
       "gzip_bytes": 85592,
-      "license_note": "Licensing/provenance notes retained in data/license-matrix.json as written record metadata.",
+      "license_note": "Bundled-data provenance is recorded in data/source-manifest.json.",
       "paths": [
         "data/outlines/books"
       ],
@@ -399,7 +399,7 @@
       "files": 39,
       "bytes": 51410549,
       "gzip_bytes": 9746097,
-      "license_note": "Derived interlinear data retained with provenance notes in data/license-matrix.json.",
+      "license_note": "Derived from bundled data; provenance is recorded in data/source-manifest.json.",
       "paths": [
         "data/interlinear/books"
       ],
@@ -460,7 +460,7 @@
       "files": 27,
       "bytes": 20561051,
       "gzip_bytes": 3726677,
-      "license_note": "Derived interlinear data retained with provenance notes in data/license-matrix.json.",
+      "license_note": "Derived from bundled data; provenance is recorded in data/source-manifest.json.",
       "paths": [
         "data/interlinear/books"
       ],

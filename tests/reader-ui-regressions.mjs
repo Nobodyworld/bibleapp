@@ -13,6 +13,7 @@ const [index, css, app, renderer, strongsView] = await Promise.all([
 
 const chapterTools = index.match(/<div class="chapter-actions"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/)?.[0] || "";
 const sideTools = index.match(/<nav class="detail-tool-nav"[\s\S]*?<\/nav>/)?.[0] || "";
+const homeButtonMarkup = index.match(/<button id="homeButton"[\s\S]*?<\/button>/)?.[0] || "";
 
 assert(!chapterTools.includes('id="showOutline"'), "Outline must not appear in chapter tools.");
 assert(!chapterTools.includes('id="showInterlinear"'), "Interlinear must not appear in chapter tools.");
@@ -45,6 +46,7 @@ assert(/Content-Security-Policy/.test(index), "App shell must declare a Content 
 assert(/object-src 'none'/.test(index), "Content Security Policy must block embedded objects.");
 assert(/line\.append\(number,\s*document\.createTextNode/.test(renderer), "Reference preview verse numbers must render as superscripts.");
 assert(/button\.textContent =/.test(renderer), "Cross-reference button labels must remain plain text.");
+assert(/reference-hover-tooltip-title/.test(renderer), "Reference previews must include a passage title bar.");
 assert(
   /\.reference-hover-tooltip-layer\s*{[\s\S]*?max-height:\s*calc\(100dvh - 20px\);[\s\S]*?overflow-y:\s*auto;[\s\S]*?pointer-events:\s*auto;/.test(css),
   "Reference hover previews must stay inside the viewport and support scrolling.",
@@ -75,5 +77,18 @@ assert(
   /\.strong-sticky-summary > h3\s*{[\s\S]*?border-bottom:\s*1px solid var\(--line\);/.test(css),
   "Strong's summary heading must retain its separator.",
 );
+assert(
+  /class="theme-switch-track"/.test(index) &&
+    /class="theme-option theme-sun"/.test(index) &&
+    /class="theme-option theme-moon"/.test(index) &&
+    /aria-pressed="false"/.test(index),
+  "Theme control must expose both theme icons and switch state.",
+);
+assert(
+  /id="statusText" class="header-status"/.test(index) &&
+    !homeButtonMarkup.includes('id="statusText"'),
+  "Dynamic load status must remain available outside the brand control.",
+);
+assert(/setMorphologyHelp\(pos,\s*morphology,\s*language\)/.test(strongsView), "Strong's morphology must expose definition help.");
 
-console.log(JSON.stringify({ status: "ok", assertions: 26 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 30 }, null, 2));

@@ -43,10 +43,15 @@ async function runTests() {
     if (!Array.isArray(pm.feature_packs)) throw new Error("Missing feature_packs array");
   });
 
-  test("license-matrix.json exists and is valid", () => {
-    const lm = readJson(join(dataRoot, "license-matrix.json"));
-    if (!lm) throw new Error("Missing or invalid");
-    if (!Array.isArray(lm.packaged_datasets)) throw new Error("Missing packaged_datasets array");
+  test("source-manifest.json exists and is valid", () => {
+    const sourceManifest = readJson(join(dataRoot, "source-manifest.json"));
+    if (!sourceManifest) throw new Error("Missing or invalid");
+    if (sourceManifest.schema_version !== 1) throw new Error("Invalid schema version");
+    if (sourceManifest.source_package?.classification !== "OPENBIBLE_CONFIRMED") {
+      throw new Error("Unexpected source classification");
+    }
+    if (!Array.isArray(sourceManifest.exceptions)) throw new Error("Missing exceptions array");
+    if (!Array.isArray(sourceManifest.transformations)) throw new Error("Missing transformations array");
   });
 
   // Data completeness tests

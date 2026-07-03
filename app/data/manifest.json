@@ -354,7 +354,7 @@
     "footnotes": true,
     "presentation": true
   },
-  "license_matrix": "data/license-matrix.json",
+  "source_manifest": "data/source-manifest.json",
   "translations": [
     {
       "id": "bsb",

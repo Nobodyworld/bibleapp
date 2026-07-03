@@ -234,24 +234,67 @@ button:disabled {
 
 .theme-toggle-button {
   min-height: 44px;
-  padding: 8px 12px;
-  border-radius: 8px;
+  padding: 6px 9px;
+  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  font-size: 16px;
+  gap: 7px;
+  font-size: 18px;
 }
 
-.theme-icon {
-  display: inline-block;
-  width: 20px;
+.theme-option {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  color: var(--muted);
+  line-height: 1;
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.theme-switch-track {
+  position: relative;
+  width: 36px;
   height: 20px;
-  transition: transform 200ms ease;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-alt);
 }
 
-.theme-toggle-button:hover .theme-icon {
-  transform: scale(1.1) rotate(15deg);
+.theme-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: var(--shadow-sm);
+  transition: transform 180ms ease;
+}
+
+.theme-toggle-button[aria-pressed="true"] .theme-switch-thumb {
+  transform: translateX(16px);
+}
+
+.theme-toggle-button[aria-pressed="false"] .theme-sun,
+.theme-toggle-button[aria-pressed="true"] .theme-moon {
+  color: var(--accent-dark);
+  transform: scale(1.1);
+}
+
+.header-status {
+  flex: 0 1 auto;
+  margin: 0;
+  padding: 5px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--panel-alt);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
 }
 
 .brand {
@@ -296,12 +339,6 @@ button:disabled {
   font-weight: 700;
   letter-spacing: -0.5px;
   line-height: 1.2;
-}
-
-.brand p {
-  margin: 3px 0 0;
-  color: var(--muted);
-  font-size: 12px;
 }
 
 .reader-controls {
@@ -1200,6 +1237,24 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   white-space: normal;
 }
 
+.reference-hover-tooltip-title {
+  position: sticky;
+  top: -7px;
+  display: block;
+  margin: -7px -9px 8px;
+  padding: 7px 9px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 5px 5px 0 0;
+  background: #0c1115;
+  color: #fff;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+.reference-hover-tooltip-status {
+  display: block;
+}
+
 .reference-hover-tooltip-verse {
   display: block;
 }
@@ -1927,6 +1982,69 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   color: var(--muted);
   font-size: 12px;
   font-weight: 700;
+}
+
+.morphology-help {
+  border-radius: 3px;
+  cursor: help;
+  text-decoration: underline dotted;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.morphology-help:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.morphology-tooltip-layer {
+  position: fixed;
+  z-index: 40;
+  width: min(330px, calc(100vw - 20px));
+  max-height: calc(100dvh - 20px);
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 6px;
+  background: rgba(12, 15, 18, 0.98);
+  color: #fff;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.34);
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-size: 12px;
+}
+
+.morphology-tooltip-layer[hidden] {
+  display: none;
+}
+
+.morphology-tooltip-title {
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.morphology-tooltip-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.morphology-tooltip-table th,
+.morphology-tooltip-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  text-align: left;
+  vertical-align: top;
+}
+
+.morphology-tooltip-table th {
+  width: 72px;
+  color: #83ddd5;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+
+.morphology-tooltip-table tr:last-child th,
+.morphology-tooltip-table tr:last-child td {
+  border-bottom: 0;
 }
 
 .strong-overview-pos::before {
@@ -3203,8 +3321,32 @@ button.target-tag-badge:focus-visible {
 
 @media (max-width: 960px) {
   .app-header {
-    align-items: stretch;
-    flex-direction: column;
+    display: grid;
+    grid-template-areas:
+      "brand theme"
+      "controls controls"
+      "status status";
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .brand {
+    grid-area: brand;
+    min-width: 0;
+  }
+
+  .reader-controls {
+    grid-area: controls;
+  }
+
+  .header-status {
+    grid-area: status;
+    justify-self: start;
+  }
+
+  .theme-toggle-button {
+    grid-area: theme;
   }
 
   .reader-controls {

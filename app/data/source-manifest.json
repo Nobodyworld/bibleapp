@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "source_package": {
+    "name": "OpenBible.com downloadable application",
+    "classification": "OPENBIBLE_CONFIRMED",
+    "archive_filename": "openbible.zip",
+    "archive_sha256": "5873f5a28ceb3cb760cc0dcaa9b9d28ffaf00595bad0c424b60c7f1ad56283fe",
+    "reviewed_at": "2026-07-02",
+    "default_rights": "The package states that the majority of its content and code is provided under CC0 and may be copied, adapted, and shared commercially or noncommercially, with or without attribution."
+  },
+  "exceptions": [
+    {
+      "scope": "Source-attached Bible text notices",
+      "terms": "The package requires attached copyright notices to be maintained and the associated Bible text not to be modified.",
+      "notices": [
+        "The Berean Bible (www.Berean.Bible) Berean Study Bible (BSB) © 2016, 2020 by Bible Hub and Berean.Bible. Used by Permission. All rights Reserved. Free downloads and licensing available.",
+        "Text courtesy of BibleProtector.com. Section Headings Courtesy Berean Study Bible.",
+        "This text of God's Word has been dedicated to the public domain. Free resources and databases are available at BereanBible.com."
+      ]
+    },
+    {
+      "scope": "Original OpenBible search scripts",
+      "terms": "The package identifies the scripts as created with ZoomSearchEngine® by Passmark Software® and requires their copyright notices to be maintained.",
+      "repository_status": "Not bundled; replaced by generated JSON search indexes."
+    }
+  ],
+  "transformations": [
+    "Bible text and study pages converted to structured JSON records.",
+    "Local search indexes generated from packaged text and study data.",
+    "Cross-reference graph and word-map analysis data generated from packaged records.",
+    "Hebrew and Greek interlinear records assembled from packaged text and Strong's mappings.",
+    "Supplemental workbook translations imported into the same per-book JSON format."
+  ]
+}

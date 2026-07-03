@@ -79,7 +79,7 @@ async function checkArchiveReferences(docFiles) {
 
 async function checkExternalBibleLinks(docFiles) {
   const offenders = [];
-  for (const file of docFiles.filter((item) => !isArchivedDoc(item) && !rel(item).endsWith("LICENSES.md"))) {
+  for (const file of docFiles.filter((item) => !isArchivedDoc(item) && !rel(item).endsWith("NOTICE.md"))) {
     const text = await readFile(file, "utf8");
     const links = text.match(/https?:\/\/[^\s)>"']+/g) || [];
     links
@@ -158,7 +158,7 @@ async function checkSchemaVersionFields() {
 }
 
 async function checkOverviewDocs() {
-  const required = ["README.md", "docs/CURRENT_WORK.md", "docs/UI_FUNCTIONALITY_SCHEMA.md"];
+  const required = ["README.md", "docs/README.md", "docs/UI_FUNCTIONALITY_SCHEMA.md"];
   const missing = [];
   for (const path of required) {
     if (!(await exists(join(appRoot, path)))) missing.push(path);

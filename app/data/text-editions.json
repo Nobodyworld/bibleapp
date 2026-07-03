@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "generated_at": "2026-06-22T20:44:02.020Z",
-  "license_matrix": "data/license-matrix.json",
-  "note": "Clean publish metadata for retained public-domain/no-license text editions only.",
+  "source_manifest": "data/source-manifest.json",
+  "note": "Retained text-edition metadata; bundled-data rights and notices are recorded in the source manifest.",
   "editions": [
     {
       "id": "bsb",

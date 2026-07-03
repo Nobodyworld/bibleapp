@@ -1,40 +1,82 @@
 # Bible App
 
-This repository contains the private publish package for a static Bible reader app.
+Local-first Bible study application with multi-translation reading,
+commentary, interlinear analysis, semantic tagging, resilient persistence,
+and desktop/mobile verification.
 
-The active app is in `app/`. The `backup/` directory is local reference/archive material and is ignored from publishing.
+The application is a static browser client. Its Bible texts, commentary,
+lexicons, cross-references, interlinear records, search indexes, and analysis
+packs are shipped as local JSON data, so ordinary study sessions do not
+require a remote service.
 
-Repository-wide past, current, and future work is consolidated in `MASTER_STATUS_TRACKER.md`. Detailed documents under `app/docs/` remain supporting contracts and decision records.
+## Features
 
-## Current Package
+- Ten English Bible translations with chapter and verse navigation.
+- Commentary, outlines, footnotes, cross-references, and Strong's lexicons.
+- Hebrew and Greek interlinear views with morphology and language tooltips.
+- Local search indexes, semantic tags, favorites, assertions, and study jobs.
+- Browser-local persistence with import, export, and recovery coverage.
+- Generated word maps and cross-reference graph analysis.
+- Static, domain, accessibility, desktop-browser, and mobile-browser tests.
 
-- Reader UI and local browser storage tools.
-- Retained Bible text editions under `app/data/verses/`.
-- Machine-readable data licensing in `app/data/license-matrix.json`.
-- Human-readable licensing notes in `app/LICENSES.md`.
-- Retained cross-reference, commentary, outline, interlinear, lexicon, search, word-map, and graph datasets.
-- Current engineering and UI contracts in `app/docs/`.
+## Architecture
 
-The package retains licensing and provenance notes as records. Runtime availability does not imply legal approval for public redistribution or commercial sale.
+`app/index.html`, `app/app.js`, and `app/styles.css` provide the static shell.
+Focused ES modules under `app/src/` implement routing, rendering, study
+views, persistence, semantic data, and package state. Runtime datasets live
+under `app/data/`; schemas and deterministic data tools live under
+`app/schemas/` and `app/tools/`. Repository-level integration and integrity
+tests are under `tests/`.
 
-## Run
+## Setup and Run
+
+Prerequisites:
+
+- Node.js 20 or newer
+- Python 3 for the local static server
+- Microsoft Edge for the browser verification suite
 
 ```powershell
+npm ci
 npm run serve
 ```
 
-Open:
+Open `http://127.0.0.1:8000/`. Routes are hash-based; for example:
+`http://127.0.0.1:8000/#/read/bsb/psalms/23`.
 
-```text
-http://127.0.0.1:8000/
-```
-
-## Audit
-
-From the repository root:
+## Verification
 
 ```powershell
+npm run inventory:check
+npm run test:static
+npm run test:browser
+npm run test:browser:mobile
 npm run verify
 ```
 
-This runs syntax/data validation, accessibility and documentation checks, desktop and mobile browser regression suites, and the structural publish audit.
+`npm run verify` runs the full static, domain, accessibility, desktop,
+mobile, inventory, and package audit suite.
+
+## Privacy
+
+The app is local-first. Bible data and study tools are served from this
+repository, and user-created study state is stored in the browser. No account,
+analytics service, or remote application API is required. Exported user data
+should be handled like any other personal file.
+
+## Licensing
+
+Application code, tests, scripts, schemas, and tooling are available under
+the MIT License. Bundled Bible and study data retains its source rights and
+notices and is not described as MIT-licensed. See [NOTICE.md](NOTICE.md) and
+[`app/data/source-manifest.json`](app/data/source-manifest.json).
+
+## Known Limitations
+
+- Browser-local data does not automatically synchronize between devices or
+  browser profiles.
+- The repository includes large runtime datasets and is heavier than a
+  typical static web project.
+- Browser verification currently expects Microsoft Edge on Windows.
+- Some generated source text contains legacy character-encoding artifacts.
+- The app has no hosted backend, collaborative accounts, or cloud backup.

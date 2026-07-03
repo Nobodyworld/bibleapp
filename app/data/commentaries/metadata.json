@@ -1,1 +1,62 @@
-{"aggregate_links_by_source":{"gill":142,"mhc":0},"aggregate_sections_by_source":{"ellicott":22994,"gill":31102,"mhc":31102,"pulpit":25571},"counts":{"aggregate_book_files":66,"aggregate_direct_sections":81870,"aggregate_hash_sections":28789,"aggregate_inline_sections":110,"aggregate_links":142,"aggregate_sections":110769,"aggregate_verse_pages":31102,"aggregate_verse_pages_seen":31102,"source_book_files":264,"source_chapter_pages":4756,"source_entries":81891,"source_introductions":506,"source_links":199229},"generated_at":"2026-06-13T03:55:59.774217+00:00","output_root":"C:\\Users\\Nobod\\Desktop\\bibleapp\\openbible-enhancements\\data\\commentaries","source_entries_by_source":{"ellicott":22994,"gill":29679,"mhc":3626,"pulpit":25592},"source_introductions_by_source":{"ellicott":505,"gill":1},"source_links_by_source":{"ellicott":68485,"gill":52507,"mhc":0,"pulpit":78237},"source_root":"C:\\Users\\Nobod\\Desktop\\bibleapp\\openbible","sources":[{"id":"ellicott","name":"Ellicott's Commentary for English Readers"},{"id":"pulpit","name":"Pulpit Commentary"},{"id":"mhc","name":"Matthew Henry's Concise Commentary"},{"id":"gill","name":"Gill's Exposition of the Entire Bible"}]}
+{
+  "aggregate_links_by_source": {
+    "gill": 142,
+    "mhc": 0
+  },
+  "aggregate_sections_by_source": {
+    "ellicott": 22994,
+    "gill": 31102,
+    "mhc": 31102,
+    "pulpit": 25571
+  },
+  "counts": {
+    "aggregate_book_files": 66,
+    "aggregate_direct_sections": 81870,
+    "aggregate_hash_sections": 28789,
+    "aggregate_inline_sections": 110,
+    "aggregate_links": 142,
+    "aggregate_sections": 110769,
+    "aggregate_verse_pages": 31102,
+    "aggregate_verse_pages_seen": 31102,
+    "source_book_files": 264,
+    "source_chapter_pages": 4756,
+    "source_entries": 81891,
+    "source_introductions": 506,
+    "source_links": 199229
+  },
+  "generated_at": "2026-06-13T03:55:59.774217+00:00",
+  "source_entries_by_source": {
+    "ellicott": 22994,
+    "gill": 29679,
+    "mhc": 3626,
+    "pulpit": 25592
+  },
+  "source_introductions_by_source": {
+    "ellicott": 505,
+    "gill": 1
+  },
+  "source_links_by_source": {
+    "ellicott": 68485,
+    "gill": 52507,
+    "mhc": 0,
+    "pulpit": 78237
+  },
+  "sources": [
+    {
+      "id": "ellicott",
+      "name": "Ellicott's Commentary for English Readers"
+    },
+    {
+      "id": "pulpit",
+      "name": "Pulpit Commentary"
+    },
+    {
+      "id": "mhc",
+      "name": "Matthew Henry's Concise Commentary"
+    },
+    {
+      "id": "gill",
+      "name": "Gill's Exposition of the Entire Bible"
+    }
+  ]
+}
