@@ -4,12 +4,12 @@ import {
   fetchWordMapBook,
   loadLanguageMetadata,
 } from "../data-service.js";
-import { isDetailHoverLocked, setDetail, textNode } from "../dom.js?v=browser-comments-20260707";
+import { isDetailHoverLocked, setDetail, textNode } from "../dom.js?v=browser-comments-20260707b";
 import { capabilityMessage } from "../capabilities.js";
 import { languageUnitTooltip, setLanguageTextWithTooltips } from "../language-tooltips.js";
-import { setMorphologyHelp } from "../morphology-tooltips.js?v=browser-comments-20260707";
+import { setMorphologyHelp } from "../morphology-tooltips.js?v=browser-comments-20260707b";
 import { analyzeOriginalWord, gematriaValueForUnit, wordHasLanguageScript } from "../language.js";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=browser-comments-20260707";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=browser-comments-20260707b";
 
 function languageTitle(language) {
   return language === "hebrew" ? "Hebrew" : "Greek";
@@ -17,7 +17,6 @@ function languageTitle(language) {
 
 function displayMarkChar(record) {
   const char = record.mark?.char || record.char || "";
-  if (record.base_char && char.match(/\p{Mark}/u)) return `${record.base_char}${char}`;
   return char.match(/\p{Mark}/u) ? `\u25CC${char}` : char;
 }
 
@@ -94,12 +93,7 @@ function renderWordBreakdown(analysis, wordInfo = null) {
     gematriaTotalNode = total;
   }
 
-  const markRecords = analysis.units.flatMap((unit) =>
-    (unit.marks || []).map((record) => ({
-      ...record,
-      base_char: unit.letter ? unit.char : "",
-    })),
-  );
+  const markRecords = analysis.units.flatMap((unit) => unit.marks || []);
   if (markRecords.length) {
     const marksTitle = document.createElement("h5");
     marksTitle.textContent = `${languageTitle(analysis.language)} marks / symbols`;

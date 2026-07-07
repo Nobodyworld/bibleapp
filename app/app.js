@@ -1,8 +1,8 @@
-import { DEFAULT_ROUTE } from "./src/config.js?v=browser-comments-20260707";
+import { DEFAULT_ROUTE } from "./src/config.js?v=browser-comments-20260707b";
 import { capabilityAvailable, resolveCapability } from "./src/capabilities.js";
-import { createChapterRenderer } from "./src/chapter-renderer.js?v=browser-comments-20260707";
+import { createChapterRenderer } from "./src/chapter-renderer.js?v=browser-comments-20260707b";
 import { loadManifest, loadReaderBookData, translationCanLoadBook } from "./src/data-service.js";
-import { createDetailViews } from "./src/detail-views.js?v=browser-comments-20260707";
+import { createDetailViews } from "./src/detail-views.js?v=browser-comments-20260707b";
 import {
   els,
   goBackDetail,
@@ -14,14 +14,14 @@ import {
   setStatus,
   sortedNumericKeys,
   trackReaderLocation,
-} from "./src/dom.js?v=browser-comments-20260707";
+} from "./src/dom.js?v=browser-comments-20260707b";
 import { createReferenceButton as makeReferenceButton, referenceKey, refDomId } from "./src/references.js";
 import { buildReferenceContext, referenceContextKey } from "./src/reference-context.js";
-import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js?v=browser-comments-20260707";
+import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js?v=browser-comments-20260707b";
 import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js";
-import { getTagTargets, initStores, listenForUserDataChanges, setTagAssertion } from "./src/stores.js?v=browser-comments-20260707";
+import { getTagTargets, initStores, listenForUserDataChanges, setTagAssertion } from "./src/stores.js?v=browser-comments-20260707b";
 import { studyUnavailableLabel } from "./src/study-empty-state.js";
-import { chapterSwipeDirection, CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js?v=browser-comments-20260707";
+import { chapterSwipeDirection, CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js?v=browser-comments-20260707b";
 
 const state = {
   manifest: null,
@@ -152,6 +152,99 @@ const ctx = {
 const detailViews = createDetailViews(ctx);
 ctx.detailViews = detailViews;
 const renderer = createChapterRenderer(ctx);
+const OLD_TESTAMENT_BOOK_COUNT = 39;
+
+function setPickerExpanded(button, panel, expanded) {
+  if (!button || !panel) return;
+  button.setAttribute("aria-expanded", expanded ? "true" : "false");
+  panel.hidden = !expanded;
+}
+
+function closeReaderPickers(except = null) {
+  if (except !== "book") setPickerExpanded(els.bookPickerButton, els.bookPickerPanel, false);
+  if (except !== "chapter") setPickerExpanded(els.chapterPickerButton, els.chapterPickerPanel, false);
+}
+
+function syncReaderPickerButtons() {
+  const book = findBook(state.bookId);
+  if (els.bookPickerButton) {
+    els.bookPickerButton.textContent = book?.name || state.bookId || "Select book";
+  }
+  if (els.chapterPickerButton) {
+    els.chapterPickerButton.textContent = state.chapter || "Select chapter";
+  }
+}
+
+function createPickerOption(label, active, onClick) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = ["reader-picker-option", active ? "active" : ""].filter(Boolean).join(" ");
+  button.textContent = label;
+  button.setAttribute("aria-pressed", active ? "true" : "false");
+  button.addEventListener("click", onClick);
+  return button;
+}
+
+function renderBookPicker() {
+  if (!els.bookPickerPanel || !state.manifest?.books) return;
+  els.bookPickerPanel.replaceChildren();
+  const groups = [
+    ["Old Testament", state.manifest.books.slice(0, OLD_TESTAMENT_BOOK_COUNT)],
+    ["New Testament", state.manifest.books.slice(OLD_TESTAMENT_BOOK_COUNT)],
+  ];
+  groups.forEach(([title, books]) => {
+    const column = document.createElement("section");
+    column.className = "book-picker-column";
+    const heading = document.createElement("h3");
+    heading.textContent = title;
+    const list = document.createElement("div");
+    list.className = "book-picker-list";
+    books.forEach((book) => {
+      list.append(
+        createPickerOption(book.name, book.id === state.bookId, () => {
+          closeReaderPickers();
+          els.book.value = book.id;
+          void navigateToRoute({
+            translationId: state.translationId,
+            bookId: book.id,
+            chapter: "1",
+            verse: null,
+          });
+        }),
+      );
+    });
+    column.append(heading, list);
+    els.bookPickerPanel.append(column);
+  });
+}
+
+function renderChapterPicker() {
+  if (!els.chapterPickerPanel) return;
+  els.chapterPickerPanel.replaceChildren();
+  const grid = document.createElement("div");
+  grid.className = "chapter-picker-grid";
+  sortedNumericKeys(state.verseBook?.chapters).forEach((chapter) => {
+    grid.append(
+      createPickerOption(chapter, chapter === state.chapter, () => {
+        closeReaderPickers();
+        els.chapter.value = chapter;
+        void navigateToRoute({
+          translationId: state.translationId,
+          bookId: state.bookId,
+          chapter,
+          verse: null,
+        });
+      }),
+    );
+  });
+  els.chapterPickerPanel.append(grid);
+}
+
+function syncReaderPickers() {
+  syncReaderPickerButtons();
+  renderBookPicker();
+  renderChapterPicker();
+}
 
 function fillTranslationOptions() {
   els.translation.replaceChildren();
@@ -167,6 +260,7 @@ function fillBookOptions() {
     els.book.append(option(book.id, book.name));
   });
   els.book.value = state.bookId;
+  syncReaderPickers();
 }
 
 function fillChapterOptions() {
@@ -175,6 +269,7 @@ function fillChapterOptions() {
     els.chapter.append(option(chapter, chapter));
   });
   els.chapter.value = state.chapter;
+  syncReaderPickers();
 }
 
 function syncChapterButtons() {
@@ -467,6 +562,22 @@ function bindEvents() {
       chapter: els.chapter.value,
       verse: null,
     });
+  });
+  els.bookPickerButton?.addEventListener("click", () => {
+    const expanded = els.bookPickerButton.getAttribute("aria-expanded") === "true";
+    closeReaderPickers("book");
+    setPickerExpanded(els.bookPickerButton, els.bookPickerPanel, !expanded);
+  });
+  els.chapterPickerButton?.addEventListener("click", () => {
+    const expanded = els.chapterPickerButton.getAttribute("aria-expanded") === "true";
+    closeReaderPickers("chapter");
+    setPickerExpanded(els.chapterPickerButton, els.chapterPickerPanel, !expanded);
+  });
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest?.(".reader-controls label")) closeReaderPickers();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeReaderPickers();
   });
   els.prev.addEventListener("click", () => void goToChapter(-1));
   els.next.addEventListener("click", () => void goToChapter(1));

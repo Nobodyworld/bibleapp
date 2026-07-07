@@ -1,6 +1,6 @@
-import { createDetailList, setDetail } from "../dom.js?v=browser-comments-20260707";
-import { canRunJob, runJob } from "../job-processor.js?v=browser-comments-20260707";
-import { completeJob, getAllJobEvents, updateJobStatus } from "../stores.js?v=browser-comments-20260707";
+import { createDetailList, setDetail } from "../dom.js?v=browser-comments-20260707b";
+import { canRunJob, runJob } from "../job-processor.js?v=browser-comments-20260707b";
+import { completeJob, getAllJobEvents, updateJobStatus } from "../stores.js?v=browser-comments-20260707b";
 
 export function createJobsView(ctx) {
   return function showJobs() {

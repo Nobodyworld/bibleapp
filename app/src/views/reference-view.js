@@ -1,6 +1,6 @@
 import { fetchVerseBook, resolvePassageText } from "../data-service.js";
-import { createDetailList, setDetail, setDetailMessage } from "../dom.js?v=browser-comments-20260707";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=browser-comments-20260707";
+import { createDetailList, setDetail, setDetailMessage } from "../dom.js?v=browser-comments-20260707b";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=browser-comments-20260707b";
 
 export function createReferenceViews(ctx) {
   function appendPassageText(container, text) {

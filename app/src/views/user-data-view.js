@@ -1,5 +1,5 @@
-import { createUserDataExport, getUserDataSummary, importUserData, setPackageStore } from "../stores.js?v=browser-comments-20260707";
-import { setDetail } from "../dom.js?v=browser-comments-20260707";
+import { createUserDataExport, getUserDataSummary, importUserData, setPackageStore } from "../stores.js?v=browser-comments-20260707b";
+import { setDetail } from "../dom.js?v=browser-comments-20260707b";
 import { resolveCapabilities } from "../capabilities.js";
 import { setCapabilityDisabled } from "../package-state.js";
 

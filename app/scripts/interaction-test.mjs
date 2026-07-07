@@ -272,11 +272,53 @@ async function runQa(page) {
         !document.querySelector('.chapter-actions #showOutline') &&
         !document.querySelector('.chapter-actions #showInterlinear') &&
         document.querySelector('.detail-tool-nav #showOutline') &&
-        document.querySelector('.detail-tool-nav #showInterlinear')
+        document.querySelector('.detail-tool-nav #showInterlinear') &&
+        document.querySelector('#bookPickerButton') &&
+        document.querySelector('#chapterPickerButton')
       )`,
     ),
     "Outline and Interlinear controls must live exclusively in the side panel",
   );
+  await click(page, "#chapterPickerButton");
+  await waitFor(page, "!document.querySelector('#chapterPickerPanel')?.hidden");
+  const chapterPickerState = await evaluate(
+    page,
+    `(() => {
+      const grid = document.querySelector('.chapter-picker-grid');
+      const style = grid ? getComputedStyle(grid) : null;
+      return {
+        optionCount: grid?.querySelectorAll('.reader-picker-option').length || 0,
+        columns: style?.gridTemplateColumns || ''
+      };
+    })()`,
+  );
+  assert(
+    chapterPickerState.optionCount >= 100 && chapterPickerState.columns.split(" ").length > 1,
+    `chapter picker should open as a grid, not a long native scroll: ${JSON.stringify(chapterPickerState)}`,
+  );
+  await clickButtonByText(page, "24", { scope: "#chapterPickerPanel" });
+  await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('Psalms 24')");
+  await click(page, "#chapterPickerButton");
+  await clickButtonByText(page, "23", { scope: "#chapterPickerPanel" });
+  await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('Psalms 23')");
+  await click(page, "#bookPickerButton");
+  await waitFor(page, "!document.querySelector('#bookPickerPanel')?.hidden");
+  const bookPickerState = await evaluate(
+    page,
+    `(() => ({
+      columns: document.querySelectorAll('.book-picker-column').length,
+      headings: [...document.querySelectorAll('.book-picker-column h3')].map((node) => node.textContent.trim()),
+      scrollableColumns: [...document.querySelectorAll('.book-picker-list')].filter((node) => node.scrollHeight > node.clientHeight).length
+    }))()`,
+  );
+  assert(
+    bookPickerState.columns === 2 &&
+      bookPickerState.headings.includes("Old Testament") &&
+      bookPickerState.headings.includes("New Testament") &&
+      bookPickerState.scrollableColumns >= 1,
+    `book picker should expose two scrollable testament columns: ${JSON.stringify(bookPickerState)}`,
+  );
+  await click(page, "#bookPickerButton");
   pass("initial Psalm 23 render");
 
   const selectedReaderText = await evaluate(
@@ -445,7 +487,7 @@ async function runQa(page) {
           const node = document.querySelector('#openStudyPanel');
           return Boolean(node && node.getBoundingClientRect().width > 0 && node.getBoundingClientRect().height > 0);
         })(),
-        visibleControls: ['#bookSelect', '#chapterSelect', '#showSearch', '#showTags'].filter((selector) => {
+        visibleControls: ['#bookPickerButton', '#chapterPickerButton', '#showSearch', '#showTags'].filter((selector) => {
           const node = document.querySelector(selector);
           return node && node.getBoundingClientRect().width > 0 && node.getBoundingClientRect().height > 0;
         }).length
@@ -517,6 +559,7 @@ async function runQa(page) {
     footnoteMarkerStyle.color !== footnoteMarkerStyle.textColor,
     `footnote marker should be visually distinct from verse text: ${JSON.stringify(footnoteMarkerStyle)}`,
   );
+  assert(footnoteMarkerStyle.color === "rgb(35, 71, 251)", `footnote marker should use the requested blue: ${JSON.stringify(footnoteMarkerStyle)}`);
   pass("footnote popup");
 
   await click(page, ".verse-study-button");
@@ -829,8 +872,9 @@ async function runQa(page) {
   assert(
     strongSidebar.markListStyle?.direction === "rtl" &&
       strongSidebar.markListStyle?.flexWrap === "nowrap" &&
-      strongSidebar.markGlyphs.some((glyph) => /[\u0590-\u05ff][\u0591-\u05c7]/u.test(glyph)),
-    `Hebrew mark pills must stay RTL, single-line, and include letter-specific glyphs: ${JSON.stringify(strongSidebar)}`,
+      strongSidebar.markGlyphs.length > 0 &&
+      strongSidebar.markGlyphs.every((glyph) => !/[\u05d0-\u05ea]/u.test(glyph)),
+    `Hebrew mark pills must stay RTL, single-line, and show symbols without letters: ${JSON.stringify(strongSidebar)}`,
   );
   assert(strongSidebar.concordanceText.includes("byword") || strongSidebar.concordanceText.includes("proverb"), "Strong's sidebar missing concordance data");
   assert(

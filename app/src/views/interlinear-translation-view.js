@@ -1,15 +1,15 @@
 import { fetchVerseBook, fetchWordMapBook, loadLanguageMetadata, loadOriginalSourceTexts } from "../data-service.js";
-import { createDetailList, els, setDetail, setDetailMessage, textNode } from "../dom.js?v=browser-comments-20260707";
+import { createDetailList, els, setDetail, setDetailMessage, textNode } from "../dom.js?v=browser-comments-20260707b";
 import { setLanguageTextWithTooltips } from "../language-tooltips.js";
-import { setMorphologyHelp } from "../morphology-tooltips.js?v=browser-comments-20260707";
+import { setMorphologyHelp } from "../morphology-tooltips.js?v=browser-comments-20260707b";
 import { referenceKey } from "../references.js";
 import { analyzeOriginalWord, summarizeHebrewGematriaTokens, wordHasLanguageScript } from "../language.js";
-import { resolveInterlinearVerseTokens } from "../strongs.js?v=browser-comments-20260707";
-import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=browser-comments-20260707";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=browser-comments-20260707";
+import { resolveInterlinearVerseTokens } from "../strongs.js?v=browser-comments-20260707b";
+import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=browser-comments-20260707b";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=browser-comments-20260707b";
 import { createStudyEmptyState } from "../study-empty-state.js";
 import { interlinearTokenIdentity } from "../ui-contracts.js";
-import { createSourceTokenTarget } from "../semantic-targets.js?v=browser-comments-20260707";
+import { createSourceTokenTarget } from "../semantic-targets.js?v=browser-comments-20260707b";
 
 function normalizeWordMapSpan(raw, bsbVerseText) {
   const start = Number(raw[2] || 0);

@@ -31,12 +31,21 @@ assert(/:root\[data-theme="dark"\] \.parallel-verse\.active\s*{[\s\S]*?backgroun
 assert(/:root\[data-theme="dark"\] \.reader-context-verse\s*{[\s\S]*?background:\s*rgba\(148,\s*163,\s*184,\s*0\.08\)/.test(css), "Dark reader selection must use the calm slate highlight.");
 assert(/\.reader-nav-arrow\s*{[\s\S]*?width:\s*20px;[\s\S]*?min-height:\s*56px;/.test(css), "Chapter navigation must remain edge-sliver sized.");
 assert(/\.reader-floating-nav\s*{[\s\S]*?top:\s*176px;/.test(css), "Floating chapter navigation must sit below the reader header.");
+assert(/\.detail-floating-nav\s*{[\s\S]*?top:\s*18px;[\s\S]*?margin:\s*0 24px 0 0;/.test(css), "Detail history controls must sit slightly lower and left of the panel edge.");
 assert(
   /class="scope-favorite-star"/.test(index) &&
     /class="scope-favorite-label"/.test(index) &&
     /querySelector\("\.scope-favorite-star"\)/.test(app),
   "Book and chapter favorites must expose separately styled star and label spans.",
 );
+assert(
+  /id="bookPickerButton"/.test(index) &&
+    /id="chapterPickerButton"/.test(index) &&
+    /\.book-picker-panel\s*{[\s\S]*?grid-template-columns:\s*repeat\(2/.test(css) &&
+    /\.chapter-picker-grid\s*{[\s\S]*?grid-template-columns:\s*repeat\(6/.test(css),
+  "Book and chapter controls must use app-owned picker popovers: testament columns and chapter grid.",
+);
+assert(/\.fn-marker\s*{[\s\S]*?color:\s*#2347fb;/.test(css), "Footnote markers must use the requested blue.");
 
 assert(/function disengageDetailFollow\(\)/.test(app), "Background reset must share the detail-follow disengage path.");
 assert(
@@ -71,11 +80,12 @@ assert(
   "Hebrew reading-direction affordance must behave as an expandable control.",
 );
 assert(
-  /base_char:\s*unit\.letter \? unit\.char : ""/.test(strongsView) &&
+  /const markRecords = analysis\.units\.flatMap\(\(unit\) => unit\.marks \|\| \[\]\);/.test(strongsView) &&
+    !/base_char/.test(strongsView) &&
     /section\.append\(marksTitle,\s*markStudy,\s*letters\)/.test(strongsView) &&
     /\.mark-study \.mark-study-word\s*{[\s\S]*?text-align:\s*center;/.test(css) &&
     /\.language-breakdown\.hebrew \.mark-list\s*{[\s\S]*?justify-content:\s*center;[\s\S]*?flex-wrap:\s*nowrap;/.test(css),
-  "Hebrew marks must appear before letters/gematria, stay centered, and use letter-specific single-line pills.",
+  "Hebrew marks must appear before letters/gematria, stay centered, and use symbols-only single-line pills.",
 );
 assert(
   /:root\[data-theme="dark"\] \.translation-renderings\s*{[\s\S]*?background:\s*var\(--bg-elevated\)\s*!important;/.test(css) &&
@@ -100,10 +110,10 @@ assert(
 );
 assert(/setMorphologyHelp\(pos,\s*morphology,\s*language\)/.test(strongsView), "Strong's morphology must expose definition help.");
 assert(
-  /styles\.css\?v=browser-comments-20260707/.test(index) &&
-    /app\.js\?v=browser-comments-20260707/.test(index) &&
+  /styles\.css\?v=browser-comments-20260707b/.test(index) &&
+    /app\.js\?v=browser-comments-20260707b/.test(index) &&
     !/full-audit-20260701|browser-comments-20260702/.test(index),
   "Browser-visible app and stylesheet entry points must use the current cache-buster key.",
 );
 
-console.log(JSON.stringify({ status: "ok", assertions: 33 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 36 }, null, 2));

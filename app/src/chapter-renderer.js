@@ -1,4 +1,4 @@
-import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=browser-comments-20260707";
+import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=browser-comments-20260707b";
 import { resolvePassageText } from "./data-service.js";
 import { referenceKey, refDomId, parseLocationFromHref } from "./references.js";
 import {
@@ -6,12 +6,12 @@ import {
   ensureStores,
   getRedLetterRanges,
   getTaggedTargetsForReference,
-} from "./stores.js?v=browser-comments-20260707";
+} from "./stores.js?v=browser-comments-20260707b";
 import {
   createTextSpanTarget,
   createVerseTarget,
   resolveTextSpanAnchor,
-} from "./semantic-targets.js?v=browser-comments-20260707";
+} from "./semantic-targets.js?v=browser-comments-20260707b";
 import { mapStrongChapterRanges } from "./strongs.js";
 import { createStudyEmptyState, studyUnavailableLabel } from "./study-empty-state.js";
 import { interlinearTokenIdentity } from "./ui-contracts.js";

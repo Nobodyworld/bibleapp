@@ -1,12 +1,12 @@
-import { createCommentaryOutlineViews } from "./views/commentary-outline-view.js?v=browser-comments-20260707";
-import { createInterlinearTranslationViews } from "./views/interlinear-translation-view.js?v=browser-comments-20260707";
-import { createJobsView } from "./views/jobs-view.js?v=browser-comments-20260707";
-import { createReferenceViews } from "./views/reference-view.js?v=browser-comments-20260707";
-import { createSearchView } from "./views/search-view.js?v=browser-comments-20260707";
-import { createStrongsView } from "./views/strongs-view.js?v=browser-comments-20260707";
-import { createTagsView } from "./views/tags-view.js?v=browser-comments-20260707";
-import { createUserDataView } from "./views/user-data-view.js?v=browser-comments-20260707";
-import { setDetail } from "./dom.js?v=browser-comments-20260707";
+import { createCommentaryOutlineViews } from "./views/commentary-outline-view.js?v=browser-comments-20260707b";
+import { createInterlinearTranslationViews } from "./views/interlinear-translation-view.js?v=browser-comments-20260707b";
+import { createJobsView } from "./views/jobs-view.js?v=browser-comments-20260707b";
+import { createReferenceViews } from "./views/reference-view.js?v=browser-comments-20260707b";
+import { createSearchView } from "./views/search-view.js?v=browser-comments-20260707b";
+import { createStrongsView } from "./views/strongs-view.js?v=browser-comments-20260707b";
+import { createTagsView } from "./views/tags-view.js?v=browser-comments-20260707b";
+import { createUserDataView } from "./views/user-data-view.js?v=browser-comments-20260707b";
+import { setDetail } from "./dom.js?v=browser-comments-20260707b";
 
 export function createDetailViews(ctx) {
   const strongsView = createStrongsView(ctx);
