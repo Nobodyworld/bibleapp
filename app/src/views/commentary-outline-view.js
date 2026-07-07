@@ -1,10 +1,10 @@
 import { fetchCommentaryAggregate, fetchCommentarySource } from "../data-service.js";
-import { createDetailList, setDetail, setDetailMessage } from "../dom.js?v=full-audit-20260701";
+import { createDetailList, setDetail, setDetailMessage } from "../dom.js?v=browser-comments-20260707";
 import { capabilityMessage } from "../capabilities.js";
 import { makeInternalLinksNavigable } from "../references.js";
 import { createStudyEmptyState } from "../study-empty-state.js";
-import { setSanitizedCommentaryHtml } from "../sanitize-commentary.js?v=full-audit-20260701";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=full-audit-20260701";
+import { setSanitizedCommentaryHtml } from "../sanitize-commentary.js?v=browser-comments-20260707";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=browser-comments-20260707";
 
 export function createCommentaryOutlineViews(ctx) {
   async function loadCommentaryAggregate() {

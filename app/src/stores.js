@@ -1,4 +1,4 @@
-import { DEFAULT_TAGS, JOB_TYPES, STORAGE_KEYS } from "./config.js?v=full-audit-20260701";
+import { DEFAULT_TAGS, JOB_TYPES, STORAGE_KEYS } from "./config.js?v=browser-comments-20260707";
 import {
   createVerseTarget,
   createTagAssertion,
@@ -10,7 +10,7 @@ import {
   tagAssertionId,
   tagDefinitionId,
   normalizeTarget,
-} from "./semantic-targets.js?v=full-audit-20260701";
+} from "./semantic-targets.js?v=browser-comments-20260707";
 import { aggregatePollResponses, createPollResponse, normalizePollResponse } from "./semantic-polls.js";
 import { createDefaultPackageStore, normalizePackageStore } from "./package-state.js";
 

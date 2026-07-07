@@ -1,4 +1,4 @@
-import { createDetailList, setDetail } from "../dom.js?v=full-audit-20260701";
+import { createDetailList, setDetail } from "../dom.js?v=browser-comments-20260707";
 import { referenceKey } from "../references.js";
 import {
   createCustomTag,
@@ -9,9 +9,9 @@ import {
   setTagAssertion,
   setVerseTag,
   updateCustomTag,
-} from "../stores.js?v=full-audit-20260701";
-import { targetId } from "../semantic-targets.js?v=full-audit-20260701";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=full-audit-20260701";
+} from "../stores.js?v=browser-comments-20260707";
+import { targetId } from "../semantic-targets.js?v=browser-comments-20260707";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=browser-comments-20260707";
 
 function tagIcon(tag) {
   return String(tag?.icon || tag?.label?.slice(0, 1) || "*").slice(0, 3);

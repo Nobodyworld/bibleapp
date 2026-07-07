@@ -1,4 +1,4 @@
-import { targetId } from "./semantic-targets.js?v=full-audit-20260701";
+import { targetId } from "./semantic-targets.js?v=browser-comments-20260707";
 
 function targetNodeId(target) {
   if (!target) return null;

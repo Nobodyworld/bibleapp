@@ -5,7 +5,7 @@ import {
   fetchSearchShard,
   fetchVerseBook,
 } from "../data-service.js";
-import { createDetailList, setDetail, textNode } from "../dom.js?v=full-audit-20260701";
+import { createDetailList, setDetail, textNode } from "../dom.js?v=browser-comments-20260707";
 
 const SEARCH_STOP_WORDS = new Set([
   "a",

@@ -1,8 +1,8 @@
-import { DEFAULT_ROUTE } from "./src/config.js?v=full-audit-20260701";
+import { DEFAULT_ROUTE } from "./src/config.js?v=browser-comments-20260707";
 import { capabilityAvailable, resolveCapability } from "./src/capabilities.js";
-import { createChapterRenderer } from "./src/chapter-renderer.js?v=full-audit-20260701";
+import { createChapterRenderer } from "./src/chapter-renderer.js?v=browser-comments-20260707";
 import { loadManifest, loadReaderBookData, translationCanLoadBook } from "./src/data-service.js";
-import { createDetailViews } from "./src/detail-views.js?v=full-audit-20260701";
+import { createDetailViews } from "./src/detail-views.js?v=browser-comments-20260707";
 import {
   els,
   goBackDetail,
@@ -14,14 +14,14 @@ import {
   setStatus,
   sortedNumericKeys,
   trackReaderLocation,
-} from "./src/dom.js?v=full-audit-20260701";
+} from "./src/dom.js?v=browser-comments-20260707";
 import { createReferenceButton as makeReferenceButton, referenceKey, refDomId } from "./src/references.js";
 import { buildReferenceContext, referenceContextKey } from "./src/reference-context.js";
-import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js?v=full-audit-20260701";
+import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js?v=browser-comments-20260707";
 import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js";
-import { getTagTargets, initStores, listenForUserDataChanges, setTagAssertion } from "./src/stores.js?v=full-audit-20260701";
+import { getTagTargets, initStores, listenForUserDataChanges, setTagAssertion } from "./src/stores.js?v=browser-comments-20260707";
 import { studyUnavailableLabel } from "./src/study-empty-state.js";
-import { chapterSwipeDirection, CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js?v=full-audit-20260701";
+import { chapterSwipeDirection, CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js?v=browser-comments-20260707";
 
 const state = {
   manifest: null,

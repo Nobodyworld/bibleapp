@@ -4,12 +4,12 @@ import {
   fetchWordMapBook,
   loadLanguageMetadata,
 } from "../data-service.js";
-import { isDetailHoverLocked, setDetail, textNode } from "../dom.js?v=full-audit-20260701";
+import { isDetailHoverLocked, setDetail, textNode } from "../dom.js?v=browser-comments-20260707";
 import { capabilityMessage } from "../capabilities.js";
 import { languageUnitTooltip, setLanguageTextWithTooltips } from "../language-tooltips.js";
-import { setMorphologyHelp } from "../morphology-tooltips.js?v=full-audit-20260701";
+import { setMorphologyHelp } from "../morphology-tooltips.js?v=browser-comments-20260707";
 import { analyzeOriginalWord, gematriaValueForUnit, wordHasLanguageScript } from "../language.js";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=full-audit-20260701";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=browser-comments-20260707";
 
 function languageTitle(language) {
   return language === "hebrew" ? "Hebrew" : "Greek";

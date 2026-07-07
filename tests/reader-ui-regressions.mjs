@@ -99,5 +99,11 @@ assert(
   "Dynamic load status must remain available outside the brand control.",
 );
 assert(/setMorphologyHelp\(pos,\s*morphology,\s*language\)/.test(strongsView), "Strong's morphology must expose definition help.");
+assert(
+  /styles\.css\?v=browser-comments-20260707/.test(index) &&
+    /app\.js\?v=browser-comments-20260707/.test(index) &&
+    !/full-audit-20260701|browser-comments-20260702/.test(index),
+  "Browser-visible app and stylesheet entry points must use the current cache-buster key.",
+);
 
-console.log(JSON.stringify({ status: "ok", assertions: 32 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 33 }, null, 2));
