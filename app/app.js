@@ -203,7 +203,12 @@ function currentFavoriteTargets() {
 function syncFavoriteButton(button, target, label) {
   if (!button || !target) return;
   const active = getTagTargets(state, "favorite").includes(target.target_id);
-  button.firstChild.textContent = active ? "★ " : "☆ ";
+  const star = button.querySelector(".scope-favorite-star");
+  if (star) {
+    star.textContent = active ? "★" : "☆";
+  } else {
+    button.textContent = `${active ? "★" : "☆"} ${label[0].toUpperCase()}${label.slice(1)}`;
+  }
   button.classList.toggle("active", active);
   button.setAttribute("aria-pressed", active ? "true" : "false");
   button.title = `${active ? "Remove" : "Add"} current ${label} ${active ? "from" : "to"} favorites`;

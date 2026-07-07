@@ -17,6 +17,7 @@ function languageTitle(language) {
 
 function displayMarkChar(record) {
   const char = record.mark?.char || record.char || "";
+  if (record.base_char && char.match(/\p{Mark}/u)) return `${record.base_char}${char}`;
   return char.match(/\p{Mark}/u) ? `\u25CC${char}` : char;
 }
 
@@ -80,8 +81,7 @@ function renderWordBreakdown(analysis, wordInfo = null) {
     letter.append(glyph, name, value);
     letters.append(letter);
   });
-  section.append(letters);
-
+  let gematriaTotalNode = null;
   if (analysis.language === "hebrew") {
     const gematriaTotal = analysis.units.reduce((sum, unit) => sum + gematriaValueForUnit(unit), 0);
     const total = document.createElement("div");
@@ -91,10 +91,15 @@ function renderWordBreakdown(analysis, wordInfo = null) {
     const value = document.createElement("strong");
     value.textContent = String(gematriaTotal);
     total.append(label, value);
-    section.append(total);
+    gematriaTotalNode = total;
   }
 
-  const markRecords = analysis.units.flatMap((unit) => unit.marks || []);
+  const markRecords = analysis.units.flatMap((unit) =>
+    (unit.marks || []).map((record) => ({
+      ...record,
+      base_char: unit.letter ? unit.char : "",
+    })),
+  );
   if (markRecords.length) {
     const marksTitle = document.createElement("h5");
     marksTitle.textContent = `${languageTitle(analysis.language)} marks / symbols`;
@@ -109,13 +114,18 @@ function renderWordBreakdown(analysis, wordInfo = null) {
       marks.className = "mark-list";
       markRecords.forEach((record) => marks.append(renderMarkPill(record)));
       markStudy.append(marks);
-      section.append(marksTitle, markStudy);
+      section.append(marksTitle, markStudy, letters);
+      if (gematriaTotalNode) section.append(gematriaTotalNode);
     } else {
       const marks = document.createElement("div");
       marks.className = "mark-list";
       markRecords.forEach((record) => marks.append(renderMarkPill(record)));
+      section.append(letters);
       section.append(marksTitle, marks);
     }
+  } else {
+    section.append(letters);
+    if (gematriaTotalNode) section.append(gematriaTotalNode);
   }
 
   if (analysis.unknown_marks.length) {

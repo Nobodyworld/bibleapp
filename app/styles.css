@@ -482,13 +482,26 @@ button:disabled {
 }
 
 .scope-favorite-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   min-height: 30px;
   padding: 5px 8px;
   border-color: var(--line);
   background: var(--panel);
-  color: var(--muted);
+  color: var(--text);
   font-size: 12px;
   font-weight: 800;
+}
+
+.scope-favorite-star {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.scope-favorite-label {
+  color: var(--text);
 }
 
 .scope-favorite-button.active,
@@ -496,6 +509,11 @@ button:disabled {
 .scope-favorite-button:focus-visible {
   border-color: #a66b00;
   background: color-mix(in srgb, #a66b00 12%, var(--panel));
+}
+
+.scope-favorite-button.active .scope-favorite-star,
+.scope-favorite-button:hover .scope-favorite-star,
+.scope-favorite-button:focus-visible .scope-favorite-star {
   color: #a66b00;
 }
 
@@ -519,7 +537,7 @@ button:disabled {
 
 .reader-floating-nav {
   position: sticky;
-  top: 128px;
+  top: 176px;
   z-index: 4;
   display: flex;
   justify-content: space-between;
@@ -1135,7 +1153,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   border: 0;
   border-radius: 0;
   background: transparent;
-  color: var(--accent-dark);
+  color: #9a5b00;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 11px;
   font-weight: 800;
@@ -1145,7 +1163,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 
 .fn-marker:hover,
 .fn-marker:focus-visible {
-  color: var(--accent);
+  color: #6d3f00;
   text-decoration: underline;
 }
 
@@ -2301,14 +2319,18 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 .language-breakdown.hebrew .mark-list {
   direction: rtl;
   justify-content: center;
-  flex-wrap: wrap;
-  gap: 12px 16px;
+  flex-wrap: nowrap;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
 }
 
 .language-breakdown.hebrew .mark-pill {
   min-height: 44px;
-  gap: 10px;
-  padding: 8px 12px;
+  flex: 1 1 0;
+  min-width: max-content;
+  gap: 8px;
+  padding: 8px 10px 10px;
   border-radius: 6px;
   border: 2px solid rgba(37, 99, 95, 0.3);
   font-size: 13px;
@@ -2319,8 +2341,14 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 
 .language-breakdown.hebrew .mark-glyph {
   min-width: 36px;
+  height: 34px;
+  overflow: hidden;
+  display: inline-flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-bottom: 4px;
   font-size: 38px;
-  line-height: 1;
+  line-height: 0.95;
   font-weight: 700;
 }
 
@@ -3710,7 +3738,7 @@ button {
     .verse-number-menu
   ):not(.link-button):not(.compact-link):not(.toolbar-button):not(
     .verse-context-tab
-  ):not(.parallel-verse) {
+  ):not(.parallel-verse):not(.fn-marker) {
   background: var(--bg-elevated) !important;
   color: var(--text) !important;
   border-color: var(--accent) !important;
@@ -3722,13 +3750,13 @@ button {
     .verse-number-menu
   ):not(.link-button):not(.compact-link):not(.toolbar-button):not(
     .verse-context-tab
-  ):not(.parallel-verse):hover,
+  ):not(.parallel-verse):not(.fn-marker):hover,
 :root[data-theme="dark"]
   button:not(.verse-study-button):not(.verse-number):not(
     .verse-number-menu
   ):not(.link-button):not(.compact-link):not(.toolbar-button):not(
     .verse-context-tab
-  ):not(.parallel-verse):focus-visible {
+  ):not(.parallel-verse):not(.fn-marker):focus-visible {
   background: var(--panel) !important;
   border-color: var(--accent) !important;
   color: var(--text) !important;
@@ -3772,10 +3800,16 @@ button {
 :root[data-theme="dark"] .verse-favorite-button.active,
 :root[data-theme="dark"] .scope-favorite-button.active {
   border-color: #fbbf24 !important;
-  color: #fbbf24 !important;
 }
 
-:root[data-theme="dark"] .scope-favorite-button.active span {
+:root[data-theme="dark"] .scope-favorite-button .scope-favorite-label,
+:root[data-theme="dark"] .scope-favorite-button.active .scope-favorite-label {
+  color: var(--text) !important;
+}
+
+:root[data-theme="dark"] .scope-favorite-button.active .scope-favorite-star,
+:root[data-theme="dark"] .scope-favorite-button:hover .scope-favorite-star,
+:root[data-theme="dark"] .scope-favorite-button:focus-visible .scope-favorite-star {
   color: #fbbf24 !important;
 }
 
@@ -3807,6 +3841,21 @@ button {
 
 :root[data-theme="dark"] .selection-action-menu button {
   color: var(--text);
+}
+
+:root[data-theme="dark"] .fn-marker {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #fbbf24 !important;
+}
+
+:root[data-theme="dark"] .fn-marker:hover,
+:root[data-theme="dark"] .fn-marker:focus-visible {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #fde68a !important;
 }
 
 :root[data-theme="dark"] .tagged-text-span {
@@ -3929,7 +3978,7 @@ html[data-theme="light"] .app-header {
 html[data-theme="light"]
   button:not(.verse-study-button):not(.verse-number):not(
     .verse-number-menu
-  ):not(.link-button):not(.compact-link) {
+  ):not(.link-button):not(.compact-link):not(.fn-marker) {
   background: var(--panel) !important;
   color: var(--text) !important;
   border-color: var(--line) !important;
@@ -3939,11 +3988,11 @@ html[data-theme="light"]
 html[data-theme="light"]
   button:not(.verse-study-button):not(.verse-number):not(
     .verse-number-menu
-  ):not(.link-button):not(.compact-link):hover,
+  ):not(.link-button):not(.compact-link):not(.fn-marker):hover,
 html[data-theme="light"]
   button:not(.verse-study-button):not(.verse-number):not(
     .verse-number-menu
-  ):not(.link-button):not(.compact-link):focus-visible {
+  ):not(.link-button):not(.compact-link):not(.fn-marker):focus-visible {
   background: var(--bg-elevated) !important;
   border-color: var(--accent) !important;
   color: var(--text) !important;
@@ -3984,4 +4033,19 @@ html[data-theme="light"] h4,
 html[data-theme="light"] h5,
 html[data-theme="light"] h6 {
   color: var(--text) !important;
+}
+
+html[data-theme="light"] .fn-marker {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #9a5b00 !important;
+}
+
+html[data-theme="light"] .fn-marker:hover,
+html[data-theme="light"] .fn-marker:focus-visible {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #6d3f00 !important;
 }

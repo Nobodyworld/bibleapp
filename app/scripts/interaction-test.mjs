@@ -346,6 +346,42 @@ async function runQa(page) {
   await waitFor(page, "document.querySelector('#favoriteBook')?.getAttribute('aria-pressed') === 'true'");
   await click(page, "#favoriteChapter");
   await waitFor(page, "document.querySelector('#favoriteChapter')?.getAttribute('aria-pressed') === 'true'");
+  const scopeFavoriteVisual = await evaluate(
+    page,
+    `(() => {
+      const button = document.querySelector('#favoriteBook');
+      const star = button?.querySelector('.scope-favorite-star');
+      const label = button?.querySelector('.scope-favorite-label');
+      const arrow = document.querySelector('#nextChapterFloat');
+      const starStyle = star ? getComputedStyle(star) : null;
+      const labelStyle = label ? getComputedStyle(label) : null;
+      const arrowStyle = arrow ? getComputedStyle(arrow.closest('.reader-floating-nav')) : null;
+      return {
+        starText: star?.textContent.trim() || '',
+        labelText: label?.textContent.trim() || '',
+        starColor: starStyle?.color || '',
+        labelColor: labelStyle?.color || '',
+        arrowTop: arrowStyle?.top || ''
+      };
+    })()`,
+  );
+  assert(
+    scopeFavoriteVisual.starText === "★" &&
+      scopeFavoriteVisual.labelText === "Book" &&
+      scopeFavoriteVisual.starColor !== scopeFavoriteVisual.labelColor,
+    `active scope favorite must show a distinct lit star and normal label: ${JSON.stringify(scopeFavoriteVisual)}`,
+  );
+  assert(scopeFavoriteVisual.arrowTop === "176px", `floating chapter arrows should start lower: ${JSON.stringify(scopeFavoriteVisual)}`);
+  await click(page, "#nextChapter");
+  await waitFor(
+    page,
+    "document.querySelector('#chapterTitle')?.textContent.includes('Psalms 24') && document.querySelector('#favoriteBook')?.getAttribute('aria-pressed') === 'true' && document.querySelector('#favoriteChapter')?.getAttribute('aria-pressed') === 'false'",
+  );
+  await click(page, "#prevChapter");
+  await waitFor(
+    page,
+    "document.querySelector('#chapterTitle')?.textContent.includes('Psalms 23') && document.querySelector('#favoriteBook')?.getAttribute('aria-pressed') === 'true' && document.querySelector('#favoriteChapter')?.getAttribute('aria-pressed') === 'true'",
+  );
   await click(page, ".verse-favorite-button");
   await waitFor(page, "document.querySelector('.verse-favorite-button')?.getAttribute('aria-pressed') === 'true'");
   await click(page, "#showTags");
@@ -470,11 +506,17 @@ async function runQa(page) {
   const footnoteMarkerStyle = await evaluate(
     page,
     `(() => {
-      const style = getComputedStyle(document.querySelector('.fn-marker'));
-      return { borderTopWidth: style.borderTopWidth, backgroundColor: style.backgroundColor };
+      const marker = document.querySelector('.fn-marker');
+      const style = getComputedStyle(marker);
+      const textStyle = getComputedStyle(marker?.closest('.verse-line') || document.body);
+      return { borderTopWidth: style.borderTopWidth, backgroundColor: style.backgroundColor, color: style.color, textColor: textStyle.color };
     })()`,
   );
   assert(footnoteMarkerStyle.borderTopWidth === "0px", "footnote marker still has a visible box border");
+  assert(
+    footnoteMarkerStyle.color !== footnoteMarkerStyle.textColor,
+    `footnote marker should be visually distinct from verse text: ${JSON.stringify(footnoteMarkerStyle)}`,
+  );
   pass("footnote popup");
 
   await click(page, ".verse-study-button");
@@ -726,6 +768,13 @@ async function runQa(page) {
       originButtons: [...document.querySelectorAll('.word-origin-value .strong-inline-link')].map((node) => node.textContent.trim()),
       lexicalText: document.querySelector('.lexical-summary')?.textContent || '',
       markText: document.querySelector('.mark-list')?.textContent || '',
+      hebrewBreakdownOrder: [...document.querySelectorAll('.language-breakdown.hebrew > *')].map((node) => node.className || node.tagName),
+      markListStyle: (() => {
+        const node = document.querySelector('.language-breakdown.hebrew .mark-list');
+        const style = node ? getComputedStyle(node) : null;
+        return style ? { direction: style.direction, flexWrap: style.flexWrap, overflowX: style.overflowX } : null;
+      })(),
+      markGlyphs: [...document.querySelectorAll('.language-breakdown.hebrew .mark-glyph')].map((node) => node.textContent.trim()),
       concordanceText: document.querySelector('.lexicon-sections')?.textContent || '',
       childOrder: [...document.querySelectorAll('.strong-detail > *')].map((node) => node.className || node.tagName),
       highlight: document.querySelector('.reader-context-highlight') ? 'present' : ''
@@ -771,6 +820,17 @@ async function runQa(page) {
   assert(
     ["qamats", "tsere", "hiriq"].some((label) => strongSidebar.markText.includes(label)),
     "Strong's sidebar missing visible Hebrew mark labels",
+  );
+  assert(
+    strongSidebar.hebrewBreakdownOrder.indexOf("mark-study") < strongSidebar.hebrewBreakdownOrder.indexOf("letter-breakdown") &&
+      strongSidebar.hebrewBreakdownOrder.indexOf("letter-breakdown") < strongSidebar.hebrewBreakdownOrder.indexOf("gematria-total"),
+    `Hebrew marks must appear before letters and gematria: ${JSON.stringify(strongSidebar.hebrewBreakdownOrder)}`,
+  );
+  assert(
+    strongSidebar.markListStyle?.direction === "rtl" &&
+      strongSidebar.markListStyle?.flexWrap === "nowrap" &&
+      strongSidebar.markGlyphs.some((glyph) => /[\u0590-\u05ff][\u0591-\u05c7]/u.test(glyph)),
+    `Hebrew mark pills must stay RTL, single-line, and include letter-specific glyphs: ${JSON.stringify(strongSidebar)}`,
   );
   assert(strongSidebar.concordanceText.includes("byword") || strongSidebar.concordanceText.includes("proverb"), "Strong's sidebar missing concordance data");
   assert(

@@ -30,6 +30,13 @@ assert(/@media\s*\(min-width:\s*641px\)\s*and\s*\(max-width:\s*1380px\)[\s\S]*?\
 assert(/:root\[data-theme="dark"\] \.parallel-verse\.active\s*{[\s\S]*?background:\s*rgba\(148,\s*163,\s*184,\s*0\.12\)/.test(css), "Dark parallel selection must not use a white background.");
 assert(/:root\[data-theme="dark"\] \.reader-context-verse\s*{[\s\S]*?background:\s*rgba\(148,\s*163,\s*184,\s*0\.08\)/.test(css), "Dark reader selection must use the calm slate highlight.");
 assert(/\.reader-nav-arrow\s*{[\s\S]*?width:\s*20px;[\s\S]*?min-height:\s*56px;/.test(css), "Chapter navigation must remain edge-sliver sized.");
+assert(/\.reader-floating-nav\s*{[\s\S]*?top:\s*176px;/.test(css), "Floating chapter navigation must sit below the reader header.");
+assert(
+  /class="scope-favorite-star"/.test(index) &&
+    /class="scope-favorite-label"/.test(index) &&
+    /querySelector\("\.scope-favorite-star"\)/.test(app),
+  "Book and chapter favorites must expose separately styled star and label spans.",
+);
 
 assert(/function disengageDetailFollow\(\)/.test(app), "Background reset must share the detail-follow disengage path.");
 assert(
@@ -64,9 +71,11 @@ assert(
   "Hebrew reading-direction affordance must behave as an expandable control.",
 );
 assert(
-  /\.mark-study \.mark-study-word\s*{[\s\S]*?text-align:\s*center;/.test(css) &&
-    /\.language-breakdown\.hebrew \.mark-list\s*{[\s\S]*?justify-content:\s*center;/.test(css),
-  "Hebrew marks must remain centered beneath the analyzed source word.",
+  /base_char:\s*unit\.letter \? unit\.char : ""/.test(strongsView) &&
+    /section\.append\(marksTitle,\s*markStudy,\s*letters\)/.test(strongsView) &&
+    /\.mark-study \.mark-study-word\s*{[\s\S]*?text-align:\s*center;/.test(css) &&
+    /\.language-breakdown\.hebrew \.mark-list\s*{[\s\S]*?justify-content:\s*center;[\s\S]*?flex-wrap:\s*nowrap;/.test(css),
+  "Hebrew marks must appear before letters/gematria, stay centered, and use letter-specific single-line pills.",
 );
 assert(
   /:root\[data-theme="dark"\] \.translation-renderings\s*{[\s\S]*?background:\s*var\(--bg-elevated\)\s*!important;/.test(css) &&
@@ -91,4 +100,4 @@ assert(
 );
 assert(/setMorphologyHelp\(pos,\s*morphology,\s*language\)/.test(strongsView), "Strong's morphology must expose definition help.");
 
-console.log(JSON.stringify({ status: "ok", assertions: 30 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 32 }, null, 2));
