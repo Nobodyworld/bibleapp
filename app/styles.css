@@ -1687,6 +1687,14 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   background: var(--panel-alt);
 }
 
+.interlinear-picker .detail-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .crossref-item {
   display: grid;
   gap: 5px;
@@ -2177,6 +2185,15 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   border-bottom: 1px solid rgba(255, 255, 255, 0.16);
   font-weight: 800;
   line-height: 1.35;
+}
+
+.morphology-tooltip-definition {
+  margin: 0;
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .morphology-tooltip-table {

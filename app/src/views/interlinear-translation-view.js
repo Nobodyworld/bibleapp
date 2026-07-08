@@ -503,6 +503,7 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     }
 
     const wrap = document.createElement("div");
+    wrap.className = "interlinear-picker";
     const heading = document.createElement("h3");
     heading.textContent = `${ctx.state.verseBook?.book?.name || ctx.state.bookId} ${ctx.state.chapter} Interlinear`;
     const intro = document.createElement("p");

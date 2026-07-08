@@ -18,6 +18,21 @@ const PARTS_OF_SPEECH = {
   I: "interjection",
 };
 
+const PART_OF_SPEECH_DEFINITIONS = {
+  verb: "Action, occurrence, or state of being.",
+  noun: "Person, place, thing, or concept.",
+  adjective: "Describes or modifies a noun.",
+  pronoun: "Stands in for a noun or noun phrase.",
+  preposition: "Shows relationship, direction, location, or agency.",
+  conjunction: "Connects words, phrases, clauses, or ideas.",
+  article: "Marks or specifies a noun.",
+  particle: "Short function word whose meaning depends on context.",
+  adverb: "Modifies a verb, adjective, or another adverb.",
+  interjection: "Brief expression or exclamation.",
+  interrogative: "Introduces or marks a question.",
+  "direct-object marker": "Marks the direct object in context.",
+};
+
 const HEBREW_TERMS = {
   Qal: "Qal stem — simple active",
   Nifal: "Nifal stem — usually simple passive or reflexive",
@@ -157,12 +172,23 @@ function explainGreek(code) {
   return { title: humanList(rows.map((row) => row.meaning)), rows: rows.filter((row) => row.code) };
 }
 
+function withPartOfSpeechDefinition(help) {
+  const partOfSpeechRow = help.rows.find((row) => PART_OF_SPEECH_DEFINITIONS[row.meaning]);
+  return {
+    ...help,
+    partOfSpeech: partOfSpeechRow?.meaning || "",
+    partOfSpeechDefinition: partOfSpeechRow ? PART_OF_SPEECH_DEFINITIONS[partOfSpeechRow.meaning] : "",
+  };
+}
+
 export function explainMorphology(code, language = "") {
   const value = String(code || "").trim();
   if (!value) return { title: "Morphology", rows: [] };
-  return language === "greek" || /^[A-Z]-[A-Z]{2,3}(?:-|$)/.test(value)
-    ? explainGreek(value)
-    : explainHebrew(value);
+  return withPartOfSpeechDefinition(
+    language === "greek" || /^[A-Z]-[A-Z]{2,3}(?:-|$)/.test(value)
+      ? explainGreek(value)
+      : explainHebrew(value),
+  );
 }
 
 function targetFromNode(node) {
@@ -191,10 +217,14 @@ function renderTooltip(target) {
   const title = document.createElement("div");
   title.className = "morphology-tooltip-title";
   title.textContent = help.title;
+  const definition = document.createElement("p");
+  definition.className = "morphology-tooltip-definition";
+  definition.textContent = help.partOfSpeechDefinition || "Morphology details depend on the source language and context.";
   const table = document.createElement("table");
   table.className = "morphology-tooltip-table";
   const body = document.createElement("tbody");
-  help.rows.forEach((row) => {
+  const rows = help.partOfSpeech ? help.rows.filter((row) => row.meaning !== help.partOfSpeech) : help.rows;
+  rows.forEach((row) => {
     const tr = document.createElement("tr");
     const code = document.createElement("th");
     const meaning = document.createElement("td");
@@ -205,7 +235,7 @@ function renderTooltip(target) {
     body.append(tr);
   });
   table.append(body);
-  tooltipLayer.replaceChildren(title, table);
+  tooltipLayer.replaceChildren(title, definition, table);
 }
 
 function ensureTooltipLayer() {
