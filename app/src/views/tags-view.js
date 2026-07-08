@@ -17,6 +17,83 @@ function tagIcon(tag) {
   return String(tag?.icon || tag?.label?.slice(0, 1) || "*").slice(0, 3);
 }
 
+function activeTagAssertions(state) {
+  return Object.values(state.tagStore.tag_assertions || {})
+    .filter((assertion) => assertion.active && assertion.target)
+    .sort((a, b) => String(a.target_id).localeCompare(String(b.target_id)) || String(a.tag_id).localeCompare(String(b.tag_id)));
+}
+
+function targetReferenceLabel(ctx, target) {
+  const ref = target?.reference || {};
+  const book = ctx.findBook(ref.book_id);
+  let label = book?.name || ref.book_id || "Unknown reference";
+  if (ref.chapter) label += ` ${ref.chapter}`;
+  if (ref.verse_start) {
+    label += `:${ref.verse_start}`;
+    if (ref.verse_end > ref.verse_start) label += `-${ref.verse_end}`;
+  }
+  return label;
+}
+
+function targetPreview(target) {
+  if (!target) return "";
+  if (target.target_type === "text_span") return target.anchor?.text_snapshot || "Selected English text";
+  if (target.target_type === "source_token") {
+    const parts = [target.token?.original, target.token?.strong_code].filter(Boolean);
+    return parts.length ? parts.join(" — ") : `Source token ${target.token?.token_index ?? ""}`.trim();
+  }
+  if (target.target_type === "source_token_span") {
+    return (target.token_span?.source_snapshots || []).join(" ") || "Selected source-language phrase";
+  }
+  return "";
+}
+
+function appendStudyMarkItem(ctx, li, assertions) {
+  const target = assertions[0]?.target;
+  const top = document.createElement("div");
+  top.className = "study-mark-item-top";
+  const label = document.createElement("span");
+  label.className = "study-mark-label";
+  label.textContent = targetReferenceLabel(ctx, target);
+  const ref = target?.reference || {};
+  const nav = ctx.createReferenceButton("Open", {
+    book_id: ref.book_id,
+    chapter: ref.chapter || 1,
+    verse_start: ref.verse_start || null,
+  });
+  top.append(label, nav);
+  li.className = "study-mark-item";
+  li.append(top);
+
+  const preview = targetPreview(target);
+  if (preview) {
+    const text = document.createElement("p");
+    text.className = "study-mark-preview";
+    text.textContent = preview;
+    li.append(text);
+  }
+
+  const badges = document.createElement("div");
+  badges.className = "target-tag-badges";
+  assertions.forEach((assertion) => {
+    const tag = ctx.state.tagStore.tags[assertion.tag_id];
+    if (!tag) return;
+    const badge = document.createElement("span");
+    badge.className = "target-tag-badge";
+    badge.style.setProperty("--tag-color", tag.color || "#696f78");
+    badge.title = [tag.label, tag.description].filter(Boolean).join(" - ");
+    const icon = document.createElement("span");
+    icon.className = "tag-badge-icon";
+    icon.textContent = tagIcon(tag);
+    const badgeLabel = document.createElement("span");
+    badgeLabel.className = "target-tag-badge-label";
+    badgeLabel.textContent = tag.label;
+    badge.append(icon, badgeLabel);
+    badges.append(badge);
+  });
+  if (badges.childElementCount) li.append(badges);
+}
+
 export function createTagsView(ctx) {
   function createFavoriteButton(target, options = {}) {
     const id = targetId(target);
@@ -238,7 +315,7 @@ export function createTagsView(ctx) {
     labelInput.name = "label";
     labelInput.required = true;
     labelInput.maxLength = 48;
-    labelInput.placeholder = "Personal glossary";
+    labelInput.placeholder = "Memorize";
     labelField.append(labelText, labelInput);
 
     const colorField = document.createElement("label");
@@ -274,7 +351,7 @@ export function createTagsView(ctx) {
     const submit = document.createElement("button");
     submit.type = "submit";
     submit.className = "mini-button";
-    submit.textContent = "Add Tag";
+    submit.textContent = "Add Label";
     actions.append(submit);
 
     form.append(labelField, colorField, iconField, descriptionField, actions);
@@ -292,8 +369,8 @@ export function createTagsView(ctx) {
     return form;
   }
 
-  function createTagManagerItem(tag, keys) {
-    const count = keys.length;
+  function createTagManagerItem(tag, assertions) {
+    const count = assertions.length;
     if (!tag.custom) {
       const item = document.createElement("span");
       item.className = "tag-manager-item";
@@ -335,7 +412,7 @@ export function createTagsView(ctx) {
 
     const countLabel = document.createElement("span");
     countLabel.className = "tag-manager-count";
-    countLabel.textContent = `${count} verse${count === 1 ? "" : "s"}`;
+    countLabel.textContent = `${count} use${count === 1 ? "" : "s"}`;
 
     const conflict = document.createElement("span");
     conflict.className = "import-status error";
@@ -393,60 +470,86 @@ export function createTagsView(ctx) {
     return form;
   }
 
+  function appendAllMarkedItems(wrap, assertions) {
+    const section = document.createElement("section");
+    section.className = "study-mark-section";
+    const title = document.createElement("h4");
+    title.textContent = `All marked items (${assertions.length})`;
+    section.append(title);
+    if (!assertions.length) {
+      const empty = document.createElement("p");
+      empty.textContent = "No study marks yet. Mark a book, chapter, verse, selected phrase, or source word from the reader.";
+      section.append(empty);
+      wrap.append(section);
+      return;
+    }
+
+    const labels = {
+      book: "Books",
+      chapter: "Chapters",
+      verse: "Verses",
+      verse_range: "Verse ranges",
+      text_span: "English words and phrases",
+      source_token: "Source words",
+      source_token_span: "Source-word chunks",
+    };
+    Object.entries(labels).forEach(([type, groupLabel]) => {
+      const groupedByTarget = new Map();
+      assertions
+        .filter((assertion) => assertion.target?.target_type === type)
+        .forEach((assertion) => {
+          const key = assertion.target_id;
+          if (!groupedByTarget.has(key)) groupedByTarget.set(key, []);
+          groupedByTarget.get(key).push(assertion);
+        });
+      if (!groupedByTarget.size) return;
+      const groupTitle = document.createElement("h5");
+      groupTitle.textContent = `${groupLabel} (${groupedByTarget.size})`;
+      section.append(groupTitle);
+      section.append(createDetailList([...groupedByTarget.values()], appendStudyMarkItem.bind(null, ctx)));
+    });
+    wrap.append(section);
+  }
+
   function showTagIndex() {
     const wrap = document.createElement("div");
     const heading = document.createElement("h3");
-    heading.textContent = "Verse Tags";
+    heading.textContent = "Study Marks";
+    const intro = document.createElement("p");
+    intro.className = "study-mark-intro";
+    intro.textContent = "Review favorites, labels, questions, memorization marks, word studies, and marked passages stored in this browser.";
     const favoritesButton = document.createElement("button");
     favoritesButton.type = "button";
     favoritesButton.className = "mini-button";
     favoritesButton.textContent = `Favorites (${getTagTargets(ctx.state, "favorite").length})`;
     favoritesButton.addEventListener("click", showFavorites);
-    wrap.append(heading, favoritesButton);
+    wrap.append(heading, intro, favoritesButton);
+
+    const assertions = activeTagAssertions(ctx.state);
+    appendAllMarkedItems(wrap, assertions);
+
+    const manage = document.createElement("details");
+    manage.className = "manage-labels-panel";
+    const manageSummary = document.createElement("summary");
+    manageSummary.textContent = "Manage labels";
+    manage.append(manageSummary);
 
     const createTitle = document.createElement("h4");
-    createTitle.textContent = "Create Tag";
-    wrap.append(createTitle, createCustomTagForm(() => showTagIndex()));
+    createTitle.textContent = "Create Label";
+    manage.append(createTitle, createCustomTagForm(() => showTagIndex()));
 
-    const verseTags = ctx.state.tagStore.verse_tags;
-    const tagEntries = Object.values(ctx.state.tagStore.tags).filter((tag) => tag.status !== "retired").map((tag) => ({
-      tag,
-      keys: Object.keys(verseTags).filter((key) => verseTags[key].includes(tag.id)),
-    }));
-
+    const tags = Object.values(ctx.state.tagStore.tags).filter((tag) => tag.status !== "retired");
     const availableTitle = document.createElement("h4");
-    availableTitle.textContent = "Available Tags";
+    availableTitle.textContent = "Available Labels";
     const available = document.createElement("div");
     available.className = "tag-manager-list";
-    tagEntries.forEach(({ tag, keys }) => {
-      available.append(createTagManagerItem(tag, keys));
+    tags.forEach((tag) => {
+      available.append(createTagManagerItem(tag, assertions.filter((assertion) => assertion.tag_id === tag.id)));
     });
-    wrap.append(availableTitle, available);
+    manage.append(availableTitle, available);
+    wrap.append(manage);
 
-    if (!tagEntries.some((entry) => entry.keys.length)) {
-      const empty = document.createElement("p");
-      empty.textContent = "No verses are tagged yet.";
-      wrap.append(empty);
-      setDetail("Tags", wrap);
-      return;
-    }
-
-    tagEntries.forEach(({ tag, keys }) => {
-      if (!keys.length) return;
-      const title = document.createElement("h4");
-      title.textContent = `${tag.label} (${keys.length})`;
-      wrap.append(title);
-      wrap.append(
-        createDetailList(keys.sort(), (li, key) => {
-          const [book_id, chapter, verse] = key.split(":");
-          const book = ctx.findBook(book_id);
-          const label = `${book?.name || book_id} ${chapter}:${verse}`;
-          li.append(ctx.createReferenceButton(label, { book_id, chapter, verse_start: verse }));
-        }),
-      );
-    });
-
-    setDetail("Tags", wrap);
+    setDetail("Study Marks", wrap);
   }
 
   function showFavorites() {
@@ -455,12 +558,11 @@ export function createTagsView(ctx) {
     heading.textContent = "Favorites";
     wrap.append(heading);
 
-    const assertions = Object.values(ctx.state.tagStore.tag_assertions || {})
-      .filter((assertion) => assertion.active && assertion.tag_id === "tag:favorite")
-      .sort((a, b) => String(a.target_id).localeCompare(String(b.target_id)));
+    const assertions = activeTagAssertions(ctx.state)
+      .filter((assertion) => assertion.tag_id === "tag:favorite");
     if (!assertions.length) {
       const empty = document.createElement("p");
-      empty.textContent = "No favorites yet. Use a star beside a book, chapter, or verse.";
+      empty.textContent = "No favorites yet. Use a star beside a book, chapter, verse, selected phrase, or source word.";
       wrap.append(empty);
       setDetail("Favorites", wrap);
       return;
@@ -481,34 +583,7 @@ export function createTagsView(ctx) {
       const title = document.createElement("h4");
       title.textContent = `${groupLabel} (${matching.length})`;
       wrap.append(title);
-      wrap.append(
-        createDetailList(matching, (li, assertion) => {
-          const target = assertion.target;
-          const ref = target.reference || {};
-          const book = ctx.findBook(ref.book_id);
-          let label = book?.name || ref.book_id;
-          if (ref.chapter) label += ` ${ref.chapter}`;
-          if (ref.verse_start) {
-            label += `:${ref.verse_start}`;
-            if (ref.verse_end > ref.verse_start) label += `-${ref.verse_end}`;
-          }
-          if (type === "text_span") label += ` — “${target.anchor?.text_snapshot || ""}”`;
-          if (type === "source_token") {
-            label += ` — ${target.token?.original || `token ${target.token?.token_index}`}`;
-            if (target.token?.strong_code) label += ` (${target.token.strong_code})`;
-          }
-          if (type === "source_token_span") {
-            label += ` — ${(target.token_span?.source_snapshots || []).join(" ") || "source phrase"}`;
-          }
-          li.append(
-            ctx.createReferenceButton(label, {
-              book_id: ref.book_id,
-              chapter: ref.chapter || 1,
-              verse_start: ref.verse_start || null,
-            }),
-          );
-        }),
-      );
+      wrap.append(createDetailList(matching.map((assertion) => [assertion]), appendStudyMarkItem.bind(null, ctx)));
     });
     setDetail("Favorites", wrap);
   }
