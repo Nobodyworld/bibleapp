@@ -165,11 +165,55 @@ async function waitFor(page, expression, timeoutMs = 10000) {
   const deadline = Date.now() + timeoutMs;
   let value = false;
   while (Date.now() < deadline) {
-    value = await evaluate(page, `Boolean(${expression})`);
+    value = await evaluate(page, `(async () => Boolean(await (${expression})))()`);
     if (value) return true;
     await delay(150);
   }
   throw new Error(`Timed out waiting for: ${expression}`);
+}
+
+function workspacePersistenceExpression(referenceKey, expectedDraft, expectedRendering) {
+  return `new Promise((resolve) => {
+    const readLocalWorkspace = () => {
+      try {
+        const raw = window.localStorage.getItem('bibleapp:translation-workspace:v1');
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    };
+    const matches = (store) => {
+      const renderings = store?.token_renderings?.[${JSON.stringify(referenceKey)}] || {};
+      return store?.verse_drafts?.[${JSON.stringify(referenceKey)}]?.draft_text === ${JSON.stringify(expectedDraft)} &&
+        Object.values(renderings).some((item) => item?.rendering === ${JSON.stringify(expectedRendering)});
+    };
+    if (!window.indexedDB) {
+      resolve(matches(readLocalWorkspace()));
+      return;
+    }
+    const request = window.indexedDB.open('bibleapp', 2);
+    request.onerror = () => resolve(matches(readLocalWorkspace()));
+    request.onblocked = () => resolve(matches(readLocalWorkspace()));
+    request.onsuccess = () => {
+      const db = request.result;
+      try {
+        const transaction = db.transaction('user_stores', 'readonly');
+        const get = transaction.objectStore('user_stores').get('workspace');
+        get.onsuccess = () => {
+          const store = get.result?.value || readLocalWorkspace();
+          db.close();
+          resolve(matches(store));
+        };
+        get.onerror = () => {
+          db.close();
+          resolve(matches(readLocalWorkspace()));
+        };
+      } catch {
+        db.close();
+        resolve(matches(readLocalWorkspace()));
+      }
+    };
+  })`;
 }
 
 async function click(page, selector, timeoutMs = 10000) {
@@ -1068,6 +1112,7 @@ async function runQa(page) {
   await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Translation'");
   await click(page, "#detailContent .detail-list button");
   await waitFor(page, "document.querySelector('.workspace-word-map')?.textContent.includes('These are the proverbs')", 15000);
+  const proverbsDraftReference = "proverbs:1:1";
   const wordMapState = await evaluate(
     page,
     `(() => {
@@ -1095,6 +1140,7 @@ async function runQa(page) {
       return true;
     })()`,
   );
+  await waitFor(page, workspacePersistenceExpression(proverbsDraftReference, qaDraft, tokenRendering), 15000);
   await navigate(page, baseUrl);
   await selectValue(page, "#bookSelect", "proverbs");
   await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('Proverbs 1')");
