@@ -63,6 +63,29 @@
   overflow-wrap: anywhere;
 }
 
+.reader-target-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 0.08em;
+  vertical-align: 0.08em;
+}
+
+.reader-target-badges .target-tag-badge {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  min-height: 18px;
+  justify-content: center;
+  border-color: var(--tag-color);
+  background: color-mix(in srgb, var(--tag-color) 15%, var(--panel));
+  color: var(--tag-color);
+}
+
+.reader-target-badges .tag-badge-icon {
+  color: var(--tag-color);
+}
+
 .study-mark-intro,
 .local-processing-intro,
 .study-data-intro {
@@ -81,7 +104,7 @@
 }
 
 .study-mark-section > h4,
-.study-data-section > h4,
+study-data-section > h4,
 .local-processing-section > h4 {
   margin: 0;
 }
