@@ -3084,9 +3084,14 @@ button.target-tag-badge:focus-visible {
 }
 
 .verse-number-menu-wrap:hover .tag-picker-popover,
-.verse-number-menu-wrap:focus-within .tag-picker-popover {
+.verse-number-menu-wrap:focus-within .tag-picker-popover,
+.verse-number-menu-wrap[data-menu-open="true"] .tag-picker-popover {
   display: grid;
   gap: 5px;
+}
+
+.verse-number-menu-wrap[data-menu-closed="true"] .tag-picker-popover {
+  display: none;
 }
 
 .tag-picker-title {

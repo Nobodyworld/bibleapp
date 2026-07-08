@@ -525,6 +525,22 @@ export function createStrongsView(ctx = null) {
     );
   }
 
+  function readerContextForStrong(token, options) {
+    if (Object.prototype.hasOwnProperty.call(options, "readerContext")) return options.readerContext;
+    const verse = options.verseContext?.verse || null;
+    if (!verse) return null;
+    return {
+      verse,
+      word: {
+        interlinearKey: token.interlinear_key || token.interlinearKey || "",
+        strongCode: token.strong_code || "",
+        tokenIndex: token.token_index == null ? "" : String(token.token_index),
+        language: token.language || "",
+        original: token.original || "",
+      },
+    };
+  }
+
   function showStrong(token, options = {}) {
     if (!ctx?.canUseCapability?.("strongs-overlay")) {
       if (!options.hover) setDetail("Strong's", document.createTextNode(capabilityMessage(ctx?.getCapabilityState?.("strongs-overlay"))));
@@ -646,6 +662,7 @@ export function createStrongsView(ctx = null) {
       history: options.hover ? "replace" : "push",
       transient: Boolean(options.hover),
       forceHistory: Boolean(options.forceHistory || options.pin || options.force),
+      readerContext: readerContextForStrong(token, options),
     });
 
     if (!token.strong_code) {

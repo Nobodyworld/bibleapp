@@ -21,6 +21,9 @@ export function createChapterRenderer(ctx) {
   let referenceHoverTooltipLayer = null;
   let activeReferenceHoverTarget = null;
   let referenceHoverHideTimer = null;
+  let activeVerseTagMenu = null;
+  let verseTagMenuCloseTimer = null;
+  let verseTagMenuDismissalBound = false;
 
   function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
@@ -237,6 +240,64 @@ export function createChapterRenderer(ctx) {
     activeReferenceHoverTarget = null;
     layer.hidden = true;
     layer.textContent = "";
+  }
+
+  function cancelVerseTagMenuClose() {
+    if (!verseTagMenuCloseTimer) return;
+    window.clearTimeout(verseTagMenuCloseTimer);
+    verseTagMenuCloseTimer = null;
+  }
+
+  function closeVerseTagMenu(menu = activeVerseTagMenu) {
+    if (!menu) return;
+    cancelVerseTagMenuClose();
+    menu.dataset.menuClosed = "true";
+    delete menu.dataset.menuOpen;
+    if (activeVerseTagMenu === menu) activeVerseTagMenu = null;
+  }
+
+  function openVerseTagMenu(menu) {
+    if (!menu) return;
+    cancelVerseTagMenuClose();
+    if (activeVerseTagMenu && activeVerseTagMenu !== menu) closeVerseTagMenu(activeVerseTagMenu);
+    activeVerseTagMenu = menu;
+    delete menu.dataset.menuClosed;
+    menu.dataset.menuOpen = "true";
+  }
+
+  function scheduleVerseTagMenuClose(menu) {
+    cancelVerseTagMenuClose();
+    verseTagMenuCloseTimer = window.setTimeout(() => {
+      verseTagMenuCloseTimer = null;
+      if (menu.matches(":hover") || menu.contains(document.activeElement)) return;
+      closeVerseTagMenu(menu);
+    }, 160);
+  }
+
+  function ensureVerseTagMenuDismissal() {
+    if (verseTagMenuDismissalBound) return;
+    verseTagMenuDismissalBound = true;
+    document.addEventListener("pointerdown", (event) => {
+      if (!activeVerseTagMenu || activeVerseTagMenu.contains(event.target)) return;
+      closeVerseTagMenu(activeVerseTagMenu);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !activeVerseTagMenu) return;
+      event.stopPropagation();
+      closeVerseTagMenu(activeVerseTagMenu);
+      document.activeElement?.blur?.();
+    });
+  }
+
+  function wireVerseTagMenu(menu) {
+    ensureVerseTagMenuDismissal();
+    menu.addEventListener("pointerenter", () => openVerseTagMenu(menu));
+    menu.addEventListener("pointerleave", () => scheduleVerseTagMenuClose(menu));
+    menu.addEventListener("focusin", () => openVerseTagMenu(menu));
+    menu.addEventListener("focusout", (event) => {
+      if (menu.contains(event.relatedTarget)) return;
+      scheduleVerseTagMenuClose(menu);
+    });
   }
 
   function renderReferenceHoverTooltip(layer, target) {
@@ -535,7 +596,6 @@ export function createChapterRenderer(ctx) {
       token.tabIndex = 0;
       token.setAttribute("role", "button");
       token.textContent = text;
-      token.title = `${tokenRange.token.strong_code || ""} ${tokenRange.token.original || ""}`.trim();
       token.dataset.tooltip = strongTooltip(tokenRange.token);
       token.dataset.tokenIndex = String(tokenRange.token.token_index ?? "");
       token.dataset.strongCode = tokenRange.token.strong_code || "";
@@ -677,6 +737,7 @@ export function createChapterRenderer(ctx) {
     numberWrap.className = "verse-number-wrap";
     const numberMenuWrap = document.createElement("div");
     numberMenuWrap.className = "verse-number-menu-wrap";
+    wireVerseTagMenu(numberMenuWrap);
 
     const body = document.createElement("div");
     body.className = "verse-body";

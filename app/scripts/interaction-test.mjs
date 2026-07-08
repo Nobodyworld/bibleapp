@@ -364,6 +364,14 @@ async function runQa(page) {
   );
   await click(page, "#bookPickerButton");
   pass("initial Psalm 23 render");
+  assert(
+    await evaluate(
+      page,
+      "document.querySelectorAll('.strong-token').length > 0 && !document.querySelector('.strong-token[title]')",
+    ),
+    "reader Strong's tokens must not use native title tooltips alongside app tooltips",
+  );
+  pass("reader Strong's tooltip is app-controlled");
 
   const selectedReaderText = await evaluate(
     page,
@@ -611,6 +619,54 @@ async function runQa(page) {
 
   await selectValue(page, "#translationSelect", "bsb");
   await waitFor(page, "document.querySelector('#translationSelect')?.value === 'bsb' && document.querySelector('#statusText')?.textContent.includes('BSB')");
+  const verseTagMenuState = await evaluate(
+    page,
+    `(async () => {
+      const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      const event = (type, options = {}) => {
+        const Ctor = window.PointerEvent && type.startsWith('pointer') ? PointerEvent : Event;
+        return new Ctor(type, { bubbles: true, cancelable: true, ...options });
+      };
+      const menu = document.querySelector('.verse-number-menu-wrap');
+      const popover = menu?.querySelector('.tag-picker-popover');
+      const option = menu?.querySelector('.tag-picker-option');
+      const state = () => ({
+        display: popover ? getComputedStyle(popover).display : '',
+        open: menu?.dataset.menuOpen || '',
+        closed: menu?.dataset.menuClosed || '',
+        activeInside: menu?.contains(document.activeElement) || false
+      });
+      if (!menu || !popover || !option) return { missing: true };
+      menu.dispatchEvent(event('pointerenter', { pointerType: 'mouse' }));
+      const opened = state();
+      menu.dispatchEvent(event('pointerleave', { pointerType: 'mouse' }));
+      await wait(80);
+      const duringDelay = state();
+      await wait(140);
+      const afterDelay = state();
+      menu.dispatchEvent(event('pointerenter', { pointerType: 'mouse' }));
+      option.focus();
+      const focused = state();
+      document.body.dispatchEvent(event('pointerdown', { pointerType: 'mouse' }));
+      const outsideClosed = state();
+      menu.dispatchEvent(event('pointerenter', { pointerType: 'mouse' }));
+      option.focus();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+      const escapeClosed = state();
+      return { opened, duringDelay, afterDelay, focused, outsideClosed, escapeClosed };
+    })()`,
+  );
+  assert(
+    !verseTagMenuState.missing &&
+      verseTagMenuState.opened.display === "grid" &&
+      verseTagMenuState.duringDelay.display === "grid" &&
+      verseTagMenuState.afterDelay.closed === "true" &&
+      verseTagMenuState.focused.display === "grid" &&
+      verseTagMenuState.outsideClosed.closed === "true" &&
+      verseTagMenuState.escapeClosed.closed === "true",
+    `verse number tag popup timing failed: ${JSON.stringify(verseTagMenuState)}`,
+  );
+  pass("verse number tag popup timing");
   await click(page, ".verse-number");
   await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Parallel'");
   await waitFor(page, "document.querySelector('.parallel-verse')?.textContent.includes('BSB - Berean Study Bible')", 15000);
@@ -974,6 +1030,71 @@ async function runQa(page) {
   );
   pass("Strong's detail, internal navigation, concordance, and Hebrew breakdown");
 
+  const historyHighlightFixture = await evaluate(
+    page,
+    `(() => {
+      const tokens = [...document.querySelectorAll('.strong-token')].filter((node) => node.dataset.strongCode);
+      if (tokens.length < 2) return null;
+      const first = tokens[0];
+      const second = tokens.find((node) => node.dataset.strongCode !== first.dataset.strongCode) || tokens[1];
+      first.scrollIntoView({ block: 'center' });
+      first.click();
+      return {
+        first: { code: first.dataset.strongCode, text: first.textContent.trim() },
+        second: { code: second.dataset.strongCode, text: second.textContent.trim() },
+      };
+    })()`,
+  );
+  assert(historyHighlightFixture?.first?.code && historyHighlightFixture?.second?.code, "Strong's history highlight fixture could not find two tokens");
+  await waitFor(page, `document.querySelector('#detailContent')?.textContent.includes(${JSON.stringify(historyHighlightFixture.first.code)})`);
+  await evaluate(
+    page,
+    `(() => {
+      const token = [...document.querySelectorAll('.strong-token')].find(
+        (node) => node.dataset.strongCode === ${JSON.stringify(historyHighlightFixture.second.code)}
+      );
+      token?.scrollIntoView({ block: 'center' });
+      token?.click();
+      return true;
+    })()`,
+  );
+  await waitFor(page, `document.querySelector('#detailContent')?.textContent.includes(${JSON.stringify(historyHighlightFixture.second.code)})`);
+  await click(page, "#detailBack");
+  await waitFor(page, `document.querySelector('#detailContent')?.textContent.includes(${JSON.stringify(historyHighlightFixture.first.code)})`);
+  const backHighlight = await evaluate(
+    page,
+    `(() => ({
+      code: document.querySelector('.reader-context-word')?.dataset.strongCode || '',
+      text: document.querySelector('.reader-context-word')?.textContent.trim() || '',
+      verseCount: document.querySelectorAll('.reader-context-verse').length
+    }))()`,
+  );
+  assert(
+    backHighlight.code === historyHighlightFixture.first.code && backHighlight.verseCount === 1,
+    `detail Back did not restore matching reader highlight: ${JSON.stringify({ historyHighlightFixture, backHighlight })}`,
+  );
+  await click(page, "#detailForward");
+  await waitFor(page, `document.querySelector('#detailContent')?.textContent.includes(${JSON.stringify(historyHighlightFixture.second.code)})`);
+  const forwardHighlight = await evaluate(
+    page,
+    `(() => ({
+      code: document.querySelector('.reader-context-word')?.dataset.strongCode || '',
+      text: document.querySelector('.reader-context-word')?.textContent.trim() || '',
+      verseCount: document.querySelectorAll('.reader-context-verse').length
+    }))()`,
+  );
+  assert(
+    forwardHighlight.code === historyHighlightFixture.second.code && forwardHighlight.verseCount === 1,
+    `detail Forward did not restore matching reader highlight: ${JSON.stringify({ historyHighlightFixture, forwardHighlight })}`,
+  );
+  await click(page, "#clearDetail");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Details'");
+  assert(
+    await evaluate(page, "!document.querySelector('.reader-context-word') && !document.querySelector('.reader-context-verse')"),
+    "Clear did not remove restored reader highlight",
+  );
+  pass("Strong's detail history restores reader highlight");
+
   await evaluate(
     page,
     `(() => {
@@ -986,11 +1107,11 @@ async function runQa(page) {
     page,
     `(() => {
       const token = [...document.querySelectorAll('.strong-token')].find((node) => {
-        const code = node.title.match(/[HG]\\d+/)?.[0] || '';
+        const code = node.dataset.strongCode || '';
         return code && code !== 'H4912';
       });
       if (!token) return null;
-      const code = token.title.match(/[HG]\\d+/)?.[0] || '';
+      const code = token.dataset.strongCode || '';
       token.scrollIntoView({ block: 'center' });
       const rect = token.getClientRects()[0] || token.getBoundingClientRect();
       return {
