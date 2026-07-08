@@ -108,6 +108,36 @@ async function openReader(page, baseUrl, route, viewport, expectedTitle) {
   }
 }
 
+async function clickVisibleButtonByText(page, text) {
+  await page.waitForFunction(
+    (label) =>
+      [...document.querySelectorAll("button")].some(
+        (node) =>
+          node.textContent.trim() === label &&
+          Boolean(node.offsetWidth || node.offsetHeight || node.getClientRects().length),
+      ),
+    text,
+    { timeout: 10000 },
+  );
+  await page.evaluate((label) => {
+    const button = [...document.querySelectorAll("button")].find(
+      (node) =>
+        node.textContent.trim() === label &&
+        Boolean(node.offsetWidth || node.offsetHeight || node.getClientRects().length),
+    );
+    button?.click();
+  }, text);
+}
+
+async function openVerseStudy(page) {
+  await page.waitForFunction(() => Boolean(document.querySelector(".verse-study-button")), null, { timeout: 30000 });
+  await page.evaluate(() => {
+    const button = document.querySelector(".verse-study-button");
+    button?.scrollIntoView({ block: "center" });
+    button?.click();
+  });
+}
+
 async function main() {
   await mkdir(outputRoot, { recursive: true });
   const localServer = await startAppServer();
@@ -136,44 +166,33 @@ async function main() {
     await openReader(page, localServer.url, "/#/read/bsb/psalms/23", { width: 1365, height: 768 }, "Psalms 23");
     await capture(page, "reader.png");
 
+    await page.locator("#bookPickerButton").click();
+    await page.locator("#bookPickerPanel").waitFor({ state: "visible", timeout: 10000 });
+    await capture(page, "book-picker.png");
+
     await page.locator("#showOutline").click();
     await page.locator("#detailTitle", { hasText: "Outline" }).waitFor({ timeout: 10000 });
     await capture(page, "detail-panel.png");
 
+    await openReader(page, localServer.url, "/#/read/bsb/psalms/23", { width: 1365, height: 768 }, "Psalms 23");
+    await openVerseStudy(page);
+    await page.locator("#detailTitle", { hasText: "Cross References" }).waitFor({ timeout: 15000 });
+    await capture(page, "verse-context-tabs.png");
+
     await openReader(page, localServer.url, "/#/read/bsb/john/1/1", { width: 1365, height: 768 }, "John 1");
-    await page.waitForFunction(
-      () =>
-        document.body.textContent.includes("In the beginning") &&
-        Boolean(document.querySelector(".verse-study-button")),
-      null,
-      { timeout: 30000 },
-    );
-    await page.evaluate(() => {
-      const button = document.querySelector(".verse-study-button");
-      button?.scrollIntoView({ block: "center" });
-      button?.click();
-    });
-    await page.waitForFunction(
-      () =>
-        [...document.querySelectorAll("button")].some(
-          (node) =>
-            node.textContent.trim() === "Int" &&
-            Boolean(node.offsetWidth || node.offsetHeight || node.getClientRects().length),
-        ),
-      null,
-      { timeout: 10000 },
-    );
-    await page.evaluate(() => {
-      const button = [...document.querySelectorAll("button")].find(
-        (node) =>
-          node.textContent.trim() === "Int" &&
-          Boolean(node.offsetWidth || node.offsetHeight || node.getClientRects().length),
-      );
-      button?.click();
-    });
+    await openVerseStudy(page);
+    await clickVisibleButtonByText(page, "Int");
     await page.locator("#detailTitle", { hasText: "Interlinear" }).waitFor({ timeout: 15000 });
     await page.locator(".interlinear-token").first().waitFor({ state: "visible", timeout: 15000 });
     await capture(page, "interlinear.png");
+
+    await openReader(page, localServer.url, "/#/read/bsb/proverbs/1/1", { width: 1365, height: 768 }, "Proverbs 1");
+    await openVerseStudy(page);
+    await clickVisibleButtonByText(page, "Int");
+    await page.locator("#detailTitle", { hasText: "Interlinear" }).waitFor({ timeout: 15000 });
+    await page.locator(".interlinear-token .compact-link").first().click();
+    await page.locator("#detailTitle", { hasText: "Strong's" }).waitFor({ timeout: 15000 });
+    await capture(page, "hebrew-side-panel.png");
 
     await openReader(page, localServer.url, "/#/read/bsb/proverbs/1/1", { width: 1365, height: 768 }, "Proverbs 1");
     await page.locator("#showSearch").click();
@@ -183,10 +202,35 @@ async function main() {
     await page.locator(".search-result").first().waitFor({ state: "visible", timeout: 15000 });
     await capture(page, "search.png");
 
+    await page.locator("#showTags").click();
+    await page.locator("#detailTitle", { hasText: "Study Marks" }).waitFor({ timeout: 10000 });
+    await capture(page, "study-marks.png");
+
+    await page.locator("#showUserData").click();
+    await page.locator("#detailTitle", { hasText: "Study Data" }).waitFor({ timeout: 10000 });
+    await capture(page, "study-data.png");
+
+    await page.locator("#showJobs").click();
+    await page.locator("#detailTitle", { hasText: "Local Processing" }).waitFor({ timeout: 10000 });
+    await capture(page, "local-processing.png");
+
     await openReader(page, localServer.url, "/#/read/bsb/psalms/23", { width: 390, height: 844 }, "Psalms 23");
     await capture(page, "mobile.png");
 
-    const files = ["reader.png", "detail-panel.png", "interlinear.png", "search.png", "mobile.png"];
+    const files = [
+      "reader.png",
+      "book-picker.png",
+      "detail-panel.png",
+      "verse-context-tabs.png",
+      "interlinear.png",
+      "hebrew-side-panel.png",
+      "search.png",
+      "study-marks.png",
+      "study-data.png",
+      "local-processing.png",
+      "mobile.png",
+    ];
+    await writeFile(resolve(outputRoot, "SCREENSHOTS.md"), `# Public Screenshots\n\n${files.map((file) => `- ${file}`).join("\n")}\n`, "utf8");
     console.log(JSON.stringify({ status: "ok", output: "docs/images", files }, null, 2));
   } finally {
     if (browser) await browser.close();
