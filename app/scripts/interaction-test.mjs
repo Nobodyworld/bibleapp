@@ -417,6 +417,53 @@ async function runQa(page) {
   await waitFor(page, "!document.querySelector('.reader-target-badges')");
   pass("reader text-span favorite tags and badges");
 
+  const partialWordSelection = await evaluate(
+    page,
+    `(() => {
+      const body = document.querySelector('.verse-row[data-verse="1"] .verse-body');
+      const segment = [...body.querySelectorAll('.strong-token')].find((node) => node.textContent.includes('shepherd'));
+      const textNode = segment?.firstChild;
+      const text = textNode?.textContent || '';
+      const start = text.indexOf('shep');
+      if (!body || !segment || !textNode || start < 0) return '';
+      const range = document.createRange();
+      range.setStart(textNode, start);
+      range.setEnd(textNode, start + 4);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      body.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      return String(selection);
+    })()`,
+  );
+  assert(partialWordSelection === "shep", `partial-word selection fixture failed: ${partialWordSelection}`);
+  await waitFor(
+    page,
+    "!document.querySelector('.selection-action-menu')?.hidden && document.querySelector('.selection-favorite-button')",
+  );
+  await click(page, ".selection-favorite-button");
+  await waitFor(page, "document.querySelector('.reader-target-badges .target-tag-badge')");
+  const partialWordTagState = await evaluate(
+    page,
+    `(() => ({
+      taggedTexts: [...document.querySelectorAll('.tagged-text-span')].map((node) => node.textContent),
+      verseText: document.querySelector('.verse-row[data-verse="1"] .verse-body')?.textContent || ''
+    }))()`,
+  );
+  assert(
+    partialWordTagState.taggedTexts.length === 1 && partialWordTagState.taggedTexts[0] === "shepherd",
+    `partial-word tag did not expand to full word: ${JSON.stringify(partialWordTagState)}`,
+  );
+  assert(
+    !partialWordTagState.verseText.includes("shep★Favoriteherd"),
+    "partial-word tag badge split the selected word",
+  );
+  await click(page, ".reader-target-badges .target-tag-badge");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Tags'");
+  await click(page, '.target-tag-editor [aria-label="Remove Favorite tag"]');
+  await waitFor(page, "!document.querySelector('.reader-target-badges')");
+  pass("partial-word text span expansion");
+
   assert(
     await evaluate(
       page,

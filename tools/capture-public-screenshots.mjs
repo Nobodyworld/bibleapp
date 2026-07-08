@@ -169,6 +169,8 @@ async function main() {
     await page.locator("#bookPickerButton").click();
     await page.locator("#bookPickerPanel").waitFor({ state: "visible", timeout: 10000 });
     await capture(page, "book-picker.png");
+    await page.locator("#bookPickerButton").click();
+    await page.locator("#bookPickerPanel").waitFor({ state: "hidden", timeout: 10000 });
 
     await page.locator("#showOutline").click();
     await page.locator("#detailTitle", { hasText: "Outline" }).waitFor({ timeout: 10000 });

@@ -127,6 +127,29 @@ export function createChapterRenderer(ctx) {
     return Number.isInteger(start) ? start + localRange.toString().length : null;
   }
 
+  function isWordCoreChar(char) {
+    return /[\p{L}\p{N}]/u.test(char || "");
+  }
+
+  function isWordJoiner(text, index) {
+    const char = text[index];
+    if (char !== "'" && char !== "\u2019" && char !== "-") return false;
+    return isWordCoreChar(text[index - 1]) && isWordCoreChar(text[index + 1]);
+  }
+
+  function isWordCharAt(text, index) {
+    if (index < 0 || index >= text.length) return false;
+    return isWordCoreChar(text[index]) || isWordJoiner(text, index);
+  }
+
+  function expandToWordBoundaries(text, start, end) {
+    let expandedStart = start;
+    let expandedEnd = end;
+    while (expandedStart > 0 && isWordCharAt(text, expandedStart - 1)) expandedStart -= 1;
+    while (expandedEnd < text.length && isWordCharAt(text, expandedEnd)) expandedEnd += 1;
+    return { start: expandedStart, end: expandedEnd };
+  }
+
   function selectedTextRange(verseText, body) {
     const selection = window.getSelection?.();
     if (!selection?.rangeCount || selection.isCollapsed) return null;
@@ -141,7 +164,8 @@ export function createChapterRenderer(ctx) {
     const start = rawStart + leading;
     const end = rawEnd - trailing;
     if (end <= start) return null;
-    return { start, end, text: verseText.slice(start, end) };
+    const expanded = expandToWordBoundaries(verseText, start, end);
+    return { ...expanded, text: verseText.slice(expanded.start, expanded.end) };
   }
 
   function ensureSelectionMenu() {
