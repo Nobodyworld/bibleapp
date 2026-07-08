@@ -1,7 +1,7 @@
 {
   "name": "bible-app",
   "version": "1.0.0",
-  "description": "Browser-based Bible reader with study tools, interlinear views, commentary, and analysis.",
+  "description": "Bible App Reader: a local-first static Bible study reader with interlinear, commentary, search, and analysis tools.",
   "type": "module",
   "engines": {
     "node": ">=20.0.0"
@@ -26,7 +26,8 @@
     "test:ui": "node ./tests/ui-contracts.mjs",
     "verify": "npm test && npm run audit",
     "serve": "python -m http.server 8000 --bind 127.0.0.1 --directory ./app",
-    "serve:publish": "python -m http.server 8000 --bind 127.0.0.1 --directory ./app"
+    "serve:publish": "python -m http.server 8000 --bind 127.0.0.1 --directory ./app",
+    "screenshots:public": "node ./tools/capture-public-screenshots.mjs"
   },
   "keywords": [
     "bible",
@@ -37,7 +38,7 @@
     "commentary",
     "analysis"
   ],
-  "author": "",
+  "author": "Nobody Production",
   "license": "MIT",
   "devDependencies": {
     "playwright-core": "^1.61.1"

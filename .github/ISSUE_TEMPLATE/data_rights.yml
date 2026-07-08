@@ -1,0 +1,29 @@
+name: Documentation or data-rights question
+description: Ask about bundled data provenance, notices, or public documentation.
+title: "[Docs/Data]: "
+labels:
+  - documentation
+body:
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - Source notice
+        - Data manifest
+        - README/docs wording
+        - Licensing boundary
+        - Other documentation
+    validations:
+      required: true
+  - type: input
+    id: path
+    attributes:
+      label: Relevant file path
+      placeholder: app/data/source-manifest.json
+  - type: textarea
+    id: question
+    attributes:
+      label: Question or concern
+    validations:
+      required: true

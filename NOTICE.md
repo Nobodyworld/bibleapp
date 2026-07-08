@@ -18,10 +18,16 @@ not to be modified. The following attached notices are preserved exactly:
 
 > This text of God's Word has been dedicated to the public domain. Free resources and databases are available at BereanBible.com.
 
+The BSB-related notices are intentionally retained together. The package
+contains historical permission/copyright notice text and a later statement that
+the text has been dedicated to the public domain. This repository preserves
+both source-attached statements as provenance instead of replacing them with a
+single legal conclusion.
+
 The original package also identifies its search scripts as created with
-ZoomSearchEngine® by Passmark Software® and requires their copyright notices
-to be retained. Those scripts are not included in this repository; the app
-uses its own generated JSON search indexes.
+ZoomSearchEngine by Passmark Software and requires their copyright notices to
+be retained. Those scripts are not included in this repository; the app uses
+its own generated JSON search indexes.
 
 Source material was transformed into JSON verse and study records, search
 indexes, graph data, interlinear records, and analysis files. The MIT License

@@ -8,7 +8,7 @@
     {
       "id": "reader-texts",
       "label": "Reader texts",
-      "description": "Static Bible reader with retained text editions and private Strong's word-study data.",
+      "description": "Static Bible reader with retained text editions and bundled Strong's word-study data.",
       "feature_pack_ids": [
         "translation-bsb",
         "translation-kjv",
