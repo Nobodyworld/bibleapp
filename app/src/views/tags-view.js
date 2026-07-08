@@ -10,7 +10,7 @@ import {
   setVerseTag,
   updateCustomTag,
 } from "../stores.js?v=browser-comments-20260707b";
-import { targetId } from "../semantic-targets.js?v=browser-comments-20260707b";
+import { tagDefinitionId, targetId } from "../semantic-targets.js?v=browser-comments-20260707b";
 import { createVerseContextTabs } from "./verse-context-tabs.js?v=browser-comments-20260707b";
 
 function tagIcon(tag) {
@@ -21,6 +21,28 @@ function activeTagAssertions(state) {
   return Object.values(state.tagStore.tag_assertions || {})
     .filter((assertion) => assertion.active && assertion.target)
     .sort((a, b) => String(a.target_id).localeCompare(String(b.target_id)) || String(a.tag_id).localeCompare(String(b.tag_id)));
+}
+
+function runtimeTagDefinitionId(tag) {
+  return tag?.tag_definition_id || tagDefinitionId(tag?.id);
+}
+
+function assertionTagDefinitionId(assertion) {
+  return tagDefinitionId(assertion?.tag_id || assertion?.legacy_tag_id);
+}
+
+function assertionMatchesTag(tag, assertion) {
+  return runtimeTagDefinitionId(tag) === assertionTagDefinitionId(assertion);
+}
+
+function tagForAssertion(state, assertion) {
+  const definitionId = assertionTagDefinitionId(assertion);
+  return (
+    Object.values(state.tagStore.tags || {}).find((tag) => runtimeTagDefinitionId(tag) === definitionId) ||
+    state.tagStore.tags[assertion?.legacy_tag_id] ||
+    state.tagStore.tags[assertion?.tag_id] ||
+    null
+  );
 }
 
 function targetReferenceLabel(ctx, target) {
@@ -76,7 +98,7 @@ function appendStudyMarkItem(ctx, li, assertions) {
   const badges = document.createElement("div");
   badges.className = "target-tag-badges";
   assertions.forEach((assertion) => {
-    const tag = ctx.state.tagStore.tags[assertion.tag_id];
+    const tag = tagForAssertion(ctx.state, assertion);
     if (!tag) return;
     const badge = document.createElement("span");
     badge.className = "target-tag-badge";
@@ -412,7 +434,7 @@ export function createTagsView(ctx) {
 
     const countLabel = document.createElement("span");
     countLabel.className = "tag-manager-count";
-    countLabel.textContent = `${count} use${count === 1 ? "" : "s"}`;
+    countLabel.textContent = `${tag.label} (${count})`;
 
     const conflict = document.createElement("span");
     conflict.className = "import-status error";
@@ -544,7 +566,7 @@ export function createTagsView(ctx) {
     const available = document.createElement("div");
     available.className = "tag-manager-list";
     tags.forEach((tag) => {
-      available.append(createTagManagerItem(tag, assertions.filter((assertion) => assertion.tag_id === tag.id)));
+      available.append(createTagManagerItem(tag, assertions.filter((assertion) => assertionMatchesTag(tag, assertion))));
     });
     manage.append(availableTitle, available);
     wrap.append(manage);

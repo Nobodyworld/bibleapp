@@ -1106,7 +1106,7 @@ async function runQa(page) {
   pass("Proverbs draft persistence");
 
   await click(page, "#showJobs");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Jobs'");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Local Processing'");
   state = await getQaState(page);
   assert(
     state.detailText.includes("tag-index-refresh") &&
@@ -1114,7 +1114,7 @@ async function runQa(page) {
       state.detailText.includes("translation-edit-analysis") &&
       state.detailText.includes("word-map-refresh") &&
       state.detailText.includes("personal-glossary-build"),
-    "Jobs panel did not show queued local job types",
+    "Local Processing panel did not show queued local job types",
   );
   pass("local jobs panel");
 
@@ -1135,7 +1135,7 @@ async function runQa(page) {
   pass("local job lifecycle simulation");
 
   await click(page, "#showUserData");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'User Data'");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Study Data'");
   const userDataExport = await evaluate(
     page,
     `(() => {
@@ -1155,7 +1155,7 @@ async function runQa(page) {
   assert(userDataExport.kind === "bibleapp:user-data", "user-data export has wrong kind");
   assert(userDataExport.hasTags && userDataExport.hasWorkspace, "user-data export missing local stores");
   assert(
-    userDataExport.summaryText.includes("Custom tags") && userDataExport.summaryText.includes("Workspace jobs"),
+    userDataExport.summaryText.includes("Custom labels") && userDataExport.summaryText.includes("Workspace jobs"),
     "user-data summary missing expected counts",
   );
   assert(userDataExport.tagJobTypes.includes("tag-index-refresh"), "tag change did not queue tag-index-refresh job");
