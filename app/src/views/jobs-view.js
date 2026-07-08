@@ -2,12 +2,37 @@ import { createDetailList, setDetail } from "../dom.js?v=browser-comments-202607
 import { canRunJob, runJob } from "../job-processor.js?v=browser-comments-20260707b";
 import { completeJob, getAllJobEvents, updateJobStatus } from "../stores.js?v=browser-comments-20260707b";
 
+function stateLabel(state) {
+  return String(state || "unknown").replaceAll("_", " ");
+}
+
+function jobFriendlySummary(job) {
+  const payload = job.payload || {};
+  const target = payload.target || {};
+  const ref = target.reference || payload.reference || {};
+  const parts = [];
+  if (job.type === "tag-index-refresh") parts.push("Refresh study mark indexes");
+  else if (job.type) parts.push(job.type.replaceAll("-", " "));
+  if (payload.tag_id) parts.push(`label ${payload.tag_id}`);
+  if (target.target_type) parts.push(target.target_type.replaceAll("_", " "));
+  if (ref.book_id || ref.chapter || ref.verse_start) {
+    const chapter = ref.chapter ? ` ${ref.chapter}` : "";
+    const verse = ref.verse_start ? `:${ref.verse_start}` : "";
+    parts.push(`${ref.book_id || "reference"}${chapter}${verse}`);
+  }
+  if (payload.target_id && !parts.some((part) => part.includes(payload.target_id))) parts.push(payload.target_id);
+  return parts.filter(Boolean).join(" • ") || "Local study processing task";
+}
+
 export function createJobsView(ctx) {
   return function showJobs() {
     const wrap = document.createElement("div");
     const heading = document.createElement("h3");
-    heading.textContent = "Local Jobs";
-    wrap.append(heading);
+    heading.textContent = "Local Processing";
+    const intro = document.createElement("p");
+    intro.className = "local-processing-intro";
+    intro.textContent = "Local processing keeps study indexes, derived views, and browser-local study data current without a remote service.";
+    wrap.append(heading, intro);
 
     const jobs = getAllJobEvents(ctx.state);
     const summary = document.createElement("p");
@@ -20,9 +45,9 @@ export function createJobsView(ctx) {
 
     if (!jobs.length) {
       const empty = document.createElement("p");
-      empty.textContent = "No local jobs queued.";
+      empty.textContent = "No local processing tasks are queued.";
       wrap.append(empty);
-      setDetail("Jobs", wrap);
+      setDetail("Local Processing", wrap);
       return;
     }
 
@@ -67,52 +92,96 @@ export function createJobsView(ctx) {
       parent.append(button);
     };
 
-    wrap.append(
-      createDetailList(jobs.slice(0, 80), (li, job) => {
-        li.className = "job-entry";
-        const top = document.createElement("div");
-        top.className = "job-entry-top";
-        const type = document.createElement("span");
-        type.className = "job-type";
-        type.textContent = job.type;
-        const status = document.createElement("span");
-        status.className = `job-status ${job.state}`;
-        status.textContent = job.state;
-        top.append(type, status);
+    const renderJob = (li, job) => {
+      li.className = "job-entry job-entry-friendly";
+      const top = document.createElement("div");
+      top.className = "job-entry-top";
+      const type = document.createElement("span");
+      type.className = "job-type";
+      type.textContent = job.type;
+      const status = document.createElement("span");
+      status.className = `job-status ${job.state}`;
+      status.textContent = stateLabel(job.state);
+      top.append(type, status);
 
-        const meta = document.createElement("div");
-        meta.className = "reference-meta";
-        meta.textContent = `${job.store} - ${job.created_at}`;
+      const friendly = document.createElement("p");
+      friendly.className = "job-friendly-summary";
+      friendly.textContent = jobFriendlySummary(job);
 
-        const payload = document.createElement("pre");
-        payload.className = "job-payload";
-        payload.textContent = JSON.stringify(job.payload || {}, null, 2);
+      const meta = document.createElement("div");
+      meta.className = "reference-meta";
+      meta.textContent = `${job.store} - ${job.created_at}`;
 
-        const actions = document.createElement("div");
-        actions.className = "job-actions";
-        if (job.state === "queued") {
-          addJobAction(actions, job, "Plan Review", "planned", "job-action-review");
-        }
-        if ((job.state === "queued" || job.state === "planned") && canRunJob(job)) {
-          addRunAction(actions, job);
-        }
-        if (job.state !== "simulation_only") {
-          addJobAction(actions, job, "Simulate", "simulation_only", "job-action-process");
-        }
-        if (job.state !== "queued") {
-          addJobAction(actions, job, "Requeue", "queued", "job-action-requeue");
-        }
+      const actions = document.createElement("div");
+      actions.className = "job-actions";
+      if (job.state === "queued") {
+        addJobAction(actions, job, "Plan Review", "planned", "job-action-review");
+      }
+      if ((job.state === "queued" || job.state === "planned") && canRunJob(job)) {
+        addRunAction(actions, job);
+      }
+      if (job.state !== "simulation_only") {
+        addJobAction(actions, job, "Simulate", "simulation_only", "job-action-process");
+      }
+      if (job.state !== "queued") {
+        addJobAction(actions, job, "Requeue", "queued", "job-action-requeue");
+      }
 
-        li.append(top, meta, payload, actions);
+      const details = document.createElement("details");
+      details.className = "technical-details-panel";
+      const detailsSummary = document.createElement("summary");
+      detailsSummary.textContent = "Technical details";
+      const payload = document.createElement("pre");
+      payload.className = "job-payload";
+      payload.textContent = JSON.stringify(job.payload || {}, null, 2);
+      details.append(detailsSummary, payload);
 
-        if (job.result) {
-          const result = document.createElement("pre");
-          result.className = "job-payload job-result";
-          result.textContent = JSON.stringify(job.result, null, 2);
-          li.append(result);
-        }
-      }),
-    );
-    setDetail("Jobs", wrap);
+      li.append(top, friendly, meta, actions, details);
+
+      if (job.result) {
+        const resultDetails = document.createElement("details");
+        resultDetails.className = "technical-details-panel";
+        const resultSummary = document.createElement("summary");
+        resultSummary.textContent = "Result details";
+        const result = document.createElement("pre");
+        result.className = "job-payload job-result";
+        result.textContent = JSON.stringify(job.result, null, 2);
+        resultDetails.append(resultSummary, result);
+        li.append(resultDetails);
+      }
+    };
+
+    const states = [
+      ["queued", "Queued"],
+      ["planned", "Planned"],
+      ["simulation_only", "Simulation-only"],
+      ["running", "Running"],
+      ["completed", "Completed"],
+      ["failed", "Failed"],
+    ];
+    const rendered = new Set();
+    states.forEach(([state, label]) => {
+      const group = jobs.filter((job) => job.state === state).slice(0, 80);
+      if (!group.length) return;
+      group.forEach((job) => rendered.add(job.id));
+      const section = document.createElement("section");
+      section.className = "local-processing-section";
+      const title = document.createElement("h4");
+      title.textContent = `${label} (${group.length})`;
+      section.append(title, createDetailList(group, renderJob));
+      wrap.append(section);
+    });
+
+    const other = jobs.filter((job) => !rendered.has(job.id)).slice(0, 80);
+    if (other.length) {
+      const section = document.createElement("section");
+      section.className = "local-processing-section";
+      const title = document.createElement("h4");
+      title.textContent = `Other (${other.length})`;
+      section.append(title, createDetailList(other, renderJob));
+      wrap.append(section);
+    }
+
+    setDetail("Local Processing", wrap);
   };
 }
