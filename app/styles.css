@@ -1206,9 +1206,9 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 .tagged-text-span {
   --tag-color: var(--accent);
   border-radius: 3px;
-  background: color-mix(in srgb, var(--tag-color) 14%, transparent);
+  background: rgba(31, 122, 77, 0.14);
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--tag-color) 62%, transparent);
+  text-decoration-color: var(--tag-color);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.16em;
 }
@@ -2809,7 +2809,7 @@ button.target-tag-badges:hover,
 button.target-tag-badges:focus-visible {
   background: transparent;
   box-shadow: none;
-  outline: 2px solid color-mix(in srgb, var(--tag-color, var(--accent)) 42%, transparent);
+  outline: 2px solid rgba(37, 99, 95, 0.35);
   outline-offset: 2px;
 }
 
@@ -4146,8 +4146,8 @@ button {
 }
 
 :root[data-theme="dark"] .tagged-text-span {
-  background: color-mix(in srgb, var(--tag-color, var(--accent)) 24%, transparent);
-  text-decoration-color: color-mix(in srgb, var(--tag-color, var(--accent)) 72%, transparent);
+  background: rgba(78, 205, 193, 0.2);
+  text-decoration-color: var(--tag-color, var(--accent));
 }
 
 /* Dark mode link-button and context highlighting */
