@@ -1,15 +1,15 @@
 :root {
   --footnote-fg: #315f99;
   --footnote-fg-hover: #224d80;
-  --mark-surface: color-mix(in srgb, var(--accent) 7%, var(--panel));
-  --mark-surface-strong: color-mix(in srgb, var(--accent) 12%, var(--panel));
+  --mark-surface: #eef5f4;
+  --mark-surface-strong: #e6f1f0;
 }
 
 [data-theme="dark"] {
   --footnote-fg: #8fb3d9;
   --footnote-fg-hover: #b8d4ec;
-  --mark-surface: color-mix(in srgb, var(--accent) 9%, var(--panel));
-  --mark-surface-strong: color-mix(in srgb, var(--accent) 14%, var(--panel));
+  --mark-surface: #29342f;
+  --mark-surface-strong: #2b3d39;
 }
 
 .fn-marker {
@@ -78,7 +78,7 @@
   min-height: 18px;
   justify-content: center;
   border-color: var(--tag-color);
-  background: color-mix(in srgb, var(--tag-color) 15%, var(--panel));
+  background: var(--panel-alt);
   color: var(--tag-color);
 }
 

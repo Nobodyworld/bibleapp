@@ -405,7 +405,7 @@ button:disabled {
 
 .reader-picker-button[aria-expanded="true"] {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+  box-shadow: 0 0 0 3px rgba(37, 99, 95, 0.16);
 }
 
 .reader-picker-panel {
@@ -501,7 +501,7 @@ button:disabled {
 .reader-picker-option:focus-visible,
 .reader-picker-option.active {
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  background: rgba(37, 99, 95, 0.12);
   color: var(--accent-dark);
 }
 
@@ -646,7 +646,7 @@ button:disabled {
 .scope-favorite-button:hover,
 .scope-favorite-button:focus-visible {
   border-color: #a66b00;
-  background: color-mix(in srgb, #a66b00 12%, var(--panel));
+  background: rgba(166, 107, 0, 0.12);
 }
 
 .scope-favorite-button.active .scope-favorite-star,
@@ -694,7 +694,7 @@ button:disabled {
   min-height: 56px;
   padding: 0;
   border-radius: 0 12px 12px 0;
-  background: color-mix(in srgb, var(--panel) 84%, transparent);
+  background: rgba(255, 255, 255, 0.84);
   box-shadow: 0 4px 14px rgba(16, 24, 40, 0.12);
   color: var(--accent-dark);
   font-size: 18px;
@@ -785,7 +785,7 @@ button:disabled {
   padding: 2px;
   border: 1px solid var(--line);
   border-radius: 8px;
-  background: color-mix(in srgb, var(--panel) 74%, transparent);
+  background: rgba(255, 255, 255, 0.74);
 }
 
 .toolbar-button {
@@ -1198,7 +1198,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 
 .tagged-text-span {
   border-radius: 3px;
-  background: color-mix(in srgb, var(--accent) 11%, transparent);
+  background: rgba(37, 99, 95, 0.11);
   text-decoration: underline;
   text-decoration-color: rgba(37, 99, 95, 0.55);
   text-decoration-thickness: 1px;
@@ -1266,7 +1266,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 .verse-context-favorite-button.active,
 .verse-context-favorite-button:hover,
 .verse-context-favorite-button:focus-visible {
-  background: color-mix(in srgb, #a66b00 10%, transparent);
+  background: rgba(166, 107, 0, 0.1);
   color: #a66b00;
 }
 
@@ -1622,7 +1622,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 .detail-tool-button:focus-visible,
 .detail-tool-button[aria-pressed="true"] {
   border-color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 14%, var(--panel));
+  background: rgba(37, 99, 95, 0.14);
 }
 
 .mobile-detail-launcher {
@@ -2351,7 +2351,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 
 .word-origin-value .strong-origin-link:hover,
 .word-origin-value .strong-origin-link:focus-visible {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  background: rgba(37, 99, 95, 0.14);
   border-color: var(--accent);
 }
 
@@ -2793,7 +2793,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   padding: 2px 7px;
   border: 1px solid var(--tag-color);
   border-radius: 999px;
-  background: color-mix(in srgb, var(--tag-color) 7%, var(--panel));
+  background: var(--panel);
   color: var(--tag-color);
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-size: 11px;
@@ -2803,7 +2803,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 
 button.target-tag-badge:hover,
 button.target-tag-badge:focus-visible {
-  background: color-mix(in srgb, var(--tag-color) 15%, var(--panel));
+  background: var(--panel-alt);
 }
 
 .target-tag-badges.compact {
@@ -3121,14 +3121,14 @@ button.target-tag-badge:focus-visible {
 .tag-editor-toggle:hover,
 .tag-editor-toggle:focus-visible {
   border-color: var(--tag-color);
-  background: color-mix(in srgb, var(--tag-color) 10%, transparent);
+  background: var(--panel-alt);
   outline: none;
 }
 
 .tag-picker-option.active,
 .tag-editor-toggle.active {
   border-color: var(--tag-color);
-  background: color-mix(in srgb, var(--tag-color) 16%, #fff);
+  background: var(--panel-alt);
   color: var(--tag-color);
 }
 
@@ -3197,7 +3197,7 @@ button.target-tag-badge:focus-visible {
 
 .translation-rendering-row.exact {
   border-color: rgba(37, 99, 95, 0.28);
-  background: color-mix(in srgb, var(--accent) 8%, var(--panel));
+  background: rgba(37, 99, 95, 0.08);
 }
 
 .translation-rendering-label {
@@ -3796,7 +3796,7 @@ button.target-tag-badge:focus-visible {
 
 :root[data-theme="dark"] .action-group {
   border-color: var(--line) !important;
-  background: color-mix(in srgb, var(--panel) 72%, transparent) !important;
+  background: rgba(39, 38, 31, 0.72) !important;
 }
 
 :root[data-theme="dark"] .toolbar-button {
@@ -4022,7 +4022,7 @@ button {
 
 :root[data-theme="dark"] .target-tag-badge {
   border-color: var(--tag-color) !important;
-  background: color-mix(in srgb, var(--tag-color) 10%, transparent) !important;
+  background: rgba(148, 163, 184, 0.1) !important;
   color: var(--tag-color) !important;
 }
 
@@ -4051,7 +4051,7 @@ button {
 }
 
 :root[data-theme="dark"] .tagged-text-span {
-  background: color-mix(in srgb, var(--accent) 20%, transparent);
+  background: rgba(78, 205, 193, 0.2);
 }
 
 /* Dark mode link-button and context highlighting */
@@ -4079,7 +4079,7 @@ button {
 
 :root[data-theme="dark"] .reader-nav-arrow {
   border-color: var(--line) !important;
-  background: color-mix(in srgb, var(--panel) 88%, transparent) !important;
+  background: rgba(39, 38, 31, 0.88) !important;
   color: var(--muted) !important;
 }
 
@@ -4119,7 +4119,7 @@ button {
 }
 
 :root[data-theme="dark"] .translation-rendering-row.exact {
-  background: color-mix(in srgb, var(--accent) 10%, var(--panel)) !important;
+  background: rgba(78, 205, 193, 0.1) !important;
   border-color: rgba(78, 205, 193, 0.34) !important;
 }
 
