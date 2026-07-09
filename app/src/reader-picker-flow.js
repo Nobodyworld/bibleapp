@@ -24,30 +24,36 @@ function scrollActivePickerOptionIntoView(panel) {
   });
 }
 
-function waitForPickerOptions(panel, callback) {
+function waitForPickerOptions(panel, isReady, callback) {
   const startedAt = Date.now();
   const check = () => {
     if (!panel || Date.now() - startedAt > PICKER_READY_TIMEOUT_MS) return;
-    if (panel.querySelector(ACTIVE_OPTION_SELECTOR)) {
+    if (panel.querySelector(ACTIVE_OPTION_SELECTOR) && isReady()) {
       callback();
       return;
     }
     window.requestAnimationFrame(check);
   };
-  check();
+  window.requestAnimationFrame(check);
 }
 
-function openChapterPickerAfterBookSelection() {
+function openChapterPickerAfterBookSelection(selectedBookLabel) {
   const bookButton = document.getElementById("bookPickerButton");
   const bookPanel = document.getElementById("bookPickerPanel");
   const chapterButton = document.getElementById("chapterPickerButton");
   const chapterPanel = document.getElementById("chapterPickerPanel");
 
-  waitForPickerOptions(chapterPanel, () => {
-    setPickerExpanded(bookButton, bookPanel, false);
-    setPickerExpanded(chapterButton, chapterPanel, true);
-    scrollActivePickerOptionIntoView(chapterPanel);
-  });
+  waitForPickerOptions(
+    chapterPanel,
+    () =>
+      bookButton?.textContent?.trim() === selectedBookLabel &&
+      chapterButton?.textContent?.trim() === "1",
+    () => {
+      setPickerExpanded(bookButton, bookPanel, false);
+      setPickerExpanded(chapterButton, chapterPanel, true);
+      scrollActivePickerOptionIntoView(chapterPanel);
+    },
+  );
 }
 
 function handleReaderPickerClick(event) {
@@ -64,8 +70,9 @@ function handleReaderPickerClick(event) {
     return;
   }
 
-  if (target.closest("#bookPickerPanel .reader-picker-option")) {
-    openChapterPickerAfterBookSelection();
+  const selectedBook = target.closest("#bookPickerPanel .reader-picker-option");
+  if (selectedBook) {
+    openChapterPickerAfterBookSelection(selectedBook.textContent.trim());
   }
 }
 
