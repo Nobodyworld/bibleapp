@@ -95,10 +95,25 @@ async function capture(page, filename) {
   });
 }
 
-async function openReader(page, baseUrl, route, viewport, expectedTitle) {
+async function setTheme(page, theme) {
+  await page.evaluate((nextTheme) => {
+    localStorage.setItem("bibleAppTheme", nextTheme);
+    document.documentElement.setAttribute("data-theme", nextTheme);
+  }, theme);
+  await delay(100);
+}
+
+async function openReader(page, baseUrl, route, viewport, expectedTitle, options = {}) {
   await page.setViewportSize(viewport);
+  if (options.theme) {
+    await page.addInitScript((theme) => {
+      localStorage.setItem("bibleAppTheme", theme);
+      document.documentElement.setAttribute("data-theme", theme);
+    }, options.theme);
+  }
   await page.goto(`${baseUrl}${route}`);
   await waitForApp(page);
+  if (options.theme) await setTheme(page, options.theme);
   if (expectedTitle) {
     await page.waitForFunction(
       (title) => document.querySelector("#chapterTitle")?.textContent.includes(title),
@@ -163,7 +178,7 @@ async function main() {
     });
     const page = await context.newPage();
 
-    await openReader(page, localServer.url, "/#/read/bsb/psalms/23", { width: 1365, height: 768 }, "Psalms 23");
+    await openReader(page, localServer.url, "/#/read/bsb/psalms/23", { width: 1365, height: 768 }, "Psalms 23", { theme: "light" });
     await capture(page, "reader.png");
 
     await page.locator("#bookPickerButton").click();
@@ -176,19 +191,19 @@ async function main() {
     await page.locator("#detailTitle", { hasText: "Outline" }).waitFor({ timeout: 10000 });
     await capture(page, "detail-panel.png");
 
-    await openReader(page, localServer.url, "/#/read/bsb/psalms/23", { width: 1365, height: 768 }, "Psalms 23");
+    await openReader(page, localServer.url, "/#/read/bsb/psalms/23", { width: 1365, height: 768 }, "Psalms 23", { theme: "light" });
     await openVerseStudy(page);
     await page.locator("#detailTitle", { hasText: "Cross References" }).waitFor({ timeout: 15000 });
     await capture(page, "verse-context-tabs.png");
 
-    await openReader(page, localServer.url, "/#/read/bsb/john/1/1", { width: 1365, height: 768 }, "John 1");
+    await openReader(page, localServer.url, "/#/read/bsb/john/1/1", { width: 1365, height: 768 }, "John 1", { theme: "light" });
     await openVerseStudy(page);
     await clickVisibleButtonByText(page, "Int");
     await page.locator("#detailTitle", { hasText: "Interlinear" }).waitFor({ timeout: 15000 });
     await page.locator(".interlinear-token").first().waitFor({ state: "visible", timeout: 15000 });
     await capture(page, "interlinear.png");
 
-    await openReader(page, localServer.url, "/#/read/bsb/proverbs/1/1", { width: 1365, height: 768 }, "Proverbs 1");
+    await openReader(page, localServer.url, "/#/read/bsb/proverbs/1/1", { width: 1365, height: 768 }, "Proverbs 1", { theme: "light" });
     await openVerseStudy(page);
     await clickVisibleButtonByText(page, "Int");
     await page.locator("#detailTitle", { hasText: "Interlinear" }).waitFor({ timeout: 15000 });
@@ -196,7 +211,7 @@ async function main() {
     await page.locator("#detailTitle", { hasText: "Strong's" }).waitFor({ timeout: 15000 });
     await capture(page, "hebrew-side-panel.png");
 
-    await openReader(page, localServer.url, "/#/read/bsb/proverbs/1/1", { width: 1365, height: 768 }, "Proverbs 1");
+    await openReader(page, localServer.url, "/#/read/bsb/proverbs/1/1", { width: 1365, height: 768 }, "Proverbs 1", { theme: "light" });
     await page.locator("#showSearch").click();
     await page.locator("#detailTitle", { hasText: "Search" }).waitFor({ timeout: 10000 });
     await page.locator(".search-form input[name='query']").fill("wisdom");
@@ -216,8 +231,38 @@ async function main() {
     await page.locator("#detailTitle", { hasText: "Local Processing" }).waitFor({ timeout: 10000 });
     await capture(page, "local-processing.png");
 
-    await openReader(page, localServer.url, "/#/read/bsb/psalms/23", { width: 390, height: 844 }, "Psalms 23");
+    await openReader(page, localServer.url, "/#/read/bsb/psalms/23", { width: 390, height: 844 }, "Psalms 23", { theme: "light" });
     await capture(page, "mobile.png");
+
+    await openReader(page, localServer.url, "/#/read/bsb/psalms/23", { width: 1365, height: 768 }, "Psalms 23", { theme: "dark" });
+    await capture(page, "reader-dark.png");
+
+    await page.locator("#showOutline").click();
+    await page.locator("#detailTitle", { hasText: "Outline" }).waitFor({ timeout: 10000 });
+    await capture(page, "detail-panel-dark.png");
+
+    await openReader(page, localServer.url, "/#/read/bsb/john/1/1", { width: 1365, height: 768 }, "John 1", { theme: "dark" });
+    await openVerseStudy(page);
+    await clickVisibleButtonByText(page, "Int");
+    await page.locator("#detailTitle", { hasText: "Interlinear" }).waitFor({ timeout: 15000 });
+    await page.locator(".interlinear-token").first().waitFor({ state: "visible", timeout: 15000 });
+    await capture(page, "interlinear-dark.png");
+
+    await openReader(page, localServer.url, "/#/read/bsb/proverbs/1/1", { width: 1365, height: 768 }, "Proverbs 1", { theme: "dark" });
+    await openVerseStudy(page);
+    await clickVisibleButtonByText(page, "Int");
+    await page.locator("#detailTitle", { hasText: "Interlinear" }).waitFor({ timeout: 15000 });
+    await page.locator(".interlinear-token .compact-link").first().click();
+    await page.locator("#detailTitle", { hasText: "Strong's" }).waitFor({ timeout: 15000 });
+    await capture(page, "hebrew-side-panel-dark.png");
+
+    await openReader(page, localServer.url, "/#/read/bsb/proverbs/1/1", { width: 1365, height: 768 }, "Proverbs 1", { theme: "dark" });
+    await page.locator("#showTags").click();
+    await page.locator("#detailTitle", { hasText: "Study Marks" }).waitFor({ timeout: 10000 });
+    await capture(page, "study-marks-dark.png");
+
+    await openReader(page, localServer.url, "/#/read/bsb/psalms/23", { width: 390, height: 844 }, "Psalms 23", { theme: "dark" });
+    await capture(page, "mobile-dark.png");
 
     const files = [
       "reader.png",
@@ -231,6 +276,12 @@ async function main() {
       "study-data.png",
       "local-processing.png",
       "mobile.png",
+      "reader-dark.png",
+      "detail-panel-dark.png",
+      "interlinear-dark.png",
+      "hebrew-side-panel-dark.png",
+      "study-marks-dark.png",
+      "mobile-dark.png",
     ];
     await writeFile(resolve(outputRoot, "SCREENSHOTS.md"), `# Public Screenshots\n\n${files.map((file) => `- ${file}`).join("\n")}\n`, "utf8");
     console.log(JSON.stringify({ status: "ok", output: "docs/images", files }, null, 2));
