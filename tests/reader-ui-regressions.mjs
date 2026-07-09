@@ -3,10 +3,12 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [index, css, app, renderer, tagsView, strongsView] = await Promise.all([
+const [index, css, stylesPolish, app, pickerFlow, renderer, tagsView, strongsView] = await Promise.all([
   readFile(new URL("../app/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/styles.css", import.meta.url), "utf8"),
+  readFile(new URL("../app/styles-polish.css", import.meta.url), "utf8"),
   readFile(new URL("../app/app.js", import.meta.url), "utf8"),
+  readFile(new URL("../app/src/reader-picker-flow.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/chapter-renderer.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/views/tags-view.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/views/strongs-view.js", import.meta.url), "utf8"),
@@ -54,6 +56,26 @@ assert(
   "Book and chapter controls must use app-owned picker popovers: testament columns and chapter grid.",
 );
 assert(/\.fn-marker\s*{[\s\S]*?color:\s*#2347fb;/.test(css), "Footnote markers must use the requested blue.");
+assert(
+  /reader-picker-flow\.js\?v=reader-picker-flow-20260709/.test(index),
+  "The reader picker flow helper must load after the main app module.",
+);
+assert(
+  /ACTIVE_OPTION_SELECTOR = "\.reader-picker-option\.active"/.test(pickerFlow) &&
+    /scrollIntoView\(\{[\s\S]*?block:\s*"center",[\s\S]*?inline:\s*"nearest",/.test(pickerFlow),
+  "Opening reader pickers must scroll the active option into view.",
+);
+assert(
+  /openChapterPickerAfterBookSelection/.test(pickerFlow) &&
+    /#bookPickerPanel \.reader-picker-option/.test(pickerFlow) &&
+    /setPickerExpanded\(chapterButton, chapterPanel, true\)/.test(pickerFlow),
+  "Selecting a book in the app-owned picker must open chapter selection after navigation.",
+);
+assert(
+  /@media\s*\(min-width:\s*1024px\)[\s\S]*?\.reader-pane \.verse-row\s*{[\s\S]*?grid-template-columns:\s*58px minmax\(0, 1fr\) 32px;[\s\S]*?gap:\s*12px;/.test(stylesPolish) &&
+    /@media\s*\(min-width:\s*1380px\)[\s\S]*?\.reader-pane \.chapter-content\s*{[\s\S]*?padding-inline:\s*28px 24px;/.test(stylesPolish),
+  "Wide reader layout must add desktop-only breathing room without changing the mobile base layout.",
+);
 
 assert(/function disengageDetailFollow\(\)/.test(app), "Background reset must share the detail-follow disengage path.");
 assert(
@@ -132,4 +154,4 @@ assert(
   "Browser-visible app and stylesheet entry points must use the current cache-buster key.",
 );
 
-console.log(JSON.stringify({ status: "ok", assertions: 38 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 42 }, null, 2));
