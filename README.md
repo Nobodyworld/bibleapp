@@ -22,21 +22,138 @@ data-export tools from one static app.
 
 ## Screenshots
 
-| Reader | Book picker | Detail panel |
-| --- | --- | --- |
-| ![Psalm 23 reader view](docs/images/reader.png) | ![Old and New Testament book picker](docs/images/book-picker.png) | ![Reader detail panel](docs/images/detail-panel.png) |
+The public gallery uses large, expandable images so the app can be reviewed from
+GitHub without opening tiny table thumbnails. Click any section to expand the
+full screenshot.
 
-| Verse tools | Interlinear | Hebrew / Strong's side panel |
-| --- | --- | --- |
-| ![Verse context tabs](docs/images/verse-context-tabs.png) | ![Interlinear study view](docs/images/interlinear.png) | ![Hebrew Strong's side panel](docs/images/hebrew-side-panel.png) |
+### Reader and Navigation
 
-| Search | Study Marks | Study Data |
-| --- | --- | --- |
-| ![Search results](docs/images/search.png) | ![Study Marks dashboard](docs/images/study-marks.png) | ![Study Data panel](docs/images/study-data.png) |
+<details open>
+<summary>Reader — Psalm 23</summary>
 
-| Local Processing | Mobile |
-| --- | --- |
-| ![Local Processing panel](docs/images/local-processing.png) | ![Mobile reader view](docs/images/mobile.png) |
+![Psalm 23 reader view](docs/images/reader.png)
+
+</details>
+
+<details>
+<summary>Book picker — Old and New Testament columns</summary>
+
+![Old and New Testament book picker](docs/images/book-picker.png)
+
+</details>
+
+<details>
+<summary>Detail panel — outline and study context</summary>
+
+![Reader detail panel](docs/images/detail-panel.png)
+
+</details>
+
+<details>
+<summary>Verse tools — context tabs and verse actions</summary>
+
+![Verse context tabs](docs/images/verse-context-tabs.png)
+
+</details>
+
+### Interlinear and Source-Language Study
+
+<details open>
+<summary>Interlinear — source text, Strong's, morphology, and glosses</summary>
+
+![Interlinear study view](docs/images/interlinear.png)
+
+</details>
+
+<details>
+<summary>Hebrew / Strong's side panel</summary>
+
+![Hebrew Strong's side panel](docs/images/hebrew-side-panel.png)
+
+</details>
+
+### Study Workspace
+
+<details>
+<summary>Search</summary>
+
+![Search results](docs/images/search.png)
+
+</details>
+
+<details>
+<summary>Study Marks</summary>
+
+![Study Marks dashboard](docs/images/study-marks.png)
+
+</details>
+
+<details>
+<summary>Study Data</summary>
+
+![Study Data panel](docs/images/study-data.png)
+
+</details>
+
+<details>
+<summary>Local Processing</summary>
+
+![Local Processing panel](docs/images/local-processing.png)
+
+</details>
+
+### Dark Mode
+
+<details open>
+<summary>Dark reader — Psalm 23</summary>
+
+![Dark mode Psalm 23 reader view](docs/images/reader-dark.png)
+
+</details>
+
+<details>
+<summary>Dark detail panel</summary>
+
+![Dark mode reader detail panel](docs/images/detail-panel-dark.png)
+
+</details>
+
+<details>
+<summary>Dark interlinear</summary>
+
+![Dark mode interlinear study view](docs/images/interlinear-dark.png)
+
+</details>
+
+<details>
+<summary>Dark Hebrew / Strong's side panel</summary>
+
+![Dark mode Hebrew Strong's side panel](docs/images/hebrew-side-panel-dark.png)
+
+</details>
+
+<details>
+<summary>Dark Study Marks</summary>
+
+![Dark mode Study Marks dashboard](docs/images/study-marks-dark.png)
+
+</details>
+
+### Mobile
+
+<details open>
+<summary>Mobile reader</summary>
+
+![Mobile reader view](docs/images/mobile.png)
+
+</details>
+
+<details>
+<summary>Mobile reader — dark mode</summary>
+
+![Dark mode mobile reader view](docs/images/mobile-dark.png)
+
+</details>
 
 ## Features
 

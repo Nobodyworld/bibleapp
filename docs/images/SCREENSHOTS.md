@@ -11,3 +11,9 @@
 - study-data.png
 - local-processing.png
 - mobile.png
+- reader-dark.png
+- detail-panel-dark.png
+- interlinear-dark.png
+- hebrew-side-panel-dark.png
+- study-marks-dark.png
+- mobile-dark.png
