@@ -165,11 +165,55 @@ async function waitFor(page, expression, timeoutMs = 10000) {
   const deadline = Date.now() + timeoutMs;
   let value = false;
   while (Date.now() < deadline) {
-    value = await evaluate(page, `Boolean(${expression})`);
+    value = await evaluate(page, `(async () => Boolean(await (${expression})))()`);
     if (value) return true;
     await delay(150);
   }
   throw new Error(`Timed out waiting for: ${expression}`);
+}
+
+function workspacePersistenceExpression(referenceKey, expectedDraft, expectedRendering) {
+  return `new Promise((resolve) => {
+    const readLocalWorkspace = () => {
+      try {
+        const raw = window.localStorage.getItem('bibleapp:translation-workspace:v1');
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        return null;
+      }
+    };
+    const matches = (store) => {
+      const renderings = store?.token_renderings?.[${JSON.stringify(referenceKey)}] || {};
+      return store?.verse_drafts?.[${JSON.stringify(referenceKey)}]?.draft_text === ${JSON.stringify(expectedDraft)} &&
+        Object.values(renderings).some((item) => item?.rendering === ${JSON.stringify(expectedRendering)});
+    };
+    if (!window.indexedDB) {
+      resolve(matches(readLocalWorkspace()));
+      return;
+    }
+    const request = window.indexedDB.open('bibleapp', 2);
+    request.onerror = () => resolve(matches(readLocalWorkspace()));
+    request.onblocked = () => resolve(matches(readLocalWorkspace()));
+    request.onsuccess = () => {
+      const db = request.result;
+      try {
+        const transaction = db.transaction('user_stores', 'readonly');
+        const get = transaction.objectStore('user_stores').get('workspace');
+        get.onsuccess = () => {
+          const store = get.result?.value || readLocalWorkspace();
+          db.close();
+          resolve(matches(store));
+        };
+        get.onerror = () => {
+          db.close();
+          resolve(matches(readLocalWorkspace()));
+        };
+      } catch {
+        db.close();
+        resolve(matches(readLocalWorkspace()));
+      }
+    };
+  })`;
 }
 
 async function click(page, selector, timeoutMs = 10000) {
@@ -320,6 +364,14 @@ async function runQa(page) {
   );
   await click(page, "#bookPickerButton");
   pass("initial Psalm 23 render");
+  assert(
+    await evaluate(
+      page,
+      "document.querySelectorAll('.strong-token').length > 0 && !document.querySelector('.strong-token[title]')",
+    ),
+    "reader Strong's tokens must not use native title tooltips alongside app tooltips",
+  );
+  pass("reader Strong's tooltip is app-controlled");
 
   const selectedReaderText = await evaluate(
     page,
@@ -372,6 +424,53 @@ async function runQa(page) {
   await click(page, '.target-tag-editor [aria-label="Remove Positive tag"]');
   await waitFor(page, "!document.querySelector('.reader-target-badges')");
   pass("reader text-span favorite tags and badges");
+
+  const partialWordSelection = await evaluate(
+    page,
+    `(() => {
+      const body = document.querySelector('.verse-row[data-verse="1"] .verse-body');
+      const segment = [...body.querySelectorAll('.strong-token')].find((node) => node.textContent.includes('shepherd'));
+      const textNode = segment?.firstChild;
+      const text = textNode?.textContent || '';
+      const start = text.indexOf('shep');
+      if (!body || !segment || !textNode || start < 0) return '';
+      const range = document.createRange();
+      range.setStart(textNode, start);
+      range.setEnd(textNode, start + 4);
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      body.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+      return String(selection);
+    })()`,
+  );
+  assert(partialWordSelection === "shep", `partial-word selection fixture failed: ${partialWordSelection}`);
+  await waitFor(
+    page,
+    "!document.querySelector('.selection-action-menu')?.hidden && document.querySelector('.selection-favorite-button')",
+  );
+  await click(page, ".selection-favorite-button");
+  await waitFor(page, "document.querySelector('.reader-target-badges .target-tag-badge')");
+  const partialWordTagState = await evaluate(
+    page,
+    `(() => ({
+      taggedTexts: [...document.querySelectorAll('.tagged-text-span')].map((node) => node.textContent),
+      verseText: document.querySelector('.verse-row[data-verse="1"] .verse-body')?.textContent || ''
+    }))()`,
+  );
+  assert(
+    partialWordTagState.taggedTexts.length === 1 && partialWordTagState.taggedTexts[0] === "shepherd",
+    `partial-word tag did not expand to full word: ${JSON.stringify(partialWordTagState)}`,
+  );
+  assert(
+    !partialWordTagState.verseText.includes("shep★Favoriteherd"),
+    "partial-word tag badge split the selected word",
+  );
+  await click(page, ".reader-target-badges .target-tag-badge");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Tags'");
+  await click(page, '.target-tag-editor [aria-label="Remove Favorite tag"]');
+  await waitFor(page, "!document.querySelector('.reader-target-badges')");
+  pass("partial-word text span expansion");
 
   assert(
     await evaluate(
@@ -520,6 +619,54 @@ async function runQa(page) {
 
   await selectValue(page, "#translationSelect", "bsb");
   await waitFor(page, "document.querySelector('#translationSelect')?.value === 'bsb' && document.querySelector('#statusText')?.textContent.includes('BSB')");
+  const verseTagMenuState = await evaluate(
+    page,
+    `(async () => {
+      const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+      const event = (type, options = {}) => {
+        const Ctor = window.PointerEvent && type.startsWith('pointer') ? PointerEvent : Event;
+        return new Ctor(type, { bubbles: true, cancelable: true, ...options });
+      };
+      const menu = document.querySelector('.verse-number-menu-wrap');
+      const popover = menu?.querySelector('.tag-picker-popover');
+      const option = menu?.querySelector('.tag-picker-option');
+      const state = () => ({
+        display: popover ? getComputedStyle(popover).display : '',
+        open: menu?.dataset.menuOpen || '',
+        closed: menu?.dataset.menuClosed || '',
+        activeInside: menu?.contains(document.activeElement) || false
+      });
+      if (!menu || !popover || !option) return { missing: true };
+      menu.dispatchEvent(event('pointerenter', { pointerType: 'mouse' }));
+      const opened = state();
+      menu.dispatchEvent(event('pointerleave', { pointerType: 'mouse' }));
+      await wait(80);
+      const duringDelay = state();
+      await wait(140);
+      const afterDelay = state();
+      menu.dispatchEvent(event('pointerenter', { pointerType: 'mouse' }));
+      option.focus();
+      const focused = state();
+      document.body.dispatchEvent(event('pointerdown', { pointerType: 'mouse' }));
+      const outsideClosed = state();
+      menu.dispatchEvent(event('pointerenter', { pointerType: 'mouse' }));
+      option.focus();
+      document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
+      const escapeClosed = state();
+      return { opened, duringDelay, afterDelay, focused, outsideClosed, escapeClosed };
+    })()`,
+  );
+  assert(
+    !verseTagMenuState.missing &&
+      verseTagMenuState.opened.display === "grid" &&
+      verseTagMenuState.duringDelay.display === "grid" &&
+      verseTagMenuState.afterDelay.closed === "true" &&
+      verseTagMenuState.focused.display === "grid" &&
+      verseTagMenuState.outsideClosed.closed === "true" &&
+      verseTagMenuState.escapeClosed.closed === "true",
+    `verse number tag popup timing failed: ${JSON.stringify(verseTagMenuState)}`,
+  );
+  pass("verse number tag popup timing");
   await click(page, ".verse-number");
   await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Parallel'");
   await waitFor(page, "document.querySelector('.parallel-verse')?.textContent.includes('BSB - Berean Study Bible')", 15000);
@@ -883,6 +1030,71 @@ async function runQa(page) {
   );
   pass("Strong's detail, internal navigation, concordance, and Hebrew breakdown");
 
+  const historyHighlightFixture = await evaluate(
+    page,
+    `(() => {
+      const tokens = [...document.querySelectorAll('.strong-token')].filter((node) => node.dataset.strongCode);
+      if (tokens.length < 2) return null;
+      const first = tokens[0];
+      const second = tokens.find((node) => node.dataset.strongCode !== first.dataset.strongCode) || tokens[1];
+      first.scrollIntoView({ block: 'center' });
+      first.click();
+      return {
+        first: { code: first.dataset.strongCode, text: first.textContent.trim() },
+        second: { code: second.dataset.strongCode, text: second.textContent.trim() },
+      };
+    })()`,
+  );
+  assert(historyHighlightFixture?.first?.code && historyHighlightFixture?.second?.code, "Strong's history highlight fixture could not find two tokens");
+  await waitFor(page, `document.querySelector('#detailContent')?.textContent.includes(${JSON.stringify(historyHighlightFixture.first.code)})`);
+  await evaluate(
+    page,
+    `(() => {
+      const token = [...document.querySelectorAll('.strong-token')].find(
+        (node) => node.dataset.strongCode === ${JSON.stringify(historyHighlightFixture.second.code)}
+      );
+      token?.scrollIntoView({ block: 'center' });
+      token?.click();
+      return true;
+    })()`,
+  );
+  await waitFor(page, `document.querySelector('#detailContent')?.textContent.includes(${JSON.stringify(historyHighlightFixture.second.code)})`);
+  await click(page, "#detailBack");
+  await waitFor(page, `document.querySelector('#detailContent')?.textContent.includes(${JSON.stringify(historyHighlightFixture.first.code)})`);
+  const backHighlight = await evaluate(
+    page,
+    `(() => ({
+      code: document.querySelector('.reader-context-word')?.dataset.strongCode || '',
+      text: document.querySelector('.reader-context-word')?.textContent.trim() || '',
+      verseCount: document.querySelectorAll('.reader-context-verse').length
+    }))()`,
+  );
+  assert(
+    backHighlight.code === historyHighlightFixture.first.code && backHighlight.verseCount === 1,
+    `detail Back did not restore matching reader highlight: ${JSON.stringify({ historyHighlightFixture, backHighlight })}`,
+  );
+  await click(page, "#detailForward");
+  await waitFor(page, `document.querySelector('#detailContent')?.textContent.includes(${JSON.stringify(historyHighlightFixture.second.code)})`);
+  const forwardHighlight = await evaluate(
+    page,
+    `(() => ({
+      code: document.querySelector('.reader-context-word')?.dataset.strongCode || '',
+      text: document.querySelector('.reader-context-word')?.textContent.trim() || '',
+      verseCount: document.querySelectorAll('.reader-context-verse').length
+    }))()`,
+  );
+  assert(
+    forwardHighlight.code === historyHighlightFixture.second.code && forwardHighlight.verseCount === 1,
+    `detail Forward did not restore matching reader highlight: ${JSON.stringify({ historyHighlightFixture, forwardHighlight })}`,
+  );
+  await click(page, "#clearDetail");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Details'");
+  assert(
+    await evaluate(page, "!document.querySelector('.reader-context-word') && !document.querySelector('.reader-context-verse')"),
+    "Clear did not remove restored reader highlight",
+  );
+  pass("Strong's detail history restores reader highlight");
+
   await evaluate(
     page,
     `(() => {
@@ -895,11 +1107,11 @@ async function runQa(page) {
     page,
     `(() => {
       const token = [...document.querySelectorAll('.strong-token')].find((node) => {
-        const code = node.title.match(/[HG]\\d+/)?.[0] || '';
+        const code = node.dataset.strongCode || '';
         return code && code !== 'H4912';
       });
       if (!token) return null;
-      const code = token.title.match(/[HG]\\d+/)?.[0] || '';
+      const code = token.dataset.strongCode || '';
       token.scrollIntoView({ block: 'center' });
       const rect = token.getClientRects()[0] || token.getBoundingClientRect();
       return {
@@ -1068,6 +1280,7 @@ async function runQa(page) {
   await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Translation'");
   await click(page, "#detailContent .detail-list button");
   await waitFor(page, "document.querySelector('.workspace-word-map')?.textContent.includes('These are the proverbs')", 15000);
+  const proverbsDraftReference = "proverbs:1:1";
   const wordMapState = await evaluate(
     page,
     `(() => {
@@ -1095,6 +1308,7 @@ async function runQa(page) {
       return true;
     })()`,
   );
+  await waitFor(page, workspacePersistenceExpression(proverbsDraftReference, qaDraft, tokenRendering), 15000);
   await navigate(page, baseUrl);
   await selectValue(page, "#bookSelect", "proverbs");
   await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('Proverbs 1')");
@@ -1106,7 +1320,7 @@ async function runQa(page) {
   pass("Proverbs draft persistence");
 
   await click(page, "#showJobs");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Jobs'");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Local Processing'");
   state = await getQaState(page);
   assert(
     state.detailText.includes("tag-index-refresh") &&
@@ -1114,7 +1328,7 @@ async function runQa(page) {
       state.detailText.includes("translation-edit-analysis") &&
       state.detailText.includes("word-map-refresh") &&
       state.detailText.includes("personal-glossary-build"),
-    "Jobs panel did not show queued local job types",
+    "Local Processing panel did not show queued local job types",
   );
   pass("local jobs panel");
 
@@ -1135,7 +1349,7 @@ async function runQa(page) {
   pass("local job lifecycle simulation");
 
   await click(page, "#showUserData");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'User Data'");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Study Data'");
   const userDataExport = await evaluate(
     page,
     `(() => {
@@ -1155,7 +1369,7 @@ async function runQa(page) {
   assert(userDataExport.kind === "bibleapp:user-data", "user-data export has wrong kind");
   assert(userDataExport.hasTags && userDataExport.hasWorkspace, "user-data export missing local stores");
   assert(
-    userDataExport.summaryText.includes("Custom tags") && userDataExport.summaryText.includes("Workspace jobs"),
+    userDataExport.summaryText.includes("Custom labels") && userDataExport.summaryText.includes("Workspace jobs"),
     "user-data summary missing expected counts",
   );
   assert(userDataExport.tagJobTypes.includes("tag-index-refresh"), "tag change did not queue tag-index-refresh job");

@@ -129,6 +129,30 @@ function highlightReaderContext(options = {}) {
   }
 }
 
+function restoreReaderHighlightFromContext(context) {
+  if (!context?.verse) {
+    clearReaderHighlight();
+    return;
+  }
+  const row = document.getElementById(refDomId(referenceKey(state.bookId, state.chapter, context.verse)));
+  if (!row) return;
+  const word = context.word || {};
+  const tokens = [...row.querySelectorAll(".strong-token")];
+  const wordElement =
+    (word.interlinearKey && tokens.find((node) => node.dataset.interlinearKey === word.interlinearKey)) ||
+    (word.strongCode &&
+      word.tokenIndex &&
+      tokens.find((node) => node.dataset.strongCode === word.strongCode && node.dataset.tokenIndex === word.tokenIndex)) ||
+    (word.strongCode && tokens.find((node) => node.dataset.strongCode === word.strongCode)) ||
+    null;
+  highlightReaderContext({
+    verse: context.verse,
+    wordElement,
+    word,
+    commit: true,
+  });
+}
+
 const ctx = {
   state,
   clearReaderHighlight,
@@ -840,6 +864,10 @@ function bindEvents() {
   }
 
   setupInterlinearInteraction();
+
+  els.detail?.addEventListener("detail:restore", (event) => {
+    restoreReaderHighlightFromContext(event.detail?.readerContext);
+  });
 
   const handleRouteChange = () => {
     const route = parseReaderRoute();

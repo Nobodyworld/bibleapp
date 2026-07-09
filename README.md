@@ -22,13 +22,21 @@ data-export tools from one static app.
 
 ## Screenshots
 
-| Reader | Detail panel | Interlinear |
+| Reader | Book picker | Detail panel |
 | --- | --- | --- |
-| ![Psalm 23 reader view](docs/images/reader.png) | ![Reader detail panel](docs/images/detail-panel.png) | ![Interlinear study view](docs/images/interlinear.png) |
+| ![Psalm 23 reader view](docs/images/reader.png) | ![Old and New Testament book picker](docs/images/book-picker.png) | ![Reader detail panel](docs/images/detail-panel.png) |
 
-| Search | Mobile |
+| Verse tools | Interlinear | Hebrew / Strong's side panel |
+| --- | --- | --- |
+| ![Verse context tabs](docs/images/verse-context-tabs.png) | ![Interlinear study view](docs/images/interlinear.png) | ![Hebrew Strong's side panel](docs/images/hebrew-side-panel.png) |
+
+| Search | Study Marks | Study Data |
+| --- | --- | --- |
+| ![Search results](docs/images/search.png) | ![Study Marks dashboard](docs/images/study-marks.png) | ![Study Data panel](docs/images/study-data.png) |
+
+| Local Processing | Mobile |
 | --- | --- |
-| ![Search results](docs/images/search.png) | ![Mobile reader view](docs/images/mobile.png) |
+| ![Local Processing panel](docs/images/local-processing.png) | ![Mobile reader view](docs/images/mobile.png) |
 
 ## Features
 

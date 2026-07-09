@@ -58,6 +58,7 @@ const detailForwardHistory = [];
 let currentDetailTransient = false;
 let transientBase = null;
 let detailPanelMode = PANEL_MODES.follow;
+let currentDetailReaderContext = null;
 
 // Reader location history for tracking book/chapter/verse navigation
 let readerLocationHistory = [];
@@ -92,20 +93,43 @@ function canStoreCurrentDetail() {
   return Boolean(els.detail?.childNodes?.length) && !isDefaultDetail();
 }
 
+function snapshotReaderContextFromDom() {
+  const word = document.querySelector(".reader-context-word");
+  const verseRow =
+    word?.closest?.(".verse-row") ||
+    document.querySelector(".reader-context-verse");
+  if (!verseRow) return null;
+  return {
+    verse: verseRow.dataset.verse || null,
+    word: word
+      ? {
+          interlinearKey: word.dataset.interlinearKey || "",
+          strongCode: word.dataset.strongCode || "",
+          tokenIndex: word.dataset.tokenIndex || "",
+        }
+      : null,
+  };
+}
+
+function cloneReaderContext(context) {
+  return context ? JSON.parse(JSON.stringify(context)) : null;
+}
+
 function snapshotDetail() {
   return {
     title: els.detailTitle.textContent,
     contextNodes: els.detailContext ? [...els.detailContext.childNodes] : [],
     contextHidden: els.detailContext ? els.detailContext.hidden : true,
     nodes: [...els.detail.childNodes],
+    readerContext: cloneReaderContext(currentDetailReaderContext) || snapshotReaderContextFromDom(),
   };
 }
 
-function notifyDetailRestored() {
+function notifyDetailRestored(snapshot) {
   if (!els.detail) return;
-  els.detail.dispatchEvent(new CustomEvent("detail:restore", { bubbles: false }));
+  els.detail.dispatchEvent(new CustomEvent("detail:restore", { bubbles: false, detail: snapshot }));
   els.detail.querySelectorAll("[data-detail-restore]").forEach((node) => {
-    node.dispatchEvent(new CustomEvent("detail:restore", { bubbles: false }));
+    node.dispatchEvent(new CustomEvent("detail:restore", { bubbles: false, detail: snapshot }));
   });
 }
 
@@ -117,7 +141,8 @@ function restoreDetail(snapshot) {
     els.detailContext.hidden = Boolean(snapshot.contextHidden);
   }
   els.detail.replaceChildren(...snapshot.nodes);
-  notifyDetailRestored();
+  currentDetailReaderContext = cloneReaderContext(snapshot.readerContext);
+  notifyDetailRestored(snapshot);
 }
 
 function extractContextNode(node, options = {}) {
@@ -172,6 +197,9 @@ export function setDetail(title, node, options = {}) {
   els.detailTitle.textContent = title;
   setDetailContext(contextNode);
   els.detail.replaceChildren(node);
+  currentDetailReaderContext = Object.prototype.hasOwnProperty.call(options, "readerContext")
+    ? cloneReaderContext(options.readerContext)
+    : null;
   currentDetailTransient = Boolean(options.transient);
   updateDetailHistoryButtons();
   revealDetailOnMobile(options);
@@ -263,6 +291,7 @@ function resetDetailContent(title, message) {
   transientBase = null;
   currentDetailTransient = false;
   detailPanelMode = transitionPanelMode(detailPanelMode, PANEL_EVENTS.reset);
+  currentDetailReaderContext = null;
   els.detailTitle.textContent = title;
   setDetailContext(null);
   els.detail.textContent = message;

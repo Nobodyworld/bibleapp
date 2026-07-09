@@ -3,36 +3,9 @@ import { setDetail } from "../dom.js?v=browser-comments-20260707b";
 import { resolveCapabilities } from "../capabilities.js";
 import { setCapabilityDisabled } from "../package-state.js";
 
-function renderUserDataSummary(summary) {
-  const wrap = document.createElement("div");
-  const health = document.createElement("p");
-  health.className = "storage-health-status";
-  health.textContent = `Storage authority: ${summary.user_store_authority || summary.user_store_backend}; migration: ${summary.user_store_migration}${summary.user_store_failure ? `; fallback reason: ${summary.user_store_failure}` : ""
-    }. Browser storage is local to this browser and is not a backed-up account. Use JSON export for recovery.`;
-  wrap.append(health);
-
+function renderSummaryGrid(rows) {
   const grid = document.createElement("div");
   grid.className = "user-data-summary";
-  const rows = [
-    ["Custom tags", summary.custom_tags],
-    ["Tagged verses", summary.tagged_verses],
-    ["Tag assertions", summary.tag_assertions],
-    ["Active assertions", summary.assertions],
-    ["Assertion events", summary.assertion_events],
-    ["Quarantined assertions", summary.quarantined_assertion_records],
-    ["Poll responses", summary.poll_responses],
-    ["Poll events", summary.poll_events],
-    ["Installed packs", summary.installed_feature_packs],
-    ["Package ops", summary.package_operations],
-    ["Import backups", summary.import_backups],
-    ["Translation drafts", summary.verse_drafts],
-    ["Token renderings", summary.token_renderings],
-    ["Tag jobs", summary.tag_jobs],
-    ["Workspace jobs", summary.workspace_jobs],
-    ["User store", summary.user_store_backend],
-    ["Authority", summary.user_store_authority],
-    ["Migration", summary.user_store_migration],
-  ];
   rows.forEach(([label, value]) => {
     const item = document.createElement("div");
     item.className = "user-data-summary-item";
@@ -43,7 +16,71 @@ function renderUserDataSummary(summary) {
     item.append(number, text);
     grid.append(item);
   });
-  wrap.append(grid);
+  return grid;
+}
+
+function renderUserDataSummary(summary) {
+  const wrap = document.createElement("div");
+  const intro = document.createElement("p");
+  intro.className = "study-data-intro";
+  intro.textContent = "Study data lives in this browser. Export JSON regularly if these marks, labels, drafts, or study queues matter.";
+  wrap.append(intro);
+
+  const studySection = document.createElement("section");
+  studySection.className = "study-data-section";
+  const studyTitle = document.createElement("h4");
+  studyTitle.textContent = "Study data";
+  studySection.append(
+    studyTitle,
+    renderSummaryGrid([
+      ["Custom labels", summary.custom_tags],
+      ["Tagged verses", summary.tagged_verses],
+      ["Study mark assertions", summary.tag_assertions],
+      ["Active assertions", summary.assertions],
+      ["Translation drafts", summary.verse_drafts],
+      ["Token renderings", summary.token_renderings],
+    ]),
+  );
+  wrap.append(studySection);
+
+  const processingSection = document.createElement("section");
+  processingSection.className = "study-data-section";
+  const processingTitle = document.createElement("h4");
+  processingTitle.textContent = "Local processing";
+  processingSection.append(
+    processingTitle,
+    renderSummaryGrid([
+      ["Tag jobs", summary.tag_jobs],
+      ["Workspace jobs", summary.workspace_jobs],
+      ["Package ops", summary.package_operations],
+      ["Installed packs", summary.installed_feature_packs],
+    ]),
+  );
+  wrap.append(processingSection);
+
+  const details = document.createElement("details");
+  details.className = "storage-details-panel";
+  const summaryEl = document.createElement("summary");
+  summaryEl.textContent = "Storage details";
+  const health = document.createElement("p");
+  health.className = "storage-health-status";
+  health.textContent = `Storage authority: ${summary.user_store_authority || summary.user_store_backend}; migration: ${summary.user_store_migration}${summary.user_store_failure ? `; fallback reason: ${summary.user_store_failure}` : ""
+    }. Browser storage is local to this browser and is not a backed-up account. Use JSON export for recovery.`;
+  details.append(
+    summaryEl,
+    health,
+    renderSummaryGrid([
+      ["Assertion events", summary.assertion_events],
+      ["Quarantined assertions", summary.quarantined_assertion_records],
+      ["Poll responses", summary.poll_responses],
+      ["Poll events", summary.poll_events],
+      ["Import backups", summary.import_backups],
+      ["User store", summary.user_store_backend],
+      ["Authority", summary.user_store_authority],
+      ["Migration", summary.user_store_migration],
+    ]),
+  );
+  wrap.append(details);
   return wrap;
 }
 
@@ -109,7 +146,7 @@ export function createUserDataView(ctx) {
     const wrap = document.createElement("div");
     wrap.className = "user-data-panel";
     const heading = document.createElement("h3");
-    heading.textContent = "User Data";
+    heading.textContent = "Study Data";
     wrap.append(heading);
 
     const summarySlot = document.createElement("div");
@@ -126,7 +163,7 @@ export function createUserDataView(ctx) {
     wrap.append(summarySlot);
 
     const exportTitle = document.createElement("h4");
-    exportTitle.textContent = "Export";
+    exportTitle.textContent = "Export backup";
     const exportActions = document.createElement("div");
     exportActions.className = "user-data-actions export-actions";
     const refresh = document.createElement("button");
@@ -143,7 +180,7 @@ export function createUserDataView(ctx) {
     wrap.append(exportTitle, exportArea, exportActions);
 
     const importTitle = document.createElement("h4");
-    importTitle.textContent = "Import";
+    importTitle.textContent = "Import backup";
     const fileInput = document.createElement("input");
     fileInput.className = "user-data-file";
     fileInput.type = "file";
@@ -161,7 +198,7 @@ export function createUserDataView(ctx) {
         const summary = importUserData(ctx.state, payload, mode);
         ctx.renderChapter();
         refreshExport();
-        status.textContent = `Imported (${mode}). Custom tags: ${summary.custom_tags}; drafts: ${summary.verse_drafts}.`;
+        status.textContent = `Imported (${mode}). Custom labels: ${summary.custom_tags}; drafts: ${summary.verse_drafts}.`;
         if (mode === "replace" && summary.last_import_backup?.created_at) {
           status.textContent += ` Backup created ${summary.last_import_backup.created_at}.`;
         }
@@ -227,6 +264,6 @@ export function createUserDataView(ctx) {
     refreshCapabilities();
     wrap.append(capabilitySlot);
 
-    setDetail("User Data", wrap);
+    setDetail("Study Data", wrap);
   };
 }
