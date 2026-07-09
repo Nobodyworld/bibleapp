@@ -175,6 +175,25 @@
   overflow: auto;
 }
 
+@media (min-width: 1024px) {
+  .reader-pane .verse-row {
+    grid-template-columns: 58px minmax(0, 1fr) 32px;
+    gap: 12px;
+    padding-inline: 10px;
+  }
+}
+
+@media (min-width: 1380px) {
+  .reader-pane .chapter-content {
+    padding-inline: 28px 24px;
+  }
+
+  .reader-pane .verse-row {
+    grid-template-columns: 64px minmax(0, 1fr) 32px;
+    padding-inline: 16px 12px;
+  }
+}
+
 @media (max-width: 768px) {
   .translation-alignment-grid {
     grid-template-columns: 1fr;
