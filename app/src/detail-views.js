@@ -24,6 +24,7 @@ export function createDetailViews(ctx) {
     createFavoriteButton: tagsView.createFavoriteButton,
     renderInlineTagPicker: tagsView.renderInlineTagPicker,
     renderTagBadges: tagsView.renderTagBadges,
+    renderTargetTagPicker: tagsView.renderTargetTagPicker,
     renderTargetTagBadges: tagsView.renderTargetTagBadges,
     showCommentary: commentaryOutlineViews.showCommentary,
     showCrossrefs: referenceViews.showCrossrefs,

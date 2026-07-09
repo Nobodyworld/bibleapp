@@ -289,11 +289,6 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
         className: "token-favorite-button",
         label: tokenLabel,
       });
-      const tags = document.createElement("button");
-      tags.type = "button";
-      tags.className = "token-tag-button";
-      tags.textContent = "Tags";
-      tags.setAttribute("aria-label", `Tag ${tokenLabel}`);
       const refreshTargetActions = () => {
         favorite.refreshFavoriteState?.();
         actions.querySelector(".token-target-badges")?.remove();
@@ -306,15 +301,18 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
         });
         if (badges) actions.insertBefore(badges, controls);
       };
-      tags.addEventListener("click", (event) => {
-        event.stopPropagation();
-        ctx.detailViews.showTargetTagEditor(sourceTarget, {
-          label: tokenLabel,
-          preview: [token.english, token.gloss].filter(Boolean).join(" — "),
-          forceHistory: true,
-          lock: true,
-          onChange: refreshTargetActions,
-        });
+      const tagsButton = document.createElement("button");
+      tagsButton.type = "button";
+      tagsButton.className = "token-tag-button";
+      tagsButton.textContent = "Tags";
+      tagsButton.setAttribute("aria-label", `Tag ${tokenLabel}`);
+      const tags = ctx.detailViews.renderTargetTagPicker(sourceTarget, {
+        trigger: tagsButton,
+        className: "token-tag-picker",
+        align: "right",
+        label: tokenLabel,
+        preview: [token.english, token.gloss].filter(Boolean).join(" — "),
+        onChange: refreshTargetActions,
       });
       controls.append(favorite, tags);
       actions.append(controls);

@@ -415,13 +415,38 @@ async function runQa(page) {
     await evaluate(page, "Boolean(document.querySelector('.tagged-text-span'))"),
     "favorited reader text span was not highlighted",
   );
-  await click(page, ".reader-target-badges .target-tag-badge");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Tags'");
-  await click(page, '.target-tag-editor [aria-label="Add Positive tag"]');
+  await click(page, ".reader-target-badges .target-tag-picker-trigger");
+  await waitFor(
+    page,
+    "document.querySelector('.reader-target-badges .target-tag-picker-popover') && getComputedStyle(document.querySelector('.reader-target-badges .target-tag-picker-popover')).display === 'grid'",
+  );
+  assert(
+    await evaluate(page, "document.querySelector('#detailTitle')?.textContent !== 'Tags'"),
+    "reader target badge should open an inline tag popover instead of the side panel",
+  );
+  await click(page, '.reader-target-badges .tag-picker-option[aria-label="Add Positive tag"]');
   await waitFor(page, "document.querySelectorAll('.reader-target-badges .target-tag-badge').length === 2");
-  await click(page, '.target-tag-editor [aria-label="Remove Favorite tag"]');
+  const readerTagColorState = await evaluate(
+    page,
+    `(() => {
+      const span = document.querySelector('.tagged-text-span');
+      return {
+        tagColor: span ? getComputedStyle(span).getPropertyValue('--tag-color').trim() : '',
+        background: span ? getComputedStyle(span).backgroundColor : ''
+      };
+    })()`,
+  );
+  assert(
+    readerTagColorState.tagColor === "#1f7a4d" && readerTagColorState.background !== "rgba(37, 99, 95, 0.11)",
+    `reader text span should inherit the active tag color: ${JSON.stringify(readerTagColorState)}`,
+  );
+  await click(page, ".reader-target-badges .target-tag-picker-trigger");
+  await waitFor(page, "document.querySelector('.reader-target-badges .tag-picker-option[aria-label=\"Remove Favorite tag\"]')");
+  await click(page, '.reader-target-badges .tag-picker-option[aria-label="Remove Favorite tag"]');
   await waitFor(page, "document.querySelectorAll('.reader-target-badges .target-tag-badge').length === 1");
-  await click(page, '.target-tag-editor [aria-label="Remove Positive tag"]');
+  await click(page, ".reader-target-badges .target-tag-picker-trigger");
+  await waitFor(page, "document.querySelector('.reader-target-badges .tag-picker-option[aria-label=\"Remove Positive tag\"]')");
+  await click(page, '.reader-target-badges .tag-picker-option[aria-label="Remove Positive tag"]');
   await waitFor(page, "!document.querySelector('.reader-target-badges')");
   pass("reader text-span favorite tags and badges");
 
@@ -466,9 +491,9 @@ async function runQa(page) {
     !partialWordTagState.verseText.includes("shep★Favoriteherd"),
     "partial-word tag badge split the selected word",
   );
-  await click(page, ".reader-target-badges .target-tag-badge");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Tags'");
-  await click(page, '.target-tag-editor [aria-label="Remove Favorite tag"]');
+  await click(page, ".reader-target-badges .target-tag-picker-trigger");
+  await waitFor(page, "document.querySelector('.reader-target-badges .tag-picker-option[aria-label=\"Remove Favorite tag\"]')");
+  await click(page, '.reader-target-badges .tag-picker-option[aria-label="Remove Favorite tag"]');
   await waitFor(page, "!document.querySelector('.reader-target-badges')");
   pass("partial-word text span expansion");
 
@@ -1175,19 +1200,22 @@ async function runQa(page) {
     "document.querySelector('.interlinear-token .token-favorite-button')?.getAttribute('aria-pressed') === 'true'",
   );
   await click(page, ".interlinear-token .token-tag-button");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Tags'");
-  await waitFor(page, "document.querySelector('.target-tag-editor')");
-  await click(page, '.target-tag-editor [aria-label="Add Positive tag"]');
-  await waitFor(page, 'document.querySelector(\'.target-tag-editor [aria-label="Remove Positive tag"]\')');
-  await click(page, "#detailBack");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Interlinear'");
+  await waitFor(
+    page,
+    "document.querySelector('.interlinear-token .token-tag-picker .target-tag-picker-popover') && getComputedStyle(document.querySelector('.interlinear-token .token-tag-picker .target-tag-picker-popover')).display === 'grid'",
+  );
+  assert(
+    await evaluate(page, "document.querySelector('#detailTitle')?.textContent === 'Interlinear'"),
+    "interlinear token tag button should keep the tag picker local to the token card",
+  );
+  await click(page, '.interlinear-token .token-tag-picker .tag-picker-option[aria-label="Add Positive tag"]');
   await waitFor(page, "document.querySelector('.interlinear-token .token-target-badges .target-tag-badge')");
-  await click(page, ".interlinear-token .token-target-badges .target-tag-badge");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Tags'");
-  await click(page, '.target-tag-editor [aria-label="Remove Positive tag"]');
-  await waitFor(page, 'document.querySelector(\'.target-tag-editor [aria-label="Add Positive tag"]\')');
-  await click(page, "#detailBack");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Interlinear'");
+  await click(page, ".interlinear-token .token-target-badges .target-tag-picker-trigger");
+  await waitFor(
+    page,
+    "document.querySelector('.interlinear-token .token-target-badges .tag-picker-option[aria-label=\"Remove Positive tag\"]')",
+  );
+  await click(page, '.interlinear-token .token-target-badges .tag-picker-option[aria-label="Remove Positive tag"]');
   await waitFor(page, "!document.querySelector('.interlinear-token .token-target-badges')");
   await click(page, ".interlinear-token .token-favorite-button.active");
   await waitFor(
