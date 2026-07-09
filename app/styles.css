@@ -619,6 +619,10 @@ button:disabled {
   flex-wrap: wrap;
 }
 
+.chapter-favorite-actions {
+  flex-wrap: wrap;
+}
+
 .scope-favorite-button {
   display: inline-flex;
   align-items: center;
@@ -653,6 +657,34 @@ button:disabled {
 .scope-favorite-button:hover .scope-favorite-star,
 .scope-favorite-button:focus-visible .scope-favorite-star {
   color: #a66b00;
+}
+
+.scope-tag-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.scope-tag-button {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 8px;
+  border-color: var(--line);
+  background: var(--panel);
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.scope-tag-button:hover,
+.scope-tag-button:focus-visible {
+  border-color: var(--accent);
+  background: rgba(37, 99, 95, 0.12);
+}
+
+.scope-target-badges {
+  max-width: 132px;
 }
 
 .chapter-title h2,
@@ -1692,6 +1724,105 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--panel-alt);
+}
+
+.study-mark-section,
+.study-scripture-index {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.study-mark-section h4,
+.study-scripture-index h4 {
+  margin: 0;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.study-mark-section h5,
+.study-scripture-index h5,
+.study-scripture-index h6 {
+  margin: 8px 0 4px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.study-scripture-book,
+.study-scripture-chapter,
+.study-scripture-verse {
+  display: grid;
+  gap: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-alt);
+}
+
+.study-scripture-chapter,
+.study-scripture-verse {
+  margin-left: 10px;
+  background: var(--panel);
+}
+
+.study-scripture-book > summary,
+.study-scripture-chapter > summary,
+.study-scripture-verse > summary {
+  cursor: pointer;
+  padding: 8px 10px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.study-scripture-book > :not(summary),
+.study-scripture-chapter > :not(summary),
+.study-scripture-verse > :not(summary) {
+  margin-right: 10px;
+  margin-left: 10px;
+}
+
+.study-scripture-book > :last-child,
+.study-scripture-chapter > :last-child,
+.study-scripture-verse > :last-child {
+  margin-bottom: 10px;
+}
+
+.study-mark-item {
+  display: grid;
+  gap: 8px;
+}
+
+.study-mark-item-top,
+.study-mark-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.study-mark-item-top {
+  justify-content: space-between;
+}
+
+.study-mark-label {
+  min-width: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.study-mark-actions {
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.study-mark-preview {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
 }
 
 .interlinear-picker .detail-list li {

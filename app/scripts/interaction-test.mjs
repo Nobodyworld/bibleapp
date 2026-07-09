@@ -512,6 +512,14 @@ async function runQa(page) {
   await waitFor(page, "document.querySelector('#favoriteBook')?.getAttribute('aria-pressed') === 'true'");
   await click(page, "#favoriteChapter");
   await waitFor(page, "document.querySelector('#favoriteChapter')?.getAttribute('aria-pressed') === 'true'");
+  await click(page, "#bookTagControl .scope-tag-button");
+  await waitFor(page, "document.querySelector('#bookTagControl .tag-picker-option[aria-label=\"Add Inquiry tag\"]')");
+  await click(page, '#bookTagControl .tag-picker-option[aria-label="Add Inquiry tag"]');
+  await waitFor(page, "document.querySelector('#bookTagControl .target-tag-badge')?.textContent.includes('Inquiry')");
+  await click(page, "#chapterTagControl .scope-tag-button");
+  await waitFor(page, "document.querySelector('#chapterTagControl .tag-picker-option[aria-label=\"Add Inquiry tag\"]')");
+  await click(page, '#chapterTagControl .tag-picker-option[aria-label="Add Inquiry tag"]');
+  await waitFor(page, "document.querySelector('#chapterTagControl .target-tag-badge')?.textContent.includes('Inquiry')");
   const scopeFavoriteVisual = await evaluate(
     page,
     `(() => {
@@ -550,6 +558,37 @@ async function runQa(page) {
   );
   await click(page, ".verse-favorite-button");
   await waitFor(page, "document.querySelector('.verse-favorite-button')?.getAttribute('aria-pressed') === 'true'");
+  await click(page, "#nextChapter");
+  await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('Psalms 24')");
+  await click(page, "#showTags");
+  await waitFor(page, "document.querySelector('#detailContent')?.textContent.includes('Study Marks by Scripture')");
+  const studyMarkHierarchyState = await evaluate(
+    page,
+    `(() => {
+      const text = document.querySelector('#detailContent')?.textContent || '';
+      const chapterItem = [...document.querySelectorAll('#detailContent .study-mark-item')].find((item) =>
+        item.textContent.includes('Psalms 23') && item.textContent.includes('Chapter')
+      );
+      const open = [...(chapterItem?.querySelectorAll('button') || [])].find((button) => button.textContent.trim() === 'Open');
+      open?.click();
+      return {
+        hasHierarchy: text.includes('Study Marks by Scripture'),
+        hasBookTags: text.includes('Book tags'),
+        hasChapterTags: text.includes('Book/chapter tags'),
+        hasVerseTags: text.includes('Verse tags'),
+        clickedOpen: Boolean(open)
+      };
+    })()`,
+  );
+  assert(
+    studyMarkHierarchyState.hasHierarchy &&
+      studyMarkHierarchyState.hasBookTags &&
+      studyMarkHierarchyState.hasChapterTags &&
+      studyMarkHierarchyState.hasVerseTags &&
+      studyMarkHierarchyState.clickedOpen,
+    `Study Marks hierarchy or Open action missing: ${JSON.stringify(studyMarkHierarchyState)}`,
+  );
+  await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('Psalms 23')");
   await click(page, "#showTags");
   await waitFor(page, "document.querySelector('#detailContent')?.textContent.includes('Favorites (3)')");
   await evaluate(
@@ -580,7 +619,7 @@ async function runQa(page) {
     page,
     "document.querySelector('#favoriteBook')?.getAttribute('aria-pressed') === 'false' && document.querySelector('#favoriteChapter')?.getAttribute('aria-pressed') === 'false' && !document.querySelector('.verse-favorite-button.active')",
   );
-  pass("book chapter verse favorites and grouped panel");
+  pass("book chapter verse favorites, scope tag controls, and scripture mark hierarchy");
 
   const initialTheme = await evaluate(page, "document.documentElement.getAttribute('data-theme')");
   await click(page, "#themeToggle");

@@ -176,6 +176,8 @@ setTagAssertion(state, token, "favorite", true);
 setTagAssertion(state, tokenSpan, "favorite", true);
 assert.equal(favoriteBook.tag_id, "tag:favorite");
 assert.equal(getTagTargets(state, "favorite").length, 6);
+assert.deepEqual(getTargetTags(state, book), ["favorite"]);
+assert.deepEqual(getTargetTags(state, chapter), ["favorite"]);
 assert.deepEqual(state.tagStore.verse_tags["john:4:1"], ["favorite"]);
 assert.deepEqual(getTargetTags(state, token), ["favorite"]);
 assert.deepEqual(

@@ -3,11 +3,12 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [index, css, app, renderer, strongsView] = await Promise.all([
+const [index, css, app, renderer, tagsView, strongsView] = await Promise.all([
   readFile(new URL("../app/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/styles.css", import.meta.url), "utf8"),
   readFile(new URL("../app/app.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/chapter-renderer.js", import.meta.url), "utf8"),
+  readFile(new URL("../app/src/views/tags-view.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/views/strongs-view.js", import.meta.url), "utf8"),
 ]);
 
@@ -37,6 +38,13 @@ assert(
     /class="scope-favorite-label"/.test(index) &&
     /querySelector\("\.scope-favorite-star"\)/.test(app),
   "Book and chapter favorites must expose separately styled star and label spans.",
+);
+assert(
+  /id="bookTagControl" class="scope-tag-control"/.test(index) &&
+    /id="chapterTagControl" class="scope-tag-control"/.test(index) &&
+    /function syncScopeControls\(\)/.test(app) &&
+    /renderTargetTagPicker\(target/.test(app),
+  "Book and chapter tag controls must mount beside reader scope favorites and reuse target tag pickers.",
 );
 assert(
   /id="bookPickerButton"/.test(index) &&
@@ -110,10 +118,18 @@ assert(
 );
 assert(/setMorphologyHelp\(pos,\s*morphology,\s*language\)/.test(strongsView), "Strong's morphology must expose definition help.");
 assert(
+  /Study Marks by Scripture/.test(tagsView) &&
+    /Book\/chapter tags/.test(tagsView) &&
+    /English word\/phrase tags/.test(tagsView) &&
+    /Source-word tags/.test(tagsView) &&
+    /appendStudyMarksByScripture\(ctx,\s*wrap,\s*assertions/.test(tagsView),
+  "Study Marks must expose a scripture-centered book/chapter/verse hierarchy.",
+);
+assert(
   /styles\.css\?v=browser-comments-20260707b/.test(index) &&
     /app\.js\?v=browser-comments-20260707b/.test(index) &&
     !/full-audit-20260701|browser-comments-20260702/.test(index),
   "Browser-visible app and stylesheet entry points must use the current cache-buster key.",
 );
 
-console.log(JSON.stringify({ status: "ok", assertions: 36 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 38 }, null, 2));

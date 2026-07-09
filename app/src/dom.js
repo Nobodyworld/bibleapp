@@ -13,6 +13,8 @@ export const els = {
   title: document.querySelector("#chapterTitle"),
   favoriteBook: document.querySelector("#favoriteBook"),
   favoriteChapter: document.querySelector("#favoriteChapter"),
+  bookTagControl: document.querySelector("#bookTagControl"),
+  chapterTagControl: document.querySelector("#chapterTagControl"),
   content: document.querySelector("#chapterContent"),
   detailTitle: document.querySelector("#detailTitle"),
   detailContext: document.querySelector("#detailContext"),

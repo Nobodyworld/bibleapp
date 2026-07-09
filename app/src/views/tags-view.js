@@ -57,7 +57,7 @@ function targetReferenceLabel(ctx, target) {
   return label;
 }
 
-function targetPreview(target) {
+function targetPreview(ctx, target) {
   if (!target) return "";
   if (target.target_type === "text_span") return target.anchor?.text_snapshot || "Selected English text";
   if (target.target_type === "source_token") {
@@ -67,27 +67,78 @@ function targetPreview(target) {
   if (target.target_type === "source_token_span") {
     return (target.token_span?.source_snapshots || []).join(" ") || "Selected source-language phrase";
   }
+  if (target.target_type === "verse" || target.target_type === "verse_range") {
+    const ref = target.reference || {};
+    const chapter = ctx.state.verseBook?.chapters?.[ref.chapter];
+    const start = Number(ref.verse_start);
+    const end = Number(ref.verse_end || ref.verse_start);
+    if (!chapter?.[start]) return "";
+    if (end > start) {
+      return Array.from({ length: end - start + 1 }, (_, index) => chapter[start + index])
+        .filter(Boolean)
+        .join(" ");
+    }
+    return chapter[start] || "";
+  }
   return "";
 }
 
-function appendStudyMarkItem(ctx, li, assertions) {
+function targetTypeLabel(target) {
+  const labels = {
+    book: "Book",
+    chapter: "Chapter",
+    verse: "Verse",
+    verse_range: "Verse range",
+    text_span: "English phrase",
+    source_token: "Source word",
+    source_token_span: "Source phrase",
+  };
+  return labels[target?.target_type] || "Target";
+}
+
+function appendStudyMarkItem(ctx, li, assertions, options = {}) {
   const target = assertions[0]?.target;
   const top = document.createElement("div");
   top.className = "study-mark-item-top";
   const label = document.createElement("span");
   label.className = "study-mark-label";
-  label.textContent = targetReferenceLabel(ctx, target);
+  label.textContent = `${targetReferenceLabel(ctx, target)} · ${targetTypeLabel(target)}`;
   const ref = target?.reference || {};
-  const nav = ctx.createReferenceButton("Open", {
-    book_id: ref.book_id,
-    chapter: ref.chapter || 1,
-    verse_start: ref.verse_start || null,
-  });
-  top.append(label, nav);
+  const actions = document.createElement("div");
+  actions.className = "study-mark-actions";
+  if (ref.book_id) {
+    actions.append(
+      ctx.createReferenceButton("Open", {
+        book_id: ref.book_id,
+        chapter: ref.chapter || 1,
+        verse_start: ref.verse_start || null,
+      }),
+    );
+  }
+  if (target) {
+    const edit = document.createElement("button");
+    edit.type = "button";
+    edit.className = "mini-button";
+    edit.textContent = "Edit tags";
+    actions.append(
+      ctx.detailViews.renderTargetTagPicker(target, {
+        trigger: edit,
+        align: "right",
+        label: targetReferenceLabel(ctx, target),
+        preview: targetPreview(ctx, target),
+        onChange: () => {
+          ctx.renderChapter?.();
+          ctx.syncFavoriteButtons?.();
+          options.onChange?.();
+        },
+      }),
+    );
+  }
+  top.append(label, actions);
   li.className = "study-mark-item";
   li.append(top);
 
-  const preview = targetPreview(target);
+  const preview = targetPreview(ctx, target);
   if (preview) {
     const text = document.createElement("p");
     text.className = "study-mark-preview";
@@ -95,25 +146,213 @@ function appendStudyMarkItem(ctx, li, assertions) {
     li.append(text);
   }
 
-  const badges = document.createElement("div");
-  badges.className = "target-tag-badges";
+  const badges = target ? ctx.detailViews.renderTargetTagBadges(target, { includeFavorite: true }) : null;
+  if (badges) li.append(badges);
+}
+
+function groupAssertionsByTarget(assertions) {
+  const grouped = new Map();
   assertions.forEach((assertion) => {
-    const tag = tagForAssertion(ctx.state, assertion);
-    if (!tag) return;
-    const badge = document.createElement("span");
-    badge.className = "target-tag-badge";
-    badge.style.setProperty("--tag-color", tag.color || "#696f78");
-    badge.title = [tag.label, tag.description].filter(Boolean).join(" - ");
-    const icon = document.createElement("span");
-    icon.className = "tag-badge-icon";
-    icon.textContent = tagIcon(tag);
-    const badgeLabel = document.createElement("span");
-    badgeLabel.className = "target-tag-badge-label";
-    badgeLabel.textContent = tag.label;
-    badge.append(icon, badgeLabel);
-    badges.append(badge);
+    if (!assertion.target_id || !assertion.target) return;
+    if (!grouped.has(assertion.target_id)) grouped.set(assertion.target_id, []);
+    grouped.get(assertion.target_id).push(assertion);
   });
-  if (badges.childElementCount) li.append(badges);
+  return [...grouped.values()];
+}
+
+function targetSortValue(assertions) {
+  const target = assertions[0]?.target || {};
+  const ref = target.reference || {};
+  const typeOrder = {
+    book: 0,
+    chapter: 1,
+    verse: 2,
+    verse_range: 3,
+    text_span: 4,
+    source_token: 5,
+    source_token_span: 6,
+  };
+  return [
+    String(ref.book_id || ""),
+    Number(ref.chapter || 0),
+    Number(ref.verse_start || 0),
+    typeOrder[target.target_type] ?? 9,
+    target.target_id || assertions[0]?.target_id || "",
+  ];
+}
+
+function compareTargetGroups(a, b) {
+  const left = targetSortValue(a);
+  const right = targetSortValue(b);
+  for (let index = 0; index < left.length; index += 1) {
+    if (typeof left[index] === "number" && left[index] !== right[index]) return left[index] - right[index];
+    const comparison = String(left[index]).localeCompare(String(right[index]));
+    if (comparison) return comparison;
+  }
+  return 0;
+}
+
+function createStudyMarkList(ctx, groups, options = {}) {
+  return createDetailList(
+    groups.slice().sort(compareTargetGroups),
+    (li, assertions) => appendStudyMarkItem(ctx, li, assertions, options),
+  );
+}
+
+function createStudyDetails(className, label, count) {
+  const details = document.createElement("details");
+  details.className = className;
+  details.open = true;
+  const summary = document.createElement("summary");
+  summary.textContent = `${label} (${count})`;
+  details.append(summary);
+  return details;
+}
+
+function createScriptureBuckets(ctx, assertions) {
+  const books = new Map();
+  const ensureBook = (ref) => {
+    const bookId = ref.book_id || "unknown";
+    if (!books.has(bookId)) {
+      books.set(bookId, {
+        id: bookId,
+        label: ctx.findBook(bookId)?.name || bookId,
+        targets: new Set(),
+        bookTags: [],
+        chapters: new Map(),
+      });
+    }
+    return books.get(bookId);
+  };
+  const ensureChapter = (book, ref) => {
+    const chapter = Number(ref.chapter || 0);
+    if (!book.chapters.has(chapter)) {
+      book.chapters.set(chapter, {
+        number: chapter,
+        targets: new Set(),
+        chapterTags: [],
+        verses: new Map(),
+      });
+    }
+    return book.chapters.get(chapter);
+  };
+  const ensureVerse = (chapter, ref) => {
+    const verse = Number(ref.verse_start || 0);
+    if (!chapter.verses.has(verse)) {
+      chapter.verses.set(verse, {
+        number: verse,
+        targets: new Set(),
+        verseTags: [],
+        textTags: [],
+        sourceTags: [],
+      });
+    }
+    return chapter.verses.get(verse);
+  };
+
+  groupAssertionsByTarget(assertions).forEach((group) => {
+    const target = group[0]?.target;
+    const ref = target?.reference || {};
+    if (!ref.book_id) return;
+    const book = ensureBook(ref);
+    book.targets.add(target.target_id);
+
+    if (target.target_type === "book") {
+      book.bookTags.push(group);
+      return;
+    }
+
+    const chapter = ensureChapter(book, ref);
+    chapter.targets.add(target.target_id);
+    if (target.target_type === "chapter") {
+      chapter.chapterTags.push(group);
+      return;
+    }
+
+    const verse = ensureVerse(chapter, ref);
+    verse.targets.add(target.target_id);
+    if (target.target_type === "verse" || target.target_type === "verse_range") {
+      verse.verseTags.push(group);
+      return;
+    }
+    if (target.target_type === "text_span") {
+      verse.textTags.push(group);
+      return;
+    }
+    if (target.target_type === "source_token" || target.target_type === "source_token_span") {
+      verse.sourceTags.push(group);
+    }
+  });
+
+  books.forEach((book) => {
+    book.chapters.forEach((chapter) => {
+      chapter.verses.forEach((verse) => {
+        verse.targets.forEach((id) => {
+          chapter.targets.add(id);
+          book.targets.add(id);
+        });
+      });
+      chapter.targets.forEach((id) => book.targets.add(id));
+    });
+  });
+  return books;
+}
+
+function appendStudyCategory(ctx, parent, label, groups, options = {}) {
+  if (!groups.length) return;
+  const heading = document.createElement("h6");
+  heading.textContent = `${label} (${groups.length})`;
+  parent.append(heading, createStudyMarkList(ctx, groups, options));
+}
+
+function appendStudyMarksByScripture(ctx, wrap, assertions, options = {}) {
+  const section = document.createElement("section");
+  section.className = "study-scripture-index";
+  const title = document.createElement("h4");
+  title.textContent = "Study Marks by Scripture";
+  section.append(title);
+
+  if (!assertions.length) {
+    const empty = document.createElement("p");
+    empty.textContent = "No study marks yet. Mark a book, chapter, verse, selected phrase, or source word from the reader.";
+    section.append(empty);
+    wrap.append(section);
+    return;
+  }
+
+  const books = [...createScriptureBuckets(ctx, assertions).values()].sort((a, b) => a.label.localeCompare(b.label));
+  books.forEach((book) => {
+    const bookDetails = createStudyDetails("study-scripture-book", book.label, book.targets.size);
+    appendStudyCategory(ctx, bookDetails, "Book tags", book.bookTags, options);
+
+    [...book.chapters.values()]
+      .sort((a, b) => a.number - b.number)
+      .forEach((chapter) => {
+        const chapterDetails = createStudyDetails(
+          "study-scripture-chapter",
+          chapter.number ? `${book.label} ${chapter.number}` : `${book.label} chapter`,
+          chapter.targets.size,
+        );
+        appendStudyCategory(ctx, chapterDetails, "Book/chapter tags", chapter.chapterTags, options);
+        [...chapter.verses.values()]
+          .sort((a, b) => a.number - b.number)
+          .forEach((verse) => {
+            const verseDetails = createStudyDetails(
+              "study-scripture-verse",
+              verse.number ? `${book.label} ${chapter.number}:${verse.number}` : `${book.label} ${chapter.number}`,
+              verse.targets.size,
+            );
+            appendStudyCategory(ctx, verseDetails, "Verse tags", verse.verseTags, options);
+            appendStudyCategory(ctx, verseDetails, "English word/phrase tags", verse.textTags, options);
+            appendStudyCategory(ctx, verseDetails, "Source-word tags", verse.sourceTags, options);
+            chapterDetails.append(verseDetails);
+          });
+        bookDetails.append(chapterDetails);
+      });
+    section.append(bookDetails);
+  });
+
+  wrap.append(section);
 }
 
 export function createTagsView(ctx) {
@@ -714,7 +953,7 @@ export function createTagsView(ctx) {
       const groupTitle = document.createElement("h5");
       groupTitle.textContent = `${groupLabel} (${groupedByTarget.size})`;
       section.append(groupTitle);
-      section.append(createDetailList([...groupedByTarget.values()], appendStudyMarkItem.bind(null, ctx)));
+      section.append(createStudyMarkList(ctx, [...groupedByTarget.values()], { onChange: showTagIndex }));
     });
     wrap.append(section);
   }
@@ -734,6 +973,7 @@ export function createTagsView(ctx) {
     wrap.append(heading, intro, favoritesButton);
 
     const assertions = activeTagAssertions(ctx.state);
+    appendStudyMarksByScripture(ctx, wrap, assertions, { onChange: showTagIndex });
     appendAllMarkedItems(wrap, assertions);
 
     const manage = document.createElement("details");
@@ -791,7 +1031,7 @@ export function createTagsView(ctx) {
       const title = document.createElement("h4");
       title.textContent = `${groupLabel} (${matching.length})`;
       wrap.append(title);
-      wrap.append(createDetailList(matching.map((assertion) => [assertion]), appendStudyMarkItem.bind(null, ctx)));
+      wrap.append(createStudyMarkList(ctx, matching.map((assertion) => [assertion]), { onChange: showFavorites }));
     });
     setDetail("Favorites", wrap);
   }
