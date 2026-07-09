@@ -1030,8 +1030,8 @@ button:disabled {
 .verse-favorite-button.active,
 .verse-favorite-button:hover,
 .verse-favorite-button:focus-visible {
-  border-color: color-mix(in srgb, #a66b00 35%, transparent);
-  background: color-mix(in srgb, #a66b00 10%, transparent);
+  border-color: rgba(166, 107, 0, 0.35);
+  background: rgba(166, 107, 0, 0.1);
   color: #a66b00;
   opacity: 1;
   visibility: visible;
@@ -1200,7 +1200,7 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   border-radius: 3px;
   background: color-mix(in srgb, var(--accent) 11%, transparent);
   text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  text-decoration-color: rgba(37, 99, 95, 0.55);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.16em;
 }
@@ -1389,7 +1389,6 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   font-weight: 600;
   line-height: 1.35;
   pointer-events: auto;
-  scrollbar-width: thin;
   white-space: normal;
 }
 
@@ -4121,7 +4120,7 @@ button {
 
 :root[data-theme="dark"] .translation-rendering-row.exact {
   background: color-mix(in srgb, var(--accent) 10%, var(--panel)) !important;
-  border-color: color-mix(in srgb, var(--accent) 34%, var(--line)) !important;
+  border-color: rgba(78, 205, 193, 0.34) !important;
 }
 
 :root[data-theme="dark"] .gematria-total span,
