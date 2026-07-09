@@ -1170,7 +1170,8 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   display: none;
 }
 
-.selection-action-menu button {
+.selection-action-menu > button,
+.selection-action-menu > .target-tag-picker-menu > .target-tag-picker-trigger {
   min-height: 28px;
   border: 0;
   border-radius: 6px;
@@ -1180,9 +1181,15 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   font-weight: 800;
 }
 
-.selection-action-menu button:hover,
-.selection-action-menu button:focus-visible {
+.selection-action-menu > button:hover,
+.selection-action-menu > button:focus-visible,
+.selection-action-menu > .target-tag-picker-menu > .target-tag-picker-trigger:hover,
+.selection-action-menu > .target-tag-picker-menu > .target-tag-picker-trigger:focus-visible {
   background: rgba(37, 99, 95, 0.1);
+}
+
+.selection-action-menu .target-tag-picker-menu {
+  display: inline-flex;
 }
 
 .reader-text-segment {
@@ -1197,10 +1204,11 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 }
 
 .tagged-text-span {
+  --tag-color: var(--accent);
   border-radius: 3px;
-  background: rgba(37, 99, 95, 0.11);
+  background: rgba(31, 122, 77, 0.14);
   text-decoration: underline;
-  text-decoration-color: rgba(37, 99, 95, 0.55);
+  text-decoration-color: var(--tag-color);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.16em;
 }
@@ -2785,6 +2793,26 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   gap: 5px;
 }
 
+button.target-tag-badges {
+  align-items: center;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  line-height: 1;
+}
+
+button.target-tag-badges:hover,
+button.target-tag-badges:focus-visible {
+  background: transparent;
+  box-shadow: none;
+  outline: 2px solid rgba(37, 99, 95, 0.35);
+  outline-offset: 2px;
+}
+
 .target-tag-badge {
   display: inline-flex;
   align-items: center;
@@ -2803,6 +2831,39 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
 
 button.target-tag-badge:hover,
 button.target-tag-badge:focus-visible {
+  background: var(--panel-alt);
+}
+
+.target-tag-picker-menu {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: 0.2em;
+}
+
+.target-tag-picker-menu .tag-picker-popover {
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 90;
+}
+
+.target-tag-picker-menu[data-menu-align="right"] .tag-picker-popover {
+  right: 0;
+  left: auto;
+}
+
+.target-tag-picker-preview,
+.tag-picker-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.target-tag-picker-preview {
+  padding: 7px 8px;
+  border-left: 3px solid var(--tag-color, var(--accent));
+  border-radius: 6px;
   background: var(--panel-alt);
 }
 
@@ -3082,6 +3143,9 @@ button.target-tag-badge:focus-visible {
   text-align: left;
 }
 
+.tag-picker-menu-wrap:hover > .tag-picker-popover,
+.tag-picker-menu-wrap:focus-within > .tag-picker-popover,
+.tag-picker-menu-wrap[data-menu-open="true"] > .tag-picker-popover,
 .verse-number-menu-wrap:hover .tag-picker-popover,
 .verse-number-menu-wrap:focus-within .tag-picker-popover,
 .verse-number-menu-wrap[data-menu-open="true"] .tag-picker-popover {
@@ -3089,6 +3153,7 @@ button.target-tag-badge:focus-visible {
   gap: 5px;
 }
 
+.tag-picker-menu-wrap[data-menu-closed="true"] > .tag-picker-popover,
 .verse-number-menu-wrap[data-menu-closed="true"] .tag-picker-popover {
   display: none;
 }
@@ -3130,6 +3195,29 @@ button.target-tag-badge:focus-visible {
   border-color: var(--tag-color);
   background: var(--panel-alt);
   color: var(--tag-color);
+}
+
+.tag-picker-manage {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  margin-top: 2px;
+  padding: 3px 8px;
+  border: 1px dashed var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.tag-picker-manage:hover,
+.tag-picker-manage:focus-visible {
+  border-color: var(--accent);
+  background: var(--panel-alt);
+  color: var(--accent-dark);
+  outline: none;
 }
 
 .tag-editor {
@@ -3926,6 +4014,8 @@ button {
     .verse-context-tab
   ):not(.parallel-verse):not(.fn-marker):not(.reader-picker-button):not(
     .reader-picker-option
+  ):not(.tag-picker-option):not(.tag-editor-toggle):not(.tag-picker-manage):not(
+    .target-tag-picker-trigger
   ) {
   background: var(--bg-elevated) !important;
   color: var(--text) !important;
@@ -3940,6 +4030,8 @@ button {
     .verse-context-tab
   ):not(.parallel-verse):not(.fn-marker):not(.reader-picker-button):not(
     .reader-picker-option
+  ):not(.tag-picker-option):not(.tag-editor-toggle):not(.tag-picker-manage):not(
+    .target-tag-picker-trigger
   ):hover,
 :root[data-theme="dark"]
   button:not(.verse-study-button):not(.verse-number):not(
@@ -3948,6 +4040,8 @@ button {
     .verse-context-tab
   ):not(.parallel-verse):not(.fn-marker):not(.reader-picker-button):not(
     .reader-picker-option
+  ):not(.tag-picker-option):not(.tag-editor-toggle):not(.tag-picker-manage):not(
+    .target-tag-picker-trigger
   ):focus-visible {
   background: var(--panel) !important;
   border-color: var(--accent) !important;
@@ -4031,7 +4125,8 @@ button {
   background: rgba(24, 28, 33, 0.98);
 }
 
-:root[data-theme="dark"] .selection-action-menu button {
+:root[data-theme="dark"] .selection-action-menu > button,
+:root[data-theme="dark"] .selection-action-menu > .target-tag-picker-menu > .target-tag-picker-trigger {
   color: var(--text);
 }
 
@@ -4052,6 +4147,7 @@ button {
 
 :root[data-theme="dark"] .tagged-text-span {
   background: rgba(78, 205, 193, 0.2);
+  text-decoration-color: var(--tag-color, var(--accent));
 }
 
 /* Dark mode link-button and context highlighting */
@@ -4172,7 +4268,9 @@ html[data-theme="light"]
     .verse-number-menu
   ):not(.link-button):not(.compact-link):not(.fn-marker):not(
     .reader-picker-button
-  ):not(.reader-picker-option) {
+  ):not(.reader-picker-option):not(.tag-picker-option):not(
+    .tag-editor-toggle
+  ):not(.tag-picker-manage):not(.target-tag-picker-trigger) {
   background: var(--panel) !important;
   color: var(--text) !important;
   border-color: var(--line) !important;
@@ -4184,13 +4282,17 @@ html[data-theme="light"]
     .verse-number-menu
   ):not(.link-button):not(.compact-link):not(.fn-marker):not(
     .reader-picker-button
-  ):not(.reader-picker-option):hover,
+  ):not(.reader-picker-option):not(.tag-picker-option):not(
+    .tag-editor-toggle
+  ):not(.tag-picker-manage):not(.target-tag-picker-trigger):hover,
 html[data-theme="light"]
   button:not(.verse-study-button):not(.verse-number):not(
     .verse-number-menu
   ):not(.link-button):not(.compact-link):not(.fn-marker):not(
     .reader-picker-button
-  ):not(.reader-picker-option):focus-visible {
+  ):not(.reader-picker-option):not(.tag-picker-option):not(
+    .tag-editor-toggle
+  ):not(.tag-picker-manage):not(.target-tag-picker-trigger):focus-visible {
   background: var(--bg-elevated) !important;
   border-color: var(--accent) !important;
   color: var(--text) !important;

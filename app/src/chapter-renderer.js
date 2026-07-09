@@ -421,20 +421,20 @@ export function createChapterRenderer(ctx) {
       },
     });
 
-    const tags = document.createElement("button");
-    tags.type = "button";
-    tags.textContent = "Tags";
-    tags.setAttribute("aria-label", `Tag selected text: ${range.text}`);
-    tags.addEventListener("click", () => {
-      clearSelection();
-      ctx.detailViews.showTargetTagEditor(target, {
-        label: `${reference} — “${range.text}”`,
-        preview: range.text,
-        forceHistory: true,
-        lock: true,
-        onChange: () => ctx.renderChapter(),
-      });
+    const tagsButton = document.createElement("button");
+    tagsButton.type = "button";
+    tagsButton.textContent = "Tags";
+    tagsButton.setAttribute("aria-label", `Tag selected text: ${range.text}`);
+    const tags = ctx.detailViews.renderTargetTagPicker(target, {
+      trigger: tagsButton,
+      label: `${reference} — “${range.text}”`,
+      preview: range.text,
+      onChange: () => {
+        clearSelection();
+        ctx.renderChapter();
+      },
     });
+    tags.querySelector(".tag-picker-manage")?.addEventListener("click", clearSelection);
 
     const red = document.createElement("button");
     red.type = "button";
@@ -499,12 +499,25 @@ export function createChapterRenderer(ctx) {
     };
   }
 
+  function tagColorForId(tagId) {
+    const tags = ctx.state.tagStore?.tags || {};
+    return tags[tagId]?.color || Object.values(tags).find((tag) => tag.tag_definition_id === tagId)?.color || null;
+  }
+
+  function tagColorForTargets(taggedTargets) {
+    const tagIds = taggedTargets.flatMap((entry) => entry.tag_ids || []);
+    const primaryTagId = tagIds.find((tagId) => tagId !== "favorite") || tagIds[0];
+    return primaryTagId ? tagColorForId(primaryTagId) : null;
+  }
+
   function markTextSegment(span, start, end, taggedTargets) {
     span.dataset.verseCharStart = String(start);
     span.dataset.verseCharEnd = String(end);
     if (!taggedTargets.length) return;
     span.classList.add("tagged-text-span");
     span.dataset.taggedTargetCount = String(taggedTargets.length);
+    const tagColor = tagColorForTargets(taggedTargets);
+    if (tagColor) span.style.setProperty("--tag-color", tagColor);
   }
 
   function appendTextSegment(parent, text, isRed, start, end, taggedTargets) {
@@ -736,7 +749,7 @@ export function createChapterRenderer(ctx) {
     const numberWrap = document.createElement("div");
     numberWrap.className = "verse-number-wrap";
     const numberMenuWrap = document.createElement("div");
-    numberMenuWrap.className = "verse-number-menu-wrap";
+    numberMenuWrap.className = "verse-number-menu-wrap tag-picker-menu-wrap";
     wireVerseTagMenu(numberMenuWrap);
 
     const body = document.createElement("div");

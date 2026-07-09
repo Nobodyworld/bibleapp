@@ -117,6 +117,85 @@ function appendStudyMarkItem(ctx, li, assertions) {
 }
 
 export function createTagsView(ctx) {
+  let activeTargetTagMenu = null;
+  let targetTagMenuCloseTimer = null;
+  let targetTagMenuDismissalBound = false;
+
+  function availableTagsForTarget(target) {
+    return Object.values(ctx.state.tagStore.tags || {}).filter(
+      (tag) =>
+        tag.status !== "retired" &&
+        Array.isArray(tag.allowed_target_types) &&
+        tag.allowed_target_types.includes(target?.target_type),
+    );
+  }
+
+  function setTargetTagMenuExpanded(menu, expanded) {
+    menu.querySelectorAll(".target-tag-picker-trigger").forEach((trigger) => {
+      trigger.setAttribute("aria-expanded", expanded ? "true" : "false");
+    });
+  }
+
+  function cancelTargetTagMenuClose() {
+    if (!targetTagMenuCloseTimer) return;
+    window.clearTimeout(targetTagMenuCloseTimer);
+    targetTagMenuCloseTimer = null;
+  }
+
+  function closeTargetTagMenu(menu = activeTargetTagMenu) {
+    if (!menu) return;
+    cancelTargetTagMenuClose();
+    menu.dataset.menuClosed = "true";
+    delete menu.dataset.menuOpen;
+    setTargetTagMenuExpanded(menu, false);
+    if (activeTargetTagMenu === menu) activeTargetTagMenu = null;
+  }
+
+  function openTargetTagMenu(menu) {
+    if (!menu) return;
+    cancelTargetTagMenuClose();
+    if (activeTargetTagMenu && activeTargetTagMenu !== menu) closeTargetTagMenu(activeTargetTagMenu);
+    activeTargetTagMenu = menu;
+    delete menu.dataset.menuClosed;
+    menu.dataset.menuOpen = "true";
+    setTargetTagMenuExpanded(menu, true);
+  }
+
+  function scheduleTargetTagMenuClose(menu) {
+    cancelTargetTagMenuClose();
+    targetTagMenuCloseTimer = window.setTimeout(() => {
+      targetTagMenuCloseTimer = null;
+      if (menu.matches(":hover") || menu.contains(document.activeElement)) return;
+      closeTargetTagMenu(menu);
+    }, 160);
+  }
+
+  function ensureTargetTagMenuDismissal() {
+    if (targetTagMenuDismissalBound) return;
+    targetTagMenuDismissalBound = true;
+    document.addEventListener("pointerdown", (event) => {
+      if (!activeTargetTagMenu || activeTargetTagMenu.contains(event.target)) return;
+      closeTargetTagMenu(activeTargetTagMenu);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !activeTargetTagMenu) return;
+      event.stopPropagation();
+      closeTargetTagMenu(activeTargetTagMenu);
+      document.activeElement?.blur?.();
+    });
+  }
+
+  function wireTargetTagMenu(menu) {
+    ensureTargetTagMenuDismissal();
+    menu.addEventListener("pointerenter", () => openTargetTagMenu(menu));
+    menu.addEventListener("pointerleave", () => scheduleTargetTagMenuClose(menu));
+    menu.addEventListener("focusin", () => openTargetTagMenu(menu));
+    menu.addEventListener("focusout", (event) => {
+      if (menu.contains(event.relatedTarget)) return;
+      scheduleTargetTagMenuClose(menu);
+    });
+  }
+
   function createFavoriteButton(target, options = {}) {
     const id = targetId(target);
     let active = id ? getTagTargets(ctx.state, "favorite").includes(id) : false;
@@ -192,36 +271,132 @@ export function createTagsView(ctx) {
     setDetail("Tags", wrap, options);
   }
 
+  function createTargetTagPickerPopover(target, options = {}) {
+    const wrap = document.createElement("div");
+    wrap.className = "tag-picker-popover target-tag-picker-popover";
+    wrap.addEventListener("click", (event) => event.stopPropagation());
+
+    const title = document.createElement("div");
+    title.className = "tag-picker-title";
+    title.textContent = options.title || options.label || "Target tags";
+    wrap.append(title);
+
+    if (options.preview) {
+      const preview = document.createElement("p");
+      preview.className = "target-tag-picker-preview";
+      preview.textContent = options.preview;
+      wrap.append(preview);
+    }
+
+    const activeTags = new Set(getTargetTags(ctx.state, target));
+    const tags = availableTagsForTarget(target);
+    if (!tags.length) {
+      const empty = document.createElement("p");
+      empty.className = "tag-picker-empty";
+      empty.textContent = "No tags are available for this target.";
+      wrap.append(empty);
+    }
+
+    tags.forEach((tag) => {
+      let active = activeTags.has(tag.id);
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = active ? "tag-picker-option active" : "tag-picker-option";
+      button.style.setProperty("--tag-color", tag.color || "#696f78");
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+      button.setAttribute("aria-label", `${active ? "Remove" : "Add"} ${tag.label} tag`);
+      button.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const assertion = setTagAssertion(ctx.state, target, tag.id, !active);
+        active = Boolean(assertion?.active);
+        button.className = active ? "tag-picker-option active" : "tag-picker-option";
+        button.setAttribute("aria-pressed", active ? "true" : "false");
+        button.setAttribute("aria-label", `${active ? "Remove" : "Add"} ${tag.label} tag`);
+        if (active) activeTags.add(tag.id);
+        else activeTags.delete(tag.id);
+        if (options.onChange) options.onChange(assertion);
+        else ctx.renderChapter?.();
+      });
+      const icon = document.createElement("span");
+      icon.className = "tag-picker-icon";
+      icon.textContent = tagIcon(tag);
+      const text = document.createElement("span");
+      text.textContent = tag.label;
+      button.append(icon, text);
+      wrap.append(button);
+    });
+
+    const manage = document.createElement("button");
+    manage.type = "button";
+    manage.className = "tag-picker-manage";
+    manage.textContent = options.manageLabel || "Manage tags";
+    manage.addEventListener("click", (event) => {
+      event.stopPropagation();
+      closeTargetTagMenu(manage.closest(".target-tag-picker-menu"));
+      showTargetTagEditor(target, {
+        label: options.label,
+        preview: options.preview,
+        forceHistory: true,
+        lock: true,
+        onChange: options.onChange,
+      });
+    });
+    wrap.append(manage);
+    return wrap;
+  }
+
+  function renderTargetTagPicker(target, options = {}) {
+    const menu = document.createElement("div");
+    menu.className = ["target-tag-picker-menu", "tag-picker-menu-wrap", options.className || ""]
+      .filter(Boolean)
+      .join(" ");
+    if (options.align === "right") menu.dataset.menuAlign = "right";
+
+    const trigger = options.trigger || document.createElement("button");
+    if (trigger.tagName === "BUTTON") trigger.type = "button";
+    trigger.classList.add("target-tag-picker-trigger");
+    trigger.setAttribute("aria-haspopup", "menu");
+    trigger.setAttribute("aria-expanded", "false");
+    if (!trigger.getAttribute("aria-label")) {
+      trigger.setAttribute("aria-label", `${options.label || "Target"} tags`);
+    }
+    trigger.addEventListener("click", (event) => {
+      event.stopPropagation();
+      if (menu.dataset.menuOpen === "true") closeTargetTagMenu(menu);
+      else openTargetTagMenu(menu);
+    });
+
+    menu.append(trigger, createTargetTagPickerPopover(target, options));
+    wireTargetTagMenu(menu);
+    return menu;
+  }
+
   function renderTargetTagBadges(target, options = {}) {
     const tagIds = getTargetTags(ctx.state, target).filter(
       (tagId) => options.includeFavorite || tagId !== "favorite",
     );
     if (!tagIds.length) return null;
-    const wrap = document.createElement("div");
-    wrap.className = ["target-tag-badges", options.className || "", options.compact ? "compact" : ""]
+
+    const wrap = document.createElement(options.interactive ? "button" : "div");
+    if (options.interactive) wrap.type = "button";
+    wrap.className = ["target-tag-badges", options.compact ? "compact" : "", options.interactive ? "interactive" : ""]
       .filter(Boolean)
       .join(" ");
+    wrap.title = tagIds
+      .map((tagId) => ctx.state.tagStore.tags[tagId]?.label)
+      .filter(Boolean)
+      .join(", ");
+    if (options.interactive) {
+      wrap.setAttribute("aria-label", `${options.label || "Tagged target"}: edit tags`);
+    }
+
     tagIds.forEach((tagId) => {
       const tag = ctx.state.tagStore.tags[tagId];
       if (!tag) return;
-      const badge = document.createElement(options.interactive ? "button" : "span");
-      if (options.interactive) badge.type = "button";
+      const badge = document.createElement("span");
       badge.className = "target-tag-badge";
       badge.style.setProperty("--tag-color", tag.color || "#696f78");
       badge.title = [tag.label, tag.description].filter(Boolean).join(" - ");
-      badge.setAttribute("aria-label", `${options.label || "Tagged target"}: ${tag.label}. Edit tags`);
-      if (options.interactive) {
-        badge.addEventListener("click", (event) => {
-          event.stopPropagation();
-          showTargetTagEditor(target, {
-            label: options.label,
-            preview: options.preview,
-            forceHistory: true,
-            lock: true,
-            onChange: options.onChange,
-          });
-        });
-      }
       const icon = document.createElement("span");
       icon.className = "tag-badge-icon";
       icon.textContent = tagIcon(tag);
@@ -231,7 +406,18 @@ export function createTagsView(ctx) {
       badge.append(icon, label);
       wrap.append(badge);
     });
-    return wrap.childElementCount ? wrap : null;
+    if (!wrap.childElementCount) return null;
+    if (!options.interactive) {
+      wrap.className = ["target-tag-badges", options.className || "", options.compact ? "compact" : ""]
+        .filter(Boolean)
+        .join(" ");
+      return wrap;
+    }
+    return renderTargetTagPicker(target, {
+      ...options,
+      trigger: wrap,
+      className: ["target-tag-badge-menu", options.className || ""].filter(Boolean).join(" "),
+    });
   }
 
   function renderTagBadges(key) {
@@ -614,6 +800,7 @@ export function createTagsView(ctx) {
     createFavoriteButton,
     renderInlineTagPicker,
     renderTagBadges,
+    renderTargetTagPicker,
     renderTargetTagBadges,
     showFavorites,
     showTargetTagEditor,
