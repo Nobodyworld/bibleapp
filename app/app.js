@@ -319,6 +319,10 @@ function currentFavoriteTargets() {
   };
 }
 
+function currentScopeTargets() {
+  return currentFavoriteTargets();
+}
+
 function syncFavoriteButton(button, target, label) {
   if (!button || !target) return;
   const active = getTagTargets(state, "favorite").includes(target.target_id);
@@ -335,9 +339,52 @@ function syncFavoriteButton(button, target, label) {
 }
 
 function syncFavoriteButtons() {
-  const targets = currentFavoriteTargets();
+  const targets = currentScopeTargets();
   syncFavoriteButton(els.favoriteBook, targets.book, "book");
   syncFavoriteButton(els.favoriteChapter, targets.chapter, "chapter");
+}
+
+function renderScopeTagControl(mount, target, label, options = {}) {
+  if (!mount || !target || !detailViews?.renderTargetTagPicker) return;
+  mount.replaceChildren();
+  const refresh = () => {
+    syncScopeControls();
+    renderer.renderChapter();
+  };
+
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "scope-tag-button";
+  trigger.textContent = `${label} tags`;
+  trigger.setAttribute("aria-label", `Edit current ${label.toLowerCase()} tags`);
+  mount.append(
+    detailViews.renderTargetTagPicker(target, {
+      trigger,
+      align: options.align || "left",
+      label: `Current ${label.toLowerCase()}`,
+      title: `${label} tags`,
+      onChange: refresh,
+    }),
+  );
+
+  const badges = detailViews.renderTargetTagBadges(target, {
+    className: "scope-target-badges",
+    compact: true,
+    includeFavorite: false,
+    interactive: true,
+    align: options.align || "left",
+    label: `Current ${label.toLowerCase()}`,
+    onChange: refresh,
+  });
+  if (badges) mount.append(badges);
+}
+
+function syncScopeControls() {
+  const targets = currentScopeTargets();
+  syncFavoriteButton(els.favoriteBook, targets.book, "book");
+  syncFavoriteButton(els.favoriteChapter, targets.chapter, "chapter");
+  renderScopeTagControl(els.bookTagControl, targets.book, "Book");
+  renderScopeTagControl(els.chapterTagControl, targets.chapter, "Chapter");
 }
 
 function syncToolButtons() {
@@ -400,6 +447,8 @@ function showHomePage(options = {}) {
   els.title.textContent = "Bible App Home";
   if (els.favoriteBook) els.favoriteBook.hidden = true;
   if (els.favoriteChapter) els.favoriteChapter.hidden = true;
+  if (els.bookTagControl) els.bookTagControl.hidden = true;
+  if (els.chapterTagControl) els.chapterTagControl.hidden = true;
   els.content.replaceChildren();
   const home = document.createElement("div");
   home.className = "home-view";
@@ -457,8 +506,10 @@ async function loadBookData() {
   fillChapterOptions();
   if (els.favoriteBook) els.favoriteBook.hidden = false;
   if (els.favoriteChapter) els.favoriteChapter.hidden = false;
+  if (els.bookTagControl) els.bookTagControl.hidden = false;
+  if (els.chapterTagControl) els.chapterTagControl.hidden = false;
   renderer.renderChapter();
-  syncFavoriteButtons();
+  syncScopeControls();
 
   if (state.chapter !== requestedChapter) {
     writeReaderRoute(currentRoute(), { replace: true });
@@ -609,16 +660,16 @@ function bindEvents() {
   els.nextFloat?.addEventListener("click", () => void goToChapter(1));
   els.homeButton?.addEventListener("click", () => void navigateToRoute({ home: true }, { writeUrl: true }));
   els.favoriteBook?.addEventListener("click", () => {
-    const target = currentFavoriteTargets().book;
+    const target = currentScopeTargets().book;
     const active = getTagTargets(state, "favorite").includes(target.target_id);
     setTagAssertion(state, target, "favorite", !active);
-    syncFavoriteButtons();
+    syncScopeControls();
   });
   els.favoriteChapter?.addEventListener("click", () => {
-    const target = currentFavoriteTargets().chapter;
+    const target = currentScopeTargets().chapter;
     const active = getTagTargets(state, "favorite").includes(target.target_id);
     setTagAssertion(state, target, "favorite", !active);
-    syncFavoriteButtons();
+    syncScopeControls();
   });
 
   // Theme toggle functionality
