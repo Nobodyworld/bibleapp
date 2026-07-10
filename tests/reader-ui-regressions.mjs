@@ -72,10 +72,12 @@ assert(
   "Selecting a book in the app-owned picker must open chapter selection after navigation.",
 );
 assert(
-  /freezeReaderHighlight\(token\)/.test(pickerFlow) &&
-    /MutationObserver\(\(\) => applyFrozenReaderHighlight\(\)\)/.test(pickerFlow) &&
-    /#clearDetail/.test(pickerFlow) &&
-    /READER_BACKGROUND_RESET_SELECTOR/.test(pickerFlow),
+  /frozenReaderContext/.test(pickerFlow) &&
+    /captureFrozenReaderContext/.test(pickerFlow) &&
+    /findFrozenReaderToken/.test(pickerFlow) &&
+    /FROZEN_HIGHLIGHT_REFRESH_DELAYS_MS/.test(pickerFlow) &&
+    /READER_BACKGROUND_RESET_SELECTOR/.test(pickerFlow) &&
+    /MutationObserver\(\(\) => \{[\s\S]*?requestAnimationFrame\(applyFrozenReaderHighlight\)/.test(pickerFlow),
   "Clicked reader Strong's words must stay frozen while browsing side-panel details until an explicit unfreeze action.",
 );
 assert(
@@ -124,7 +126,7 @@ assert(
   "Hebrew marks must appear before letters/gematria and keep the studied word centered.",
 );
 assert(
-  /\.language-breakdown\.hebrew \.mark-list\s*{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(auto-fit, minmax\(96px, 1fr\)\);[\s\S]*?overflow-x:\s*visible;/.test(stylesPolish) &&
+  /\.language-breakdown\.hebrew \.mark-list\s*{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(auto-fit, minmax\(96px, 1fr\)\);[\s\S]*?direction:\s*rtl;[\s\S]*?justify-content:\s*center;[\s\S]*?overflow-x:\s*visible;/.test(stylesPolish) &&
     /\.language-breakdown\.hebrew \.mark-glyph\s*{[\s\S]*?height:\s*auto;[\s\S]*?min-height:\s*42px;[\s\S]*?overflow:\s*visible;/.test(stylesPolish),
   "Hebrew mark pills must stay reachable in narrow panels and must not clip low vowel symbols.",
 );
