@@ -178,8 +178,8 @@
 .language-breakdown.hebrew .mark-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
-  direction: ltr;
-  justify-content: stretch;
+  direction: rtl;
+  justify-content: center;
   overflow-x: visible;
   padding-bottom: 0;
 }
