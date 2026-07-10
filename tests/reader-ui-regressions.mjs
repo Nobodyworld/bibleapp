@@ -72,6 +72,13 @@ assert(
   "Selecting a book in the app-owned picker must open chapter selection after navigation.",
 );
 assert(
+  /freezeReaderHighlight\(token\)/.test(pickerFlow) &&
+    /MutationObserver\(\(\) => applyFrozenReaderHighlight\(\)\)/.test(pickerFlow) &&
+    /#clearDetail/.test(pickerFlow) &&
+    /READER_BACKGROUND_RESET_SELECTOR/.test(pickerFlow),
+  "Clicked reader Strong's words must stay frozen while browsing side-panel details until an explicit unfreeze action.",
+);
+assert(
   /@media\s*\(min-width:\s*1024px\)[\s\S]*?\.reader-pane \.verse-row\s*{[\s\S]*?grid-template-columns:\s*58px minmax\(0, 1fr\) 32px;[\s\S]*?gap:\s*12px;/.test(stylesPolish) &&
     /@media\s*\(min-width:\s*1380px\)[\s\S]*?\.reader-pane \.chapter-content\s*{[\s\S]*?padding-inline:\s*28px 24px;/.test(stylesPolish),
   "Wide reader layout must add desktop-only breathing room without changing the mobile base layout.",
@@ -158,4 +165,4 @@ assert(
   "Browser-visible app and stylesheet entry points must use the current cache-buster key.",
 );
 
-console.log(JSON.stringify({ status: "ok", assertions: 43 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 44 }, null, 2));
