@@ -127,18 +127,35 @@ async function main() {
     await waitFor(page, () => document.querySelector("#detailTitle")?.textContent === "Interlinear");
     await delay(1600);
 
-    const frozenState = await page.evaluate(() => ({
+    const interlinearFrozenState = await page.evaluate(() => ({
       wordCount: document.querySelectorAll(".reader-context-word").length,
       verseCount: document.querySelectorAll(".reader-context-verse").length,
       detailTitle: document.querySelector("#detailTitle")?.textContent || "",
     }));
 
     assert(
-      frozenState.wordCount === 1 && frozenState.verseCount === 1 && frozenState.detailTitle === "Interlinear",
-      `clicked reader word highlight did not persist through Interlinear tool browsing: ${JSON.stringify(frozenState)}`,
+      interlinearFrozenState.wordCount === 1 &&
+        interlinearFrozenState.verseCount === 1 &&
+        interlinearFrozenState.detailTitle === "Interlinear",
+      `clicked reader word highlight did not persist through Interlinear tool browsing: ${JSON.stringify(interlinearFrozenState)}`,
     );
 
-    console.log(JSON.stringify({ status: "ok", assertions: 1 }, null, 2));
+    await clickWithPointer(page, "#nextChapter");
+    await waitFor(page, () => Boolean(document.querySelector("#chapterTitle")?.textContent.includes("Psalms 24")));
+    await delay(1400);
+
+    const navigationState = await page.evaluate(() => ({
+      wordCount: document.querySelectorAll(".reader-context-word").length,
+      verseCount: document.querySelectorAll(".reader-context-verse").length,
+      chapterTitle: document.querySelector("#chapterTitle")?.textContent || "",
+    }));
+
+    assert(
+      navigationState.wordCount === 0 && navigationState.verseCount === 0,
+      `chapter navigation did not release the frozen reader highlight: ${JSON.stringify(navigationState)}`,
+    );
+
+    console.log(JSON.stringify({ status: "ok", assertions: 2 }, null, 2));
   } finally {
     await browser.close();
     await new Promise((resolveClose) => server.close(resolveClose));
