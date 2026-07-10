@@ -96,7 +96,7 @@
 }
 
 .study-mark-section,
-study-data-section,
+.study-data-section,
 .local-processing-section {
   display: grid;
   gap: 8px;
