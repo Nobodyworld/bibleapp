@@ -1,3 +1,9 @@
+import { fetchLexiconEntry } from "./data-service.js?v=original-language-sources-20260710b";
+import {
+  setLanguageTextWithTooltips,
+  setTransliterationTextWithTooltips,
+} from "./language-tooltips.js?v=original-language-sources-20260710b";
+
 const INTERLINEAR_DETAIL_TITLE = "Interlinear";
 const ENHANCED_ATTRIBUTE = "data-original-language-study";
 
@@ -6,6 +12,62 @@ function createSectionHeading(text, className) {
   heading.className = className;
   heading.textContent = text;
   return heading;
+}
+
+function languageForCard(card) {
+  return String(card.dataset.strongCode || "").toUpperCase().startsWith("H") ? "hebrew" : "greek";
+}
+
+function hasLanguageScript(text, language) {
+  const value = String(text || "");
+  return language === "hebrew" ? /[\u0590-\u05ff]/u.test(value) : /[\u0370-\u03ff\u1f00-\u1fff]/u.test(value);
+}
+
+async function appendLexicalContext(card, source, language, originalIsScript) {
+  const strongCode = String(card.dataset.strongCode || "");
+  if (!strongCode) return;
+  const entry = await fetchLexiconEntry(strongCode);
+  if (!entry || !card.isConnected) return;
+
+  if (!originalIsScript && entry.original_word && hasLanguageScript(entry.original_word, language)) {
+    const label = createSectionHeading("Dictionary form", "original-language-card-label");
+    const word = document.createElement("div");
+    word.className = "original-language-dictionary-word";
+    word.lang = language === "hebrew" ? "he" : "grc";
+    word.dir = language === "hebrew" ? "rtl" : "ltr";
+    setLanguageTextWithTooltips(word, entry.original_word, language);
+    source.prepend(label, word);
+  }
+
+  const originText = String(entry.word_origin || "").trim();
+  const related = Array.isArray(entry.word_origin_refs) ? entry.word_origin_refs.filter((item) => item?.strong_code) : [];
+  if (!originText && !related.length) return;
+
+  const details = document.createElement("section");
+  details.className = "original-language-word-origin";
+  if (originText) {
+    details.append(createSectionHeading("Word origin", "original-language-card-label"));
+    const origin = document.createElement("p");
+    origin.textContent = originText;
+    details.append(origin);
+  }
+  if (related.length) {
+    details.append(
+      createSectionHeading(
+        language === "hebrew" ? "Related Hebrew entries" : "Related Greek entries",
+        "original-language-card-label",
+      ),
+    );
+    const list = document.createElement("ul");
+    list.className = "original-language-related-entries";
+    related.forEach((item) => {
+      const row = document.createElement("li");
+      row.textContent = `${item.strong_code} — ${item.label || "Related entry"}`;
+      list.append(row);
+    });
+    details.append(list);
+  }
+  source.after(details);
 }
 
 function enhanceWordCard(card) {
@@ -27,31 +89,93 @@ function enhanceWordCard(card) {
   summary.className = "original-language-word-summary";
   summary.append(createSectionHeading("Word meaning", "original-language-card-label"), english, gloss, meta);
 
+  const language = languageForCard(card);
+  const originalIsScript = hasLanguageScript(original.textContent, language);
   const source = document.createElement("div");
   source.className = "original-language-word-source";
-  source.append(createSectionHeading("Source word", "original-language-card-label"), original);
-  if (transliteration) source.append(transliteration);
+  source.append(createSectionHeading(originalIsScript ? "Source word" : "Transliteration", "original-language-card-label"), original);
+  if (!originalIsScript) {
+    original.classList.add("original-language-token-transliteration");
+    setTransliterationTextWithTooltips(original, original.textContent, {
+      sourceLabel: "Bundled interlinear transliteration",
+    });
+  }
+  if (originalIsScript && transliteration) source.append(transliteration);
 
   card.prepend(source);
   card.prepend(summary);
+  appendLexicalContext(card, source, language, originalIsScript);
+}
+
+function languageForTokenList(tokenList) {
+  return tokenList.querySelector(":scope > .interlinear-token[data-strong-code^='H']") ? "hebrew" : "greek";
+}
+
+function verseTransliteration(tokenList, language) {
+  return [...tokenList.querySelectorAll(":scope > .interlinear-token")]
+    .map((card) => {
+      const transliteration = card.querySelector(":scope > .token-translit")?.textContent.trim();
+      const original = card.querySelector(":scope > .token-original")?.textContent.trim();
+      if (transliteration) return transliteration;
+      return original && !hasLanguageScript(original, language) ? original : "";
+    })
+    .filter(Boolean)
+    .join(" ");
+}
+
+function createSourceList(tokenList) {
+  const language = languageForTokenList(tokenList);
+  const sourceList = document.createElement("div");
+  sourceList.className = "source-text-list";
+  const unavailable = document.createElement("p");
+  unavailable.className = "original-language-source-unavailable";
+  unavailable.textContent = `Original ${language === "hebrew" ? "Hebrew" : "Greek"} source text unavailable.`;
+  sourceList.append(unavailable);
+  return sourceList;
+}
+
+function decorateSourceList(sourceList, tokenList) {
+  const language = languageForTokenList(tokenList);
+  sourceList.classList.add("original-language-source-card");
+  sourceList.prepend(
+    createSectionHeading(language === "hebrew" ? "Original Hebrew" : "Original Greek", "original-language-section-label"),
+  );
+
+  const transliterationText = verseTransliteration(tokenList, language);
+  if (!transliterationText) return;
+  const row = document.createElement("div");
+  row.className = "original-language-transliteration-row";
+  const label = document.createElement("div");
+  label.className = "reference-label";
+  label.textContent = "Transliteration";
+  const text = document.createElement("div");
+  text.className = "original-language-transliteration";
+  text.dir = "ltr";
+  setTransliterationTextWithTooltips(text, transliterationText, {
+    sourceLabel: "Bundled interlinear transliteration",
+  });
+  row.append(label, text);
+  sourceList.append(row);
 }
 
 function enhanceVerseSection(section) {
   if (!(section instanceof HTMLElement) || section.hasAttribute(ENHANCED_ATTRIBUTE)) return;
 
   const reference = section.querySelector(":scope > h3");
-  const sourceList = section.querySelector(":scope > .source-text-list");
+  let sourceList = section.querySelector(":scope > .source-text-list");
   const tokenList = section.querySelector(":scope > .interlinear-token-list");
   if (!reference || !tokenList) return;
+
+  if (!sourceList) {
+    sourceList = createSourceList(tokenList);
+    tokenList.before(sourceList);
+  }
 
   section.setAttribute(ENHANCED_ATTRIBUTE, "true");
   section.classList.add("original-language-verse-card");
   reference.classList.add("original-language-verse-reference");
 
-  if (sourceList) {
-    sourceList.classList.add("original-language-source-card");
-    sourceList.prepend(createSectionHeading("Full source verse", "original-language-section-label"));
-  }
+  decorateSourceList(sourceList, tokenList);
 
   tokenList.classList.add("original-language-word-grid");
   tokenList.setAttribute("role", "list");

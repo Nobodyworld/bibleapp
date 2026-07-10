@@ -14,22 +14,45 @@ assert(
   "The side-panel tool must present the feature as Language Study.",
 );
 assert(
-  /original-language-study-flow\.js\?v=original-language-study-20260710/.test(index),
+  /original-language-study-flow\.js\?v=original-language-sources-20260710b/.test(index),
   "The original-language study enhancement module must load after the app modules.",
 );
 assert(
+  /data-service\.js\?v=original-language-sources-20260710b/.test(flow),
+  "The study flow must version the original-language source data contract.",
+);
+assert(
   /function enhanceVerseSection\(section\)/.test(flow) &&
-    /Full source verse/.test(flow) &&
+    /function decorateSourceList\(sourceList, tokenList\)/.test(flow) &&
+    /Original Hebrew/.test(flow) &&
+    /Original Greek/.test(flow) &&
+    /Original.*source text unavailable/.test(flow) &&
+    /Transliteration/.test(flow) &&
+    !/Full source verse/.test(flow) &&
     /Word-by-word study/.test(flow) &&
     /original-language-word-card/.test(flow),
-  "The study flow must structure complete source verses and word-level cards.",
+  "The study flow must distinguish source script, unavailable states, transliteration, and word-level cards.",
 );
 assert(
   /function enhanceWordCard\(card\)/.test(flow) &&
     /original-language-word-summary/.test(flow) &&
     /original-language-word-source/.test(flow) &&
+    /Word origin/.test(flow) &&
+    /Related Hebrew entries/.test(flow) &&
+    /Related Greek entries/.test(flow) &&
     /summary[\s\S]*source/.test(flow),
-  "Word cards must place meaning and lexical metadata before the source-word block.",
+  "Word cards must place meaning before accurately labeled source/transliteration and lexical context.",
+);
+assert(
+  /setTransliterationTextWithTooltips/.test(flow) &&
+    /sourceLabel:\s*"Bundled interlinear transliteration"/.test(flow),
+  "Verse and word transliterations must use the accessible bundled-source annotation treatment.",
+);
+assert(
+  /const originText = String\(entry\.word_origin/.test(flow) &&
+    /Array\.isArray\(entry\.word_origin_refs\)/.test(flow) &&
+    /if \(!originText && !related\.length\) return;/.test(flow),
+  "Origin and related-entry sections must be omitted unless explicit lexicon fields supply them.",
 );
 assert(
   /MutationObserver\(queueStudyEnhancement\)/.test(flow) &&
@@ -46,4 +69,4 @@ assert(
   "Original-language word cards must collapse to one column on narrow screens.",
 );
 
-console.log(JSON.stringify({ status: "ok", assertions: 7 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 9 }, null, 2));

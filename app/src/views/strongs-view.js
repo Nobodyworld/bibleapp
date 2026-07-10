@@ -4,12 +4,16 @@ import {
   fetchWordMapBook,
   loadLanguageMetadata,
 } from "../data-service.js";
-import { isDetailHoverLocked, setDetail, textNode } from "../dom.js?v=browser-comments-20260707b";
+import { isDetailHoverLocked, setDetail, textNode } from "../dom.js?v=original-language-sources-20260710b";
 import { capabilityMessage } from "../capabilities.js";
-import { languageUnitTooltip, setLanguageTextWithTooltips } from "../language-tooltips.js";
-import { setMorphologyHelp } from "../morphology-tooltips.js?v=browser-comments-20260707b";
+import {
+  languageUnitTooltip,
+  setLanguageTextWithTooltips,
+  setTransliterationTextWithTooltips,
+} from "../language-tooltips.js?v=original-language-sources-20260710b";
+import { setMorphologyHelp } from "../morphology-tooltips.js?v=original-language-sources-20260710b";
 import { analyzeOriginalWord, gematriaValueForUnit, wordHasLanguageScript } from "../language.js";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=browser-comments-20260707b";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=original-language-sources-20260710b";
 
 function languageTitle(language) {
   return language === "hebrew" ? "Hebrew" : "Greek";
@@ -207,6 +211,14 @@ function appendLexicalRow(list, label, value, language = null) {
   list.append(term, detail);
 }
 
+function createTransliterationValue(value) {
+  if (!value) return null;
+  const node = document.createElement("span");
+  node.className = "lexical-transliteration";
+  setTransliterationTextWithTooltips(node, value, { sourceLabel: "Bundled Strong's transliteration" });
+  return node;
+}
+
 function createOriginValue(entry, openStrongCode) {
   if (!entry?.word_origin && !entry?.word_origin_refs?.length) return null;
   const wrap = document.createElement("span");
@@ -274,7 +286,7 @@ function appendLexicalSummary(container, entry, openStrongCode) {
   const rows = document.createElement("dl");
 
   appendLexicalRow(rows, "Original word", entry.original_word, entry.language);
-  appendLexicalRow(rows, "Transliteration", entry.transliteration);
+  appendLexicalRow(rows, "Transliteration", createTransliterationValue(entry.transliteration));
   appendLexicalRow(rows, "Phonetic spelling", entry.phonetic_spelling);
   appendLexicalRow(rows, "Part of speech", entry.part_of_speech);
   appendLexicalRow(rows, "Short definition", entry.short_definition);
@@ -636,6 +648,9 @@ export function createStrongsView(ctx = null) {
       }
       const translitText = token.transliteration || entry?.transliteration || "";
       setOptionalLine(translit, translitText && translitText !== sourceWord ? translitText : "");
+      if (!translit.hidden) {
+        setTransliterationTextWithTooltips(translit, translitText, { sourceLabel: "Bundled Strong's transliteration" });
+      }
       const morphology = token.morphology || entry?.part_of_speech || "";
       pos.hidden = !morphology;
       if (morphology) setMorphologyHelp(pos, morphology, language);

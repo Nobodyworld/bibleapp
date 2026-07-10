@@ -756,21 +756,67 @@ async function runQa(page) {
   await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Footnote'");
   state = await getQaState(page);
   assert(state.detailText.includes("Footnote"), "footnote detail did not open");
-  const footnoteMarkerStyle = await evaluate(
+  const footnoteThemeBefore = await evaluate(page, "document.documentElement.getAttribute('data-theme')");
+  if (footnoteThemeBefore !== "light") {
+    await click(page, "#themeToggle");
+    await waitFor(page, "document.documentElement.getAttribute('data-theme') === 'light'");
+  }
+  await waitFor(page, "getComputedStyle(document.querySelector('.fn-marker')).color === 'rgb(35, 71, 251)'");
+  const lightFootnoteStyle = await evaluate(
     page,
     `(() => {
       const marker = document.querySelector('.fn-marker');
+      marker.blur();
       const style = getComputedStyle(marker);
       const textStyle = getComputedStyle(marker?.closest('.verse-line') || document.body);
-      return { borderTopWidth: style.borderTopWidth, backgroundColor: style.backgroundColor, color: style.color, textColor: textStyle.color };
+      const detailMarker = document.querySelector('.footnote-detail-marker');
+      const result = { borderTopWidth: style.borderTopWidth, backgroundColor: style.backgroundColor, color: style.color, textColor: textStyle.color, detailColor: getComputedStyle(detailMarker).color };
+      marker.focus();
+      result.focusColor = getComputedStyle(marker).color;
+      result.focusOutline = getComputedStyle(marker).outlineStyle;
+      marker.blur();
+      return result;
     })()`,
   );
-  assert(footnoteMarkerStyle.borderTopWidth === "0px", "footnote marker still has a visible box border");
-  assert(
-    footnoteMarkerStyle.color !== footnoteMarkerStyle.textColor,
-    `footnote marker should be visually distinct from verse text: ${JSON.stringify(footnoteMarkerStyle)}`,
+  await click(page, "#themeToggle");
+  await waitFor(page, "document.documentElement.getAttribute('data-theme') === 'dark'");
+  await waitFor(page, "getComputedStyle(document.querySelector('.fn-marker')).color === 'rgb(158, 175, 255)'");
+  const darkFootnoteStyle = await evaluate(
+    page,
+    `(() => {
+      const marker = document.querySelector('.fn-marker');
+      marker.blur();
+      const style = getComputedStyle(marker);
+      const detailMarker = document.querySelector('.footnote-detail-marker');
+      const result = { theme: document.documentElement.getAttribute('data-theme'), color: style.color, detailColor: getComputedStyle(detailMarker).color };
+      marker.focus();
+      result.focusColor = getComputedStyle(marker).color;
+      result.focusOutline = getComputedStyle(marker).outlineStyle;
+      marker.blur();
+      return result;
+    })()`,
   );
-  assert(footnoteMarkerStyle.color === "rgb(35, 71, 251)", `footnote marker should use the requested blue: ${JSON.stringify(footnoteMarkerStyle)}`);
+  if (footnoteThemeBefore !== "dark") {
+    await click(page, "#themeToggle");
+    await waitFor(page, `document.documentElement.getAttribute('data-theme') === ${JSON.stringify(footnoteThemeBefore)}`);
+  }
+  assert(lightFootnoteStyle.borderTopWidth === "0px", "footnote marker still has a visible box border");
+  assert(
+    lightFootnoteStyle.color !== lightFootnoteStyle.textColor,
+    `footnote marker should be visually distinct from verse text: ${JSON.stringify(lightFootnoteStyle)}`,
+  );
+  assert(
+    lightFootnoteStyle.color === "rgb(35, 71, 251)" &&
+      lightFootnoteStyle.detailColor === "rgb(35, 71, 251)" &&
+      lightFootnoteStyle.focusOutline === "solid",
+    `light-theme footnote contrast regressed: ${JSON.stringify(lightFootnoteStyle)}`,
+  );
+  assert(
+    darkFootnoteStyle.color === "rgb(158, 175, 255)" &&
+      darkFootnoteStyle.detailColor === "rgb(158, 175, 255)" &&
+      darkFootnoteStyle.focusOutline === "solid",
+    `dark-theme footnote marker, detail, or focus contrast is incorrect: ${JSON.stringify(darkFootnoteStyle)}`,
+  );
   pass("footnote popup");
 
   await click(page, ".verse-study-button");

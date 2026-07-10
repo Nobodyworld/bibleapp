@@ -1,15 +1,23 @@
-import { fetchVerseBook, fetchWordMapBook, loadLanguageMetadata, loadOriginalSourceTexts } from "../data-service.js";
-import { createDetailList, els, setDetail, setDetailMessage, textNode } from "../dom.js?v=browser-comments-20260707b";
-import { setLanguageTextWithTooltips } from "../language-tooltips.js";
-import { setMorphologyHelp } from "../morphology-tooltips.js?v=browser-comments-20260707b";
+import {
+  fetchVerseBook,
+  fetchWordMapBook,
+  loadLanguageMetadata,
+  loadOriginalSourceTexts,
+} from "../data-service.js?v=original-language-sources-20260710b";
+import { createDetailList, els, setDetail, setDetailMessage, textNode } from "../dom.js?v=original-language-sources-20260710b";
+import {
+  setLanguageTextWithTooltips,
+  setTransliterationTextWithTooltips,
+} from "../language-tooltips.js?v=original-language-sources-20260710b";
+import { setMorphologyHelp } from "../morphology-tooltips.js?v=original-language-sources-20260710b";
 import { referenceKey } from "../references.js";
 import { analyzeOriginalWord, summarizeHebrewGematriaTokens, wordHasLanguageScript } from "../language.js";
-import { resolveInterlinearVerseTokens } from "../strongs.js?v=browser-comments-20260707b";
-import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=browser-comments-20260707b";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=browser-comments-20260707b";
+import { resolveInterlinearVerseTokens } from "../strongs.js?v=original-language-sources-20260710b";
+import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=original-language-sources-20260710b";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=original-language-sources-20260710b";
 import { createStudyEmptyState } from "../study-empty-state.js";
 import { interlinearTokenIdentity } from "../ui-contracts.js";
-import { createSourceTokenTarget } from "../semantic-targets.js?v=browser-comments-20260707b";
+import { createSourceTokenTarget } from "../semantic-targets.js?v=original-language-sources-20260710b";
 
 function normalizeWordMapSpan(raw, bsbVerseText) {
   const start = Number(raw[2] || 0);
@@ -215,8 +223,13 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     const transliteration = document.createElement("div");
     transliteration.className = "token-translit";
     const translitText = token.transliteration || "";
-    transliteration.textContent = translitText && translitText !== (token.original || "") ? translitText : "";
-    transliteration.hidden = !transliteration.textContent;
+    const visibleTransliteration = translitText && translitText !== (token.original || "") ? translitText : "";
+    transliteration.hidden = !visibleTransliteration;
+    if (visibleTransliteration) {
+      setTransliterationTextWithTooltips(transliteration, visibleTransliteration, {
+        sourceLabel: "Bundled interlinear transliteration",
+      });
+    }
 
     const meta = document.createElement("div");
     meta.className = "token-meta";
@@ -367,6 +380,10 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
         label.textContent = source.label;
         const text = document.createElement("div");
         text.className = source.id === "wlc" || source.id === "wlco" ? "source-text rtl-text" : "source-text";
+        text.lang = tokens[0].language === "hebrew" ? "he" : "grc";
+        text.dir = tokens[0].language === "hebrew" ? "rtl" : "ltr";
+        item.dataset.sourceId = source.id;
+        item.className = source.variant === "consonants-only" ? "source-text-row secondary" : "source-text-row";
         setLanguageTextWithTooltips(text, source.text, tokens[0].language, { wordInfoLookup });
         item.append(label, text);
         sourceList.append(item);

@@ -1,6 +1,6 @@
-import { JOB_TYPES } from "./config.js?v=browser-comments-20260707b";
+import { JOB_TYPES } from "./config.js?v=original-language-sources-20260710b";
 import { fetchWordMapBook } from "./data-service.js";
-import { parseReferenceKey, referenceKeyFromTarget, targetId } from "./semantic-targets.js?v=browser-comments-20260707b";
+import { parseReferenceKey, referenceKeyFromTarget, targetId } from "./semantic-targets.js?v=original-language-sources-20260710b";
 
 const PROCESSOR_VERSIONS = {
   [JOB_TYPES.tagIndexRefresh]: "tag-index-refresh-v1",

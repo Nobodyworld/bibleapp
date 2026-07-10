@@ -354,6 +354,58 @@
     "footnotes": true,
     "presentation": true
   },
+  "original_language_sources": [
+    {
+      "id": "wlc",
+      "code": "WLC",
+      "name": "Westminster Leningrad Codex",
+      "language": "Hebrew",
+      "script": "Hebrew",
+      "variant": "pointed",
+      "testament_scope": "old",
+      "book_count": 39,
+      "chapter_count": 929,
+      "verse_count": 23144,
+      "license_note": "Extracted from the OpenBible archive under its source-package terms; provenance is recorded in data/source-manifest.json."
+    },
+    {
+      "id": "wlco",
+      "code": "WLCO",
+      "name": "WLC — Consonants Only",
+      "language": "Hebrew",
+      "script": "Hebrew",
+      "variant": "consonants-only",
+      "testament_scope": "old",
+      "book_count": 39,
+      "chapter_count": 929,
+      "verse_count": 23144,
+      "license_note": "Extracted from the OpenBible archive under its source-package terms; provenance is recorded in data/source-manifest.json."
+    },
+    {
+      "id": "nestle",
+      "code": "Nestle 1904",
+      "name": "Nestle Greek New Testament 1904",
+      "language": "Greek",
+      "script": "Greek",
+      "testament_scope": "new",
+      "book_count": 27,
+      "chapter_count": 260,
+      "verse_count": 7938,
+      "license_note": "Extracted from the OpenBible archive under its source-package terms; provenance is recorded in data/source-manifest.json."
+    },
+    {
+      "id": "tr94",
+      "code": "TR94",
+      "name": "Scrivener’s Textus Receptus 1894",
+      "language": "Greek",
+      "script": "Greek",
+      "testament_scope": "new",
+      "book_count": 27,
+      "chapter_count": 260,
+      "verse_count": 7957,
+      "license_note": "Extracted from the OpenBible archive under its source-package terms; provenance is recorded in data/source-manifest.json."
+    }
+  ],
   "source_manifest": "data/source-manifest.json",
   "translations": [
     {

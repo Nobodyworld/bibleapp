@@ -1,8 +1,12 @@
-import { DEFAULT_ROUTE } from "./src/config.js?v=browser-comments-20260707b";
+import { DEFAULT_ROUTE } from "./src/config.js?v=original-language-sources-20260710b";
 import { capabilityAvailable, resolveCapability } from "./src/capabilities.js";
-import { createChapterRenderer } from "./src/chapter-renderer.js?v=browser-comments-20260707b";
-import { loadManifest, loadReaderBookData, translationCanLoadBook } from "./src/data-service.js";
-import { createDetailViews } from "./src/detail-views.js?v=browser-comments-20260707b";
+import { createChapterRenderer } from "./src/chapter-renderer.js?v=original-language-sources-20260710b";
+import {
+  loadManifest,
+  loadReaderBookData,
+  translationCanLoadBook,
+} from "./src/data-service.js?v=original-language-sources-20260710b";
+import { createDetailViews } from "./src/detail-views.js?v=original-language-sources-20260710b";
 import {
   els,
   goBackDetail,
@@ -14,14 +18,14 @@ import {
   setStatus,
   sortedNumericKeys,
   trackReaderLocation,
-} from "./src/dom.js?v=browser-comments-20260707b";
+} from "./src/dom.js?v=original-language-sources-20260710b";
 import { createReferenceButton as makeReferenceButton, referenceKey, refDomId } from "./src/references.js";
 import { buildReferenceContext, referenceContextKey } from "./src/reference-context.js";
-import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js?v=browser-comments-20260707b";
+import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js?v=original-language-sources-20260710b";
 import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js";
-import { getTagTargets, initStores, listenForUserDataChanges, setTagAssertion } from "./src/stores.js?v=browser-comments-20260707b";
+import { getTagTargets, initStores, listenForUserDataChanges, setTagAssertion } from "./src/stores.js?v=original-language-sources-20260710b";
 import { studyUnavailableLabel } from "./src/study-empty-state.js";
-import { chapterSwipeDirection, CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js?v=browser-comments-20260707b";
+import { chapterSwipeDirection, CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js?v=original-language-sources-20260710b";
 
 const state = {
   manifest: null,

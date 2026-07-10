@@ -1,6 +1,6 @@
-import { createDetailList, setDetail } from "../dom.js?v=browser-comments-20260707b";
-import { canRunJob, runJob } from "../job-processor.js?v=browser-comments-20260707b";
-import { completeJob, getAllJobEvents, updateJobStatus } from "../stores.js?v=browser-comments-20260707b";
+import { createDetailList, setDetail } from "../dom.js?v=original-language-sources-20260710b";
+import { canRunJob, runJob } from "../job-processor.js?v=original-language-sources-20260710b";
+import { completeJob, getAllJobEvents, updateJobStatus } from "../stores.js?v=original-language-sources-20260710b";
 
 function stateLabel(state) {
   return String(state || "unknown").replaceAll("_", " ");

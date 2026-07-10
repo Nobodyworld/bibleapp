@@ -34,4 +34,15 @@ indexes, graph data, interlinear records, and analysis files. The MIT License
 applies to the application code, tests, scripts, schemas, and tooling, not to
 third-party bundled data.
 
+The original-language verse datasets are reproducibly extracted from the
+archive's `wlc`, `wlco`, `nestle`, and `tr94` XHTML directories into
+`app/data/verses/<source-id>`. The transformation removes page navigation and
+markup, preserves only nonempty Hebrew or Greek source text, and normalizes the
+result to Unicode NFC. It does not substitute transliteration or English text.
+Coverage and source-specific paths are recorded in
+`app/data/source-manifest.json`. The source pages identify the texts as the
+Westminster Leningrad Codex, WLC Consonants Only, Nestle Greek New Testament
+1904, and Scrivener's Textus Receptus 1894; no additional rights conclusion is
+asserted beyond the archive terms preserved above.
+
 The software and bundled data are provided as-is, without warranty.

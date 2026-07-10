@@ -1,4 +1,4 @@
-import { targetId } from "./semantic-targets.js?v=browser-comments-20260707b";
+import { targetId } from "./semantic-targets.js?v=original-language-sources-20260710b";
 
 function targetNodeId(target) {
   if (!target) return null;

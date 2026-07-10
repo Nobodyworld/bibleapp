@@ -57,7 +57,19 @@ assert(
 );
 assert(/\.fn-marker\s*{[\s\S]*?color:\s*#2347fb;/.test(css), "Footnote markers must use the requested blue.");
 assert(
-  /reader-picker-flow\.js\?v=reader-picker-flow-20260709/.test(index),
+  /:root\[data-theme="dark"\] \.fn-marker\s*{[\s\S]*?color:\s*#9eafff\s*!important;/.test(css) &&
+    /:root\[data-theme="dark"\] \.fn-marker:hover\s*{[\s\S]*?color:\s*#c5ceff\s*!important;/.test(css) &&
+    /:root\[data-theme="dark"\] \.fn-marker:focus-visible\s*{[\s\S]*?outline:\s*2px solid #9eafff[\s\S]*?color:\s*#f0f2ff\s*!important;/.test(css),
+  "Dark footnotes must use lighter default, hover, and keyboard-focus colors with a visible focus outline.",
+);
+assert(
+  /html\[data-theme="light"\] \.fn-marker\s*{[\s\S]*?color:\s*#2347fb\s*!important;/.test(css) &&
+    /html\[data-theme="light"\] \.fn-marker:hover\s*{[\s\S]*?color:\s*#1232c8\s*!important;/.test(css) &&
+    /html\[data-theme="light"\] \.fn-marker:focus-visible\s*{[\s\S]*?outline:\s*2px solid #2347fb[\s\S]*?color:\s*#0b238f\s*!important;/.test(css),
+  "Light-theme footnote contrast and keyboard focus treatment must remain explicit.",
+);
+assert(
+  /reader-picker-flow\.js\?v=original-language-sources-20260710b/.test(index),
   "The reader picker flow helper must load after the main app module.",
 );
 assert(
@@ -153,6 +165,12 @@ assert(
 );
 assert(/setMorphologyHelp\(pos,\s*morphology,\s*language\)/.test(strongsView), "Strong's morphology must expose definition help.");
 assert(
+  /appendLexicalRow\(rows, "Transliteration", createTransliterationValue\(entry\.transliteration\)\)/.test(strongsView) &&
+    /appendLexicalRow\(rows, "Phonetic spelling", entry\.phonetic_spelling\)/.test(strongsView) &&
+    /function appendLexicalRow[\s\S]*?if \(!value\) return;/.test(strongsView),
+  "Strong's transliteration and phonetic spelling must remain separate, and missing fields must be omitted.",
+);
+assert(
   /Study Marks by Scripture/.test(tagsView) &&
     /Book\/chapter tags/.test(tagsView) &&
     /English word\/phrase tags/.test(tagsView) &&
@@ -161,10 +179,10 @@ assert(
   "Study Marks must expose a scripture-centered book/chapter/verse hierarchy.",
 );
 assert(
-  /styles\.css\?v=browser-comments-20260707b/.test(index) &&
-    /app\.js\?v=browser-comments-20260707b/.test(index) &&
+  /styles\.css\?v=original-language-sources-20260710b/.test(index) &&
+    /app\.js\?v=original-language-sources-20260710b/.test(index) &&
     !/full-audit-20260701|browser-comments-20260702/.test(index),
   "Browser-visible app and stylesheet entry points must use the current cache-buster key.",
 );
 
-console.log(JSON.stringify({ status: "ok", assertions: 44 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 47 }, null, 2));

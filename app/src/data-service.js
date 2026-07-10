@@ -30,7 +30,7 @@ export async function tryFetchJson(path) {
 }
 
 export function loadManifest() {
-  return fetchJson(`${DATA_ROOT}/manifest.json`);
+  return fetchJson(`${DATA_ROOT}/manifest.json?v=original-language-sources-20260710b`);
 }
 
 async function datasetAvailable(key) {
@@ -189,17 +189,22 @@ export async function fetchLexiconEntry(strongCode) {
 
 export async function loadOriginalSourceTexts({ manifest, bookId, chapter }, language, verse) {
   const candidateIds = language === "greek" ? ["nestle", "tr94"] : ["wlc", "wlco"];
-  const availableTranslationIds = new Set((manifest?.translations || []).map((item) => item.id));
-  const sourceIds = candidateIds.filter((sourceId) => availableTranslationIds.has(sourceId));
+  const sourceDefinitions = manifest?.original_language_sources || [];
+  const availableSourceIds = new Set(sourceDefinitions.map((item) => item.id));
+  const sourceIds = candidateIds.filter((sourceId) => availableSourceIds.has(sourceId));
   const results = [];
   for (const sourceId of sourceIds) {
     const book = await tryFetchJson(`${DATA_ROOT}/verses/${sourceId}/${bookId}.json`);
     const text = book?.chapters?.[chapter]?.[verse];
-    const translation = manifest?.translations?.find((item) => item.id === sourceId);
+    const sourceDefinition = sourceDefinitions.find((item) => item.id === sourceId);
     if (text) {
       results.push({
         id: sourceId,
-        label: translation?.code || sourceId.toUpperCase(),
+        code: sourceDefinition?.code || sourceId.toUpperCase(),
+        label: sourceDefinition?.name || sourceDefinition?.code || sourceId.toUpperCase(),
+        language: sourceDefinition?.language || language,
+        script: sourceDefinition?.script || (language === "hebrew" ? "Hebrew" : "Greek"),
+        variant: sourceDefinition?.variant || null,
         text,
       });
     }

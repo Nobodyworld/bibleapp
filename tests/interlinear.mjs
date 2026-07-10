@@ -3,6 +3,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { summarizeHebrewGematriaTokens } from "../app/src/language.js";
+import { languageUnitText, transliterationSymbolDescription } from "../app/src/language-tooltips.js";
 import { normalizeInterlinearVerseTokens, resolveInterlinearVerseTokens } from "../app/src/strongs.js";
 
 const rawTokens = [
@@ -71,12 +72,28 @@ const actualHebrewGematria = summarizeHebrewGematriaTokens(
 );
 assert.equal(actualHebrewGematria.total, 3);
 assert.equal(actualHebrewGematria.tokens.length, 1);
+assert.equal(
+  languageUnitText({ char: "׃", standalone: true, marks: [{ char: "׃" }] }),
+  "׃",
+);
+assert.equal(
+  languageUnitText({ char: "א", standalone: false, marks: [{ char: "ְ" }] }),
+  "אְ",
+);
+assert.equal(
+  languageUnitText({ char: "Ε", standalone: false, marks: [{ char: "̓" }] }),
+  "Ἐ",
+);
+assert.match(transliterationSymbolDescription("ō"), /o with macron.*not exact pronunciation/i);
+assert.match(transliterationSymbolDescription("î"), /i with circumflex.*not exact pronunciation/i);
+assert.match(transliterationSymbolDescription("·"), /separating transliterated word parts.*not exact pronunciation/i);
+assert.equal(transliterationSymbolDescription("x"), "");
 
 console.log(
   JSON.stringify(
     {
       status: "ok",
-      assertions: 9,
+      assertions: 16,
       corrected_reference: "john:4:1:10",
     },
     null,
