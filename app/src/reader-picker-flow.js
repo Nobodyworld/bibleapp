@@ -90,6 +90,14 @@ function applyFrozenReaderHighlight() {
   frozenReaderToken.classList.add("reader-context-word");
 }
 
+function scheduleFrozenReaderHighlightRefresh() {
+  if (!frozenReaderToken || !frozenReaderRow) return;
+  applyFrozenReaderHighlight();
+  window.requestAnimationFrame(applyFrozenReaderHighlight);
+  afterPickerPaint(applyFrozenReaderHighlight);
+  window.setTimeout(applyFrozenReaderHighlight, 80);
+}
+
 function observeFrozenReaderHighlight() {
   disconnectFrozenHighlightObserver();
   if (!frozenReaderToken || !frozenReaderRow) return;
@@ -109,10 +117,8 @@ function freezeReaderHighlight(token) {
   if (!token || !row) return;
   frozenReaderToken = token;
   frozenReaderRow = row;
-  window.requestAnimationFrame(() => {
-    applyFrozenReaderHighlight();
-    observeFrozenReaderHighlight();
-  });
+  scheduleFrozenReaderHighlightRefresh();
+  observeFrozenReaderHighlight();
 }
 
 function clearFrozenReaderHighlight(options = {}) {
@@ -132,42 +138,62 @@ function handleReaderPickerClick(event) {
 
   if (target.closest("#bookPickerButton")) {
     scrollActivePickerOptionIntoView(document.getElementById("bookPickerPanel"));
+    scheduleFrozenReaderHighlightRefresh();
     return;
   }
 
   if (target.closest("#chapterPickerButton")) {
     scrollActivePickerOptionIntoView(document.getElementById("chapterPickerPanel"));
+    scheduleFrozenReaderHighlightRefresh();
     return;
   }
 
   const selectedBook = target.closest("#bookPickerPanel .reader-picker-option");
   if (selectedBook) {
     openChapterPickerAfterBookSelection(selectedBook.textContent.trim());
+    clearFrozenReaderHighlight({ removeClasses: false });
     return;
   }
 
   const readerToken = target.closest("#chapterContent .strong-token");
   if (readerToken) {
     freezeReaderHighlight(readerToken);
+    return;
   }
+
+  scheduleFrozenReaderHighlightRefresh();
 }
 
-function handleReaderFreezeReset(event) {
+function handleReaderFreezePointerDown(event) {
   const target = event.target;
   if (!(target instanceof Element)) return;
+
+  const readerToken = target.closest("#chapterContent .strong-token");
+  if (readerToken) {
+    freezeReaderHighlight(readerToken);
+    return;
+  }
+
   if (target.closest("#clearDetail")) {
     clearFrozenReaderHighlight();
     return;
   }
+
   if (!target.closest(READER_BACKGROUND_RESET_SELECTOR)) {
     clearFrozenReaderHighlight();
+    return;
   }
+
+  scheduleFrozenReaderHighlightRefresh();
+}
+
+function handleFrozenHighlightKeydown(event) {
+  if (event.key === "Escape") clearFrozenReaderHighlight();
+  else scheduleFrozenReaderHighlightRefresh();
 }
 
 document.addEventListener("click", handleReaderPickerClick);
-document.addEventListener("pointerdown", handleReaderFreezeReset, true);
-document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape") clearFrozenReaderHighlight();
-});
+document.addEventListener("pointerdown", handleReaderFreezePointerDown, true);
+document.addEventListener("keydown", handleFrozenHighlightKeydown, true);
 window.addEventListener("hashchange", () => clearFrozenReaderHighlight({ removeClasses: false }));
 window.addEventListener("popstate", () => clearFrozenReaderHighlight({ removeClasses: false }));
