@@ -1,5 +1,6 @@
 const ACTIVE_OPTION_SELECTOR = ".reader-picker-option.active";
 const PICKER_READY_TIMEOUT_MS = 1800;
+const FROZEN_HIGHLIGHT_REFRESH_DELAYS_MS = [0, 40, 120, 300, 700, 1300, 1900];
 const READER_BACKGROUND_RESET_SELECTOR = [
   "button",
   "a",
@@ -19,6 +20,7 @@ const READER_BACKGROUND_RESET_SELECTOR = [
 
 let frozenReaderToken = null;
 let frozenReaderRow = null;
+let frozenReaderContext = null;
 let frozenHighlightObserver = null;
 
 function afterPickerPaint(callback) {
@@ -81,35 +83,94 @@ function disconnectFrozenHighlightObserver() {
   frozenHighlightObserver = null;
 }
 
+function captureFrozenReaderContext(token, row) {
+  return {
+    verse: row?.dataset?.verse || token?.dataset?.verse || "",
+    interlinearKey: token?.dataset?.interlinearKey || "",
+    strongCode: token?.dataset?.strongCode || "",
+    tokenIndex: token?.dataset?.tokenIndex || "",
+  };
+}
+
+function findFrozenReaderRow() {
+  if (frozenReaderRow?.isConnected) return frozenReaderRow;
+  if (!frozenReaderContext?.verse) return null;
+  return [...document.querySelectorAll("#chapterContent .verse-row")].find(
+    (row) => row.dataset.verse === frozenReaderContext.verse,
+  ) || null;
+}
+
+function findFrozenReaderToken(row) {
+  if (frozenReaderToken?.isConnected && row?.contains(frozenReaderToken)) return frozenReaderToken;
+  if (!row || !frozenReaderContext) return null;
+  const tokens = [...row.querySelectorAll(".strong-token")];
+  const byInterlinearKey = frozenReaderContext.interlinearKey
+    ? tokens.find((token) => token.dataset.interlinearKey === frozenReaderContext.interlinearKey)
+    : null;
+  if (byInterlinearKey) return byInterlinearKey;
+  const byStrongAndIndex = frozenReaderContext.strongCode && frozenReaderContext.tokenIndex
+    ? tokens.find(
+        (token) =>
+          token.dataset.strongCode === frozenReaderContext.strongCode &&
+          token.dataset.tokenIndex === frozenReaderContext.tokenIndex,
+      )
+    : null;
+  if (byStrongAndIndex) return byStrongAndIndex;
+  return frozenReaderContext.strongCode
+    ? tokens.find((token) => token.dataset.strongCode === frozenReaderContext.strongCode) || null
+    : null;
+}
+
+function refreshFrozenReaderNodes() {
+  const row = findFrozenReaderRow();
+  const token = findFrozenReaderToken(row);
+  if (!row || !token) return false;
+  frozenReaderRow = row;
+  frozenReaderToken = token;
+  return true;
+}
+
 function applyFrozenReaderHighlight() {
-  if (!frozenReaderToken?.isConnected || !frozenReaderRow?.isConnected) {
-    clearFrozenReaderHighlight({ removeClasses: false });
-    return;
-  }
+  if (!frozenReaderContext) return;
+  if (!refreshFrozenReaderNodes()) return;
   frozenReaderRow.classList.add("reader-context-verse");
   frozenReaderToken.classList.add("reader-context-word");
 }
 
 function scheduleFrozenReaderHighlightRefresh() {
-  if (!frozenReaderToken || !frozenReaderRow) return;
-  applyFrozenReaderHighlight();
+  if (!frozenReaderContext) return;
+  FROZEN_HIGHLIGHT_REFRESH_DELAYS_MS.forEach((delay) => {
+    window.setTimeout(applyFrozenReaderHighlight, delay);
+  });
   window.requestAnimationFrame(applyFrozenReaderHighlight);
   afterPickerPaint(applyFrozenReaderHighlight);
-  window.setTimeout(applyFrozenReaderHighlight, 80);
 }
 
 function observeFrozenReaderHighlight() {
   disconnectFrozenHighlightObserver();
-  if (!frozenReaderToken || !frozenReaderRow) return;
-  frozenHighlightObserver = new MutationObserver(() => applyFrozenReaderHighlight());
-  frozenHighlightObserver.observe(frozenReaderToken, {
-    attributes: true,
-    attributeFilter: ["class"],
+  if (!frozenReaderContext) return;
+  frozenHighlightObserver = new MutationObserver(() => {
+    window.requestAnimationFrame(applyFrozenReaderHighlight);
   });
-  frozenHighlightObserver.observe(frozenReaderRow, {
-    attributes: true,
-    attributeFilter: ["class"],
-  });
+  const chapterContent = document.getElementById("chapterContent");
+  if (chapterContent) {
+    frozenHighlightObserver.observe(chapterContent, {
+      childList: true,
+      subtree: true,
+    });
+  }
+  if (frozenReaderToken) {
+    frozenHighlightObserver.observe(frozenReaderToken, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+  }
+  if (frozenReaderRow) {
+    frozenHighlightObserver.observe(frozenReaderRow, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+  }
 }
 
 function freezeReaderHighlight(token) {
@@ -117,8 +178,9 @@ function freezeReaderHighlight(token) {
   if (!token || !row) return;
   frozenReaderToken = token;
   frozenReaderRow = row;
-  scheduleFrozenReaderHighlightRefresh();
+  frozenReaderContext = captureFrozenReaderContext(token, row);
   observeFrozenReaderHighlight();
+  scheduleFrozenReaderHighlightRefresh();
 }
 
 function clearFrozenReaderHighlight(options = {}) {
@@ -130,6 +192,7 @@ function clearFrozenReaderHighlight(options = {}) {
   }
   frozenReaderToken = null;
   frozenReaderRow = null;
+  frozenReaderContext = null;
 }
 
 function handleReaderPickerClick(event) {
