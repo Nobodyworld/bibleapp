@@ -175,6 +175,49 @@
   overflow: auto;
 }
 
+.language-breakdown.hebrew .mark-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  direction: rtl;
+  justify-content: center;
+  overflow-x: visible;
+  padding-bottom: 0;
+}
+
+.language-breakdown.hebrew .mark-pill {
+  flex: none;
+  min-width: 0;
+  justify-content: space-between;
+}
+
+.language-breakdown.hebrew .mark-glyph {
+  height: auto;
+  min-height: 42px;
+  overflow: visible;
+  align-items: center;
+  padding: 2px 0 10px;
+  line-height: 1.15;
+}
+
+@media (min-width: 1024px) {
+  .reader-pane .verse-row {
+    grid-template-columns: 58px minmax(0, 1fr) 32px;
+    gap: 12px;
+    padding-inline: 10px;
+  }
+}
+
+@media (min-width: 1380px) {
+  .reader-pane .chapter-content {
+    padding-inline: 28px 24px;
+  }
+
+  .reader-pane .verse-row {
+    grid-template-columns: 64px minmax(0, 1fr) 32px;
+    padding-inline: 16px 12px;
+  }
+}
+
 @media (max-width: 768px) {
   .translation-alignment-grid {
     grid-template-columns: 1fr;

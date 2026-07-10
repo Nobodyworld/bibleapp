@@ -3,10 +3,12 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [index, css, app, renderer, tagsView, strongsView] = await Promise.all([
+const [index, css, stylesPolish, app, pickerFlow, renderer, tagsView, strongsView] = await Promise.all([
   readFile(new URL("../app/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/styles.css", import.meta.url), "utf8"),
+  readFile(new URL("../app/styles-polish.css", import.meta.url), "utf8"),
   readFile(new URL("../app/app.js", import.meta.url), "utf8"),
+  readFile(new URL("../app/src/reader-picker-flow.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/chapter-renderer.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/views/tags-view.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/views/strongs-view.js", import.meta.url), "utf8"),
@@ -54,6 +56,35 @@ assert(
   "Book and chapter controls must use app-owned picker popovers: testament columns and chapter grid.",
 );
 assert(/\.fn-marker\s*{[\s\S]*?color:\s*#2347fb;/.test(css), "Footnote markers must use the requested blue.");
+assert(
+  /reader-picker-flow\.js\?v=reader-picker-flow-20260709/.test(index),
+  "The reader picker flow helper must load after the main app module.",
+);
+assert(
+  /ACTIVE_OPTION_SELECTOR = "\.reader-picker-option\.active"/.test(pickerFlow) &&
+    /scrollIntoView\(\{[\s\S]*?block:\s*"center",[\s\S]*?inline:\s*"nearest",/.test(pickerFlow),
+  "Opening reader pickers must scroll the active option into view.",
+);
+assert(
+  /openChapterPickerAfterBookSelection/.test(pickerFlow) &&
+    /#bookPickerPanel \.reader-picker-option/.test(pickerFlow) &&
+    /setPickerExpanded\(chapterButton, chapterPanel, true\)/.test(pickerFlow),
+  "Selecting a book in the app-owned picker must open chapter selection after navigation.",
+);
+assert(
+  /frozenReaderContext/.test(pickerFlow) &&
+    /captureFrozenReaderContext/.test(pickerFlow) &&
+    /findFrozenReaderToken/.test(pickerFlow) &&
+    /FROZEN_HIGHLIGHT_REFRESH_DELAYS_MS/.test(pickerFlow) &&
+    /READER_BACKGROUND_RESET_SELECTOR/.test(pickerFlow) &&
+    /MutationObserver\(\(\) => \{[\s\S]*?requestAnimationFrame\(applyFrozenReaderHighlight\)/.test(pickerFlow),
+  "Clicked reader Strong's words must stay frozen while browsing side-panel details until an explicit unfreeze action.",
+);
+assert(
+  /@media\s*\(min-width:\s*1024px\)[\s\S]*?\.reader-pane \.verse-row\s*{[\s\S]*?grid-template-columns:\s*58px minmax\(0, 1fr\) 32px;[\s\S]*?gap:\s*12px;/.test(stylesPolish) &&
+    /@media\s*\(min-width:\s*1380px\)[\s\S]*?\.reader-pane \.chapter-content\s*{[\s\S]*?padding-inline:\s*28px 24px;/.test(stylesPolish),
+  "Wide reader layout must add desktop-only breathing room without changing the mobile base layout.",
+);
 
 assert(/function disengageDetailFollow\(\)/.test(app), "Background reset must share the detail-follow disengage path.");
 assert(
@@ -91,9 +122,13 @@ assert(
   /const markRecords = analysis\.units\.flatMap\(\(unit\) => unit\.marks \|\| \[\]\);/.test(strongsView) &&
     !/base_char/.test(strongsView) &&
     /section\.append\(marksTitle,\s*markStudy,\s*letters\)/.test(strongsView) &&
-    /\.mark-study \.mark-study-word\s*{[\s\S]*?text-align:\s*center;/.test(css) &&
-    /\.language-breakdown\.hebrew \.mark-list\s*{[\s\S]*?justify-content:\s*center;[\s\S]*?flex-wrap:\s*nowrap;/.test(css),
-  "Hebrew marks must appear before letters/gematria, stay centered, and use symbols-only single-line pills.",
+    /\.mark-study \.mark-study-word\s*{[\s\S]*?text-align:\s*center;/.test(css),
+  "Hebrew marks must appear before letters/gematria and keep the studied word centered.",
+);
+assert(
+  /\.language-breakdown\.hebrew \.mark-list\s*{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(auto-fit, minmax\(96px, 1fr\)\);[\s\S]*?direction:\s*rtl;[\s\S]*?justify-content:\s*center;[\s\S]*?overflow-x:\s*visible;/.test(stylesPolish) &&
+    /\.language-breakdown\.hebrew \.mark-glyph\s*{[\s\S]*?height:\s*auto;[\s\S]*?min-height:\s*42px;[\s\S]*?overflow:\s*visible;/.test(stylesPolish),
+  "Hebrew mark pills must stay reachable in narrow panels and must not clip low vowel symbols.",
 );
 assert(
   /:root\[data-theme="dark"\] \.translation-renderings\s*{[\s\S]*?background:\s*var\(--bg-elevated\)\s*!important;/.test(css) &&
@@ -132,4 +167,4 @@ assert(
   "Browser-visible app and stylesheet entry points must use the current cache-buster key.",
 );
 
-console.log(JSON.stringify({ status: "ok", assertions: 38 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 44 }, null, 2));
