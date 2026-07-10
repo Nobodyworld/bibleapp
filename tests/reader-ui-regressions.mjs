@@ -113,9 +113,13 @@ assert(
   /const markRecords = analysis\.units\.flatMap\(\(unit\) => unit\.marks \|\| \[\]\);/.test(strongsView) &&
     !/base_char/.test(strongsView) &&
     /section\.append\(marksTitle,\s*markStudy,\s*letters\)/.test(strongsView) &&
-    /\.mark-study \.mark-study-word\s*{[\s\S]*?text-align:\s*center;/.test(css) &&
-    /\.language-breakdown\.hebrew \.mark-list\s*{[\s\S]*?justify-content:\s*center;[\s\S]*?flex-wrap:\s*nowrap;/.test(css),
-  "Hebrew marks must appear before letters/gematria, stay centered, and use symbols-only single-line pills.",
+    /\.mark-study \.mark-study-word\s*{[\s\S]*?text-align:\s*center;/.test(css),
+  "Hebrew marks must appear before letters/gematria and keep the studied word centered.",
+);
+assert(
+  /\.language-breakdown\.hebrew \.mark-list\s*{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(auto-fit, minmax\(96px, 1fr\)\);[\s\S]*?overflow-x:\s*visible;/.test(stylesPolish) &&
+    /\.language-breakdown\.hebrew \.mark-glyph\s*{[\s\S]*?height:\s*auto;[\s\S]*?min-height:\s*42px;[\s\S]*?overflow:\s*visible;/.test(stylesPolish),
+  "Hebrew mark pills must stay reachable in narrow panels and must not clip low vowel symbols.",
 );
 assert(
   /:root\[data-theme="dark"\] \.translation-renderings\s*{[\s\S]*?background:\s*var\(--bg-elevated\)\s*!important;/.test(css) &&
@@ -154,4 +158,4 @@ assert(
   "Browser-visible app and stylesheet entry points must use the current cache-buster key.",
 );
 
-console.log(JSON.stringify({ status: "ok", assertions: 42 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 43 }, null, 2));
