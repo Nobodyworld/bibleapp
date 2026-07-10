@@ -96,7 +96,7 @@
 }
 
 .study-mark-section,
-.study-data-section,
+study-data-section,
 .local-processing-section {
   display: grid;
   gap: 8px;
@@ -173,6 +173,30 @@
 .job-payload {
   max-width: 100%;
   overflow: auto;
+}
+
+.language-breakdown.hebrew .mark-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  direction: ltr;
+  justify-content: stretch;
+  overflow-x: visible;
+  padding-bottom: 0;
+}
+
+.language-breakdown.hebrew .mark-pill {
+  flex: none;
+  min-width: 0;
+  justify-content: space-between;
+}
+
+.language-breakdown.hebrew .mark-glyph {
+  height: auto;
+  min-height: 42px;
+  overflow: visible;
+  align-items: center;
+  padding: 2px 0 10px;
+  line-height: 1.15;
 }
 
 @media (min-width: 1024px) {
