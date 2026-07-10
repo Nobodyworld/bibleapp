@@ -84,18 +84,18 @@ async function waitFor(page, predicate, timeoutMs = 15000) {
   throw new Error(`Timed out waiting for: ${predicate.toString()}`);
 }
 
-async function clickWithPointer(page, selectorOrPredicate) {
+async function clickWithPointer(page, selectorOrTokenAlias) {
   await page.evaluate((input) => {
-    const target = typeof input === "string"
-      ? document.querySelector(input)
-      : [...document.querySelectorAll(".strong-token")].find((node) => /LORD/i.test(node.textContent || "")) ||
-        document.querySelector(".strong-token");
+    const target = input === "reader-token"
+      ? [...document.querySelectorAll(".strong-token")].find((node) => /LORD/i.test(node.textContent || "")) ||
+        document.querySelector(".strong-token")
+      : document.querySelector(input);
     if (!target) throw new Error(`Target not found: ${input}`);
     target.scrollIntoView({ block: "center", inline: "nearest" });
     target.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, cancelable: true, pointerType: "mouse" }));
     target.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, cancelable: true, pointerType: "mouse" }));
     target.click();
-  }, selectorOrPredicate);
+  }, selectorOrTokenAlias);
 }
 
 async function main() {
