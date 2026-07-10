@@ -199,6 +199,189 @@
   line-height: 1.15;
 }
 
+.original-language-study-intro {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 16px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-elevated);
+}
+
+.original-language-study-eyebrow {
+  color: var(--accent-dark);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.original-language-study-intro p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.original-language-verse-card {
+  display: grid;
+  gap: 14px;
+  margin: 0 0 18px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--panel-alt);
+  box-shadow: var(--shadow-sm);
+}
+
+.original-language-verse-reference {
+  margin: 0;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
+  font-size: 17px;
+}
+
+.original-language-source-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.original-language-section-label,
+.original-language-card-label {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.original-language-source-card .source-text {
+  font-size: clamp(24px, 4vw, 38px);
+  line-height: 1.6;
+}
+
+.original-language-section-heading {
+  margin-top: 2px;
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.original-language-word-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.interlinear-token.original-language-word-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  box-shadow: none;
+}
+
+.original-language-word-summary,
+.original-language-word-source {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px 14px;
+}
+
+.original-language-word-summary {
+  border-bottom: 1px solid var(--line);
+  background: var(--bg-elevated);
+}
+
+.original-language-word-summary .token-english {
+  color: var(--text);
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.original-language-word-summary .token-gloss {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.original-language-word-summary .token-meta {
+  color: var(--accent-dark);
+  font-size: 12px;
+}
+
+.original-language-word-source {
+  place-items: center;
+  min-height: 126px;
+  text-align: center;
+}
+
+.original-language-word-source .original-language-card-label {
+  justify-self: start;
+  width: 100%;
+  text-align: left;
+}
+
+.original-language-word-source .token-original {
+  max-width: 100%;
+  margin: 4px 0 0;
+  font-size: clamp(28px, 5vw, 42px);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.original-language-word-source .token-translit {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.original-language-word-card > .token-tag-actions,
+.original-language-word-card > .language-breakdown,
+.original-language-word-card > .token-rendering,
+.original-language-word-card > .workspace-word-map {
+  margin-inline: 12px;
+}
+
+.original-language-word-card > .language-breakdown,
+.original-language-word-card > .token-rendering,
+.original-language-word-card > .workspace-word-map {
+  margin-top: 10px;
+}
+
+.original-language-word-card > :last-child {
+  margin-bottom: 12px;
+}
+
+.original-language-study-picker {
+  display: grid;
+  gap: 10px;
+}
+
+.original-language-study-picker > h3,
+.original-language-study-picker > p {
+  margin: 0;
+}
+
+.original-language-study-picker > p {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 @media (min-width: 1024px) {
   .reader-pane .verse-row {
     grid-template-columns: 58px minmax(0, 1fr) 32px;
@@ -219,11 +402,20 @@
 }
 
 @media (max-width: 768px) {
-  .translation-alignment-grid {
+  .translation-alignment-grid,
+  .original-language-word-grid {
     grid-template-columns: 1fr;
   }
 
   .alignment-source {
     font-size: clamp(22px, 10vw, 34px);
+  }
+
+  .original-language-verse-card {
+    padding: 12px;
+  }
+
+  .original-language-source-card .source-text {
+    font-size: clamp(24px, 9vw, 34px);
   }
 }
