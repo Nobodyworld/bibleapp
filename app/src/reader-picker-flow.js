@@ -17,6 +17,18 @@ const READER_BACKGROUND_RESET_SELECTOR = [
   ".language-letter-hover",
   ".letter-unit",
 ].join(", ");
+const READER_NAVIGATION_RESET_SELECTOR = [
+  "#homeButton",
+  "#prevChapter",
+  "#nextChapter",
+  "#prevChapterFloat",
+  "#nextChapterFloat",
+  "#translationSelect",
+  "#bookSelect",
+  "#chapterSelect",
+  "#bookPickerPanel .reader-picker-option",
+  "#chapterPickerPanel .reader-picker-option",
+].join(", ");
 
 let frozenReaderToken = null;
 let frozenReaderRow = null;
@@ -27,6 +39,17 @@ function afterPickerPaint(callback) {
   window.requestAnimationFrame(() => {
     window.requestAnimationFrame(callback);
   });
+}
+
+function currentReaderScope() {
+  return {
+    bookId: document.getElementById("bookSelect")?.value || "",
+    chapter: document.getElementById("chapterSelect")?.value || "",
+  };
+}
+
+function sameReaderScope(left, right = currentReaderScope()) {
+  return Boolean(left?.bookId && left?.chapter && left.bookId === right.bookId && left.chapter === right.chapter);
 }
 
 function setPickerExpanded(button, panel, expanded) {
@@ -84,8 +107,12 @@ function disconnectFrozenHighlightObserver() {
 }
 
 function captureFrozenReaderContext(token, row) {
+  const scope = currentReaderScope();
   return {
+    bookId: scope.bookId,
+    chapter: scope.chapter,
     verse: row?.dataset?.verse || token?.dataset?.verse || "",
+    refKey: row?.dataset?.refKey || "",
     interlinearKey: token?.dataset?.interlinearKey || "",
     strongCode: token?.dataset?.strongCode || "",
     tokenIndex: token?.dataset?.tokenIndex || "",
@@ -93,11 +120,16 @@ function captureFrozenReaderContext(token, row) {
 }
 
 function findFrozenReaderRow() {
+  if (!sameReaderScope(frozenReaderContext)) {
+    clearFrozenReaderHighlight({ removeClasses: false });
+    return null;
+  }
   if (frozenReaderRow?.isConnected) return frozenReaderRow;
   if (!frozenReaderContext?.verse) return null;
-  return [...document.querySelectorAll("#chapterContent .verse-row")].find(
-    (row) => row.dataset.verse === frozenReaderContext.verse,
-  ) || null;
+  const rows = [...document.querySelectorAll("#chapterContent .verse-row")];
+  return rows.find((row) => row.dataset.refKey && row.dataset.refKey === frozenReaderContext.refKey) ||
+    rows.find((row) => row.dataset.verse === frozenReaderContext.verse) ||
+    null;
 }
 
 function findFrozenReaderToken(row) {
@@ -237,6 +269,11 @@ function handleReaderFreezePointerDown(event) {
     return;
   }
 
+  if (target.closest(READER_NAVIGATION_RESET_SELECTOR)) {
+    clearFrozenReaderHighlight({ removeClasses: false });
+    return;
+  }
+
   if (target.closest("#clearDetail")) {
     clearFrozenReaderHighlight();
     return;
@@ -255,8 +292,15 @@ function handleFrozenHighlightKeydown(event) {
   else scheduleFrozenReaderHighlightRefresh();
 }
 
+function bindNavigationReset(selector, eventName) {
+  document.querySelector(selector)?.addEventListener(eventName, () => clearFrozenReaderHighlight({ removeClasses: false }));
+}
+
 document.addEventListener("click", handleReaderPickerClick);
 document.addEventListener("pointerdown", handleReaderFreezePointerDown, true);
 document.addEventListener("keydown", handleFrozenHighlightKeydown, true);
+bindNavigationReset("#translationSelect", "change");
+bindNavigationReset("#bookSelect", "change");
+bindNavigationReset("#chapterSelect", "change");
 window.addEventListener("hashchange", () => clearFrozenReaderHighlight({ removeClasses: false }));
 window.addEventListener("popstate", () => clearFrozenReaderHighlight({ removeClasses: false }));
