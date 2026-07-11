@@ -4,16 +4,16 @@ import {
   fetchWordMapBook,
   loadLanguageMetadata,
 } from "../data-service.js";
-import { isDetailHoverLocked, setDetail, textNode } from "../dom.js?v=original-language-sources-20260710b";
+import { isDetailHoverLocked, setDetail, textNode } from "../dom.js?v=pr13-live-qa-20260710c";
 import { capabilityMessage } from "../capabilities.js";
 import {
   languageUnitTooltip,
   setLanguageTextWithTooltips,
   setTransliterationTextWithTooltips,
-} from "../language-tooltips.js?v=original-language-sources-20260710b";
-import { setMorphologyHelp } from "../morphology-tooltips.js?v=original-language-sources-20260710b";
+} from "../language-tooltips.js?v=pr13-live-qa-20260710c";
+import { setMorphologyHelp } from "../morphology-tooltips.js?v=pr13-live-qa-20260710c";
 import { analyzeOriginalWord, gematriaValueForUnit, wordHasLanguageScript } from "../language.js";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=original-language-sources-20260710b";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=pr13-live-qa-20260710c";
 
 function languageTitle(language) {
   return language === "hebrew" ? "Hebrew" : "Greek";

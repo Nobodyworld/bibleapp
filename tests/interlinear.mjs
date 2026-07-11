@@ -4,7 +4,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { summarizeHebrewGematriaTokens } from "../app/src/language.js";
 import { languageUnitText, transliterationSymbolDescription } from "../app/src/language-tooltips.js";
-import { normalizeInterlinearVerseTokens, resolveInterlinearVerseTokens } from "../app/src/strongs.js";
+import {
+  normalizeInterlinearVerseTokens,
+  resolveInterlinearVerseTokens,
+  resolveSourceBearingPresentationSegment,
+} from "../app/src/strongs.js";
 
 const rawTokens = [
   [6, "hoti", "hoti", "Conj", "G3754", 3754, "that", "demonstrative, that", "greek"],
@@ -84,16 +88,55 @@ assert.equal(
   languageUnitText({ char: "Ε", standalone: false, marks: [{ char: "̓" }] }),
   "Ἐ",
 );
-assert.match(transliterationSymbolDescription("ō"), /o with macron.*not exact pronunciation/i);
-assert.match(transliterationSymbolDescription("î"), /i with circumflex.*not exact pronunciation/i);
-assert.match(transliterationSymbolDescription("·"), /separating transliterated word parts.*not exact pronunciation/i);
+assert.match(transliterationSymbolDescription("ō"), /macron marking a long o vowel.*not exact pronunciation/i);
+assert.match(transliterationSymbolDescription("î"), /circumflex.*vowel distinction or contraction.*not exact pronunciation/i);
+assert.match(transliterationSymbolDescription("·"), /separat(?:es|ing) syllables or morphemes.*not pronounced.*not exact pronunciation/i);
 assert.equal(transliterationSymbolDescription("x"), "");
+
+const psalmStrong = {
+  1: [
+    [1, "A Psalm", "hebrew", "H4210", 4210, "מִזְמוֹר", "N", "psalm"],
+    [2, "of David", "hebrew", "H1732", 1732, "לְדָוִד", "Np", "David"],
+    [3, "The LORD", "hebrew", "H3068", 3068, "יְהוָה", "Np", "LORD"],
+    [4, "is my shepherd", "hebrew", "H7462", 7462, "רֹעִי", "V", "shepherd"],
+  ],
+};
+const psalmInterlinear = {
+  1: [
+    [1, "מִזְמוֹר", "mizmor", "N", "H4210", 4210, "A Psalm", "psalm", "hebrew"],
+    [2, "לְדָוִד", "ledavid", "Np", "H1732", 1732, "of David", "David", "hebrew"],
+    [3, "יְהוָה", "YHWH", "Np", "H3068", 3068, "The LORD", "LORD", "hebrew"],
+    [4, "רֹעִי", "roi", "V", "H7462", 7462, "is my shepherd", "shepherd", "hebrew"],
+  ],
+};
+const superscription = resolveSourceBearingPresentationSegment({
+  bookId: "psalms",
+  chapter: 23,
+  block: { kind: "psalm_superscription", before_verse: "1", text: "A Psalm of David." },
+  rawStrongByVerse: psalmStrong,
+  rawInterlinearByVerse: psalmInterlinear,
+});
+assert.equal(superscription.segment_id, "psalms:23:psalm_superscription:1");
+assert.deepEqual(superscription.token_indexes, ["1", "2"]);
+assert.equal(resolveSourceBearingPresentationSegment({
+  bookId: "psalms", chapter: 23,
+  block: { kind: "section_heading", before_verse: "1", text: "The LORD Is My Shepherd" },
+  rawStrongByVerse: psalmStrong, rawInterlinearByVerse: psalmInterlinear,
+}), null);
+assert.deepEqual(resolveInterlinearVerseTokens({
+  rawInterlinearByVerse: psalmInterlinear,
+  rawStrongByVerse: psalmStrong,
+  chapterVerses: { 1: "The LORD is my shepherd" },
+  targetVerse: 1,
+  reference: { bookId: "psalms", chapter: 23 },
+  excludedTokenIndexes: superscription.token_indexes,
+}).map((token) => token.token_index), [3, 4]);
 
 console.log(
   JSON.stringify(
     {
       status: "ok",
-      assertions: 16,
+      assertions: 22,
       corrected_reference: "john:4:1:10",
     },
     null,

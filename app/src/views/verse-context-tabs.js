@@ -1,7 +1,7 @@
 import { studyUnavailableLabel } from "../study-empty-state.js";
 import { CONTROL_STATES, resolveControlState } from "../ui-contracts.js";
-import { resolveInterlinearVerseTokens } from "../strongs.js?v=original-language-sources-20260710b";
-import { createVerseTarget } from "../semantic-targets.js?v=original-language-sources-20260710b";
+import { resolveInterlinearVerseTokens } from "../strongs.js?v=pr13-live-qa-20260710c";
+import { createVerseTarget } from "../semantic-targets.js?v=pr13-live-qa-20260710c";
 
 function getVerseText(ctx, verse) {
   return ctx.state.verseBook?.chapters?.[ctx.state.chapter]?.[verse] || "";

@@ -117,6 +117,9 @@ async function launchBrowser() {
   });
   const playwrightPage = await context.newPage();
   const page = {
+    async press(selector, key) {
+      await playwrightPage.locator(selector).press(key);
+    },
     async send(method, params = {}) {
       if (method === "Page.enable" || method === "Runtime.enable") return {};
       if (method === "Page.navigate") {
@@ -508,15 +511,23 @@ async function runQa(page) {
     ),
     "book, chapter, and verse favorite controls were not initialized",
   );
+  assert(
+    await evaluate(page, `document.querySelectorAll('.scope-mark-button').length === 2 && ![...document.querySelectorAll('button')].some((button) => /^(Book|Chapter) tags$/.test(button.textContent.trim()))`),
+    "reader must expose exactly one consolidated Book control and one consolidated Chapter control",
+  );
   await click(page, "#favoriteBook");
+  await waitFor(page, "document.querySelector('#bookTagControl .tag-picker-option[aria-label=\"Add Favorite tag\"]')");
+  await click(page, '#bookTagControl .tag-picker-option[aria-label="Add Favorite tag"]');
   await waitFor(page, "document.querySelector('#favoriteBook')?.getAttribute('aria-pressed') === 'true'");
   await click(page, "#favoriteChapter");
+  await waitFor(page, "document.querySelector('#chapterTagControl .tag-picker-option[aria-label=\"Add Favorite tag\"]')");
+  await click(page, '#chapterTagControl .tag-picker-option[aria-label="Add Favorite tag"]');
   await waitFor(page, "document.querySelector('#favoriteChapter')?.getAttribute('aria-pressed') === 'true'");
-  await click(page, "#bookTagControl .scope-tag-button");
+  await page.press("#favoriteBook", "Enter");
   await waitFor(page, "document.querySelector('#bookTagControl .tag-picker-option[aria-label=\"Add Inquiry tag\"]')");
   await click(page, '#bookTagControl .tag-picker-option[aria-label="Add Inquiry tag"]');
   await waitFor(page, "document.querySelector('#bookTagControl .target-tag-badge')?.textContent.includes('Inquiry')");
-  await click(page, "#chapterTagControl .scope-tag-button");
+  await page.press("#favoriteChapter", " ");
   await waitFor(page, "document.querySelector('#chapterTagControl .tag-picker-option[aria-label=\"Add Inquiry tag\"]')");
   await click(page, '#chapterTagControl .tag-picker-option[aria-label="Add Inquiry tag"]');
   await waitFor(page, "document.querySelector('#chapterTagControl .target-tag-badge')?.textContent.includes('Inquiry')");
@@ -613,7 +624,11 @@ async function runQa(page) {
     "Favorites panel did not group book, chapter, and verse targets",
   );
   await click(page, "#favoriteBook");
+  await waitFor(page, "document.querySelector('#bookTagControl .tag-picker-option[aria-label=\"Remove Favorite tag\"]')");
+  await click(page, '#bookTagControl .tag-picker-option[aria-label="Remove Favorite tag"]');
   await click(page, "#favoriteChapter");
+  await waitFor(page, "document.querySelector('#chapterTagControl .tag-picker-option[aria-label=\"Remove Favorite tag\"]')");
+  await click(page, '#chapterTagControl .tag-picker-option[aria-label="Remove Favorite tag"]');
   await click(page, ".verse-favorite-button.active");
   await waitFor(
     page,

@@ -1,31 +1,31 @@
-import { loadLanguageMetadata } from "./data-service.js?v=original-language-sources-20260710b";
+import { loadLanguageMetadata } from "./data-service.js?v=pr13-live-qa-20260710c";
 import { analyzeOriginalWord, gematriaValueForUnit, wordHasLanguageScript } from "./language.js";
 
 const HEBREW_RUN = /[\u0591-\u05c7\u05d0-\u05ea]+/gu;
 const GREEK_RUN = /[\u0300-\u036f\u0370-\u03ff\u1f00-\u1fff]+/gu;
 const TRANSLITERATION_SYMBOLS = new Map([
-  ["ā", "a with macron as written in the bundled transliteration"],
-  ["ē", "e with macron as written in the bundled transliteration"],
-  ["ī", "i with macron as written in the bundled transliteration"],
-  ["ō", "o with macron as written in the bundled transliteration"],
-  ["ū", "u with macron as written in the bundled transliteration"],
-  ["â", "a with circumflex as written in the bundled transliteration"],
-  ["ê", "e with circumflex as written in the bundled transliteration"],
-  ["î", "i with circumflex as written in the bundled transliteration"],
-  ["ô", "o with circumflex as written in the bundled transliteration"],
-  ["û", "u with circumflex as written in the bundled transliteration"],
-  ["ḥ", "h with dot below as written in the bundled transliteration"],
-  ["ṣ", "s with dot below as written in the bundled transliteration"],
-  ["ṭ", "t with dot below as written in the bundled transliteration"],
-  ["ḏ", "d with line below as written in the bundled transliteration"],
-  ["ḵ", "k with line below as written in the bundled transliteration"],
-  ["ṯ", "t with line below as written in the bundled transliteration"],
-  ["š", "s with caron as written in the bundled transliteration"],
-  ["ś", "s with acute accent as written in the bundled transliteration"],
-  ["‘", "consonant marker as written in the bundled transliteration"],
-  ["’", "consonant marker as written in the bundled transliteration"],
-  ["ʿ", "consonant marker as written in the bundled transliteration"],
-  ["·", "middle dot separating transliterated word parts"],
+  ["ā", "macron marking a long a vowel in the bundled OpenBible transliteration convention"],
+  ["ē", "macron marking a long e vowel in the bundled OpenBible transliteration convention"],
+  ["ī", "macron marking a long i vowel in the bundled OpenBible transliteration convention"],
+  ["ō", "macron marking a long o vowel in the bundled OpenBible transliteration convention"],
+  ["ū", "macron marking a long u vowel in the bundled OpenBible transliteration convention"],
+  ["â", "circumflex marking the convention-specific a-vowel distinction or contraction in bundled Strong's data"],
+  ["ê", "circumflex marking the convention-specific e-vowel distinction or contraction in bundled Strong's data"],
+  ["î", "circumflex marking the convention-specific i-vowel distinction or contraction in bundled Strong's data"],
+  ["ô", "circumflex marking the convention-specific o-vowel distinction or contraction in bundled Strong's data"],
+  ["û", "circumflex marking the convention-specific u-vowel distinction or contraction in bundled Strong's data"],
+  ["ḥ", "dot below distinguishing the Hebrew consonant represented by h from an unmarked Latin h"],
+  ["ṣ", "dot below distinguishing the Hebrew consonant represented by s from an unmarked Latin s"],
+  ["ṭ", "dot below distinguishing the Hebrew consonant represented by t from an unmarked Latin t"],
+  ["ḏ", "line below distinguishing the Hebrew consonant represented by d from an unmarked Latin d"],
+  ["ḵ", "line below distinguishing the Hebrew consonant represented by k from an unmarked Latin k"],
+  ["ṯ", "line below distinguishing the Hebrew consonant represented by t from an unmarked Latin t"],
+  ["š", "caron representing the Hebrew sh consonant in the bundled OpenBible transliteration convention"],
+  ["ś", "acute mark distinguishing this Hebrew s consonant from the convention's other s forms"],
+  ["‘", "source-language consonant marker representing Hebrew ayin; it is not punctuation"],
+  ["’", "source-language consonant marker representing Hebrew aleph; it is not punctuation"],
+  ["ʿ", "source-language consonant marker representing Hebrew ayin; it is not punctuation"],
+  ["·", "middle dot separating syllables or morphemes; the separator itself is not pronounced"],
 ]);
 let tooltipLayer = null;
 let activeTooltipTarget = null;
@@ -117,6 +117,15 @@ function ensureTooltipLayer() {
   });
   document.addEventListener("focusout", (event) => {
     if (activeTooltipTarget && event.target === activeTooltipTarget) hideTooltip();
+  });
+  document.addEventListener("click", (event) => {
+    const target = tooltipTarget(event.target);
+    if (target?.classList.contains("transliteration-symbol")) {
+      event.stopPropagation();
+      showTooltip(target);
+      return;
+    }
+    if (activeTooltipTarget?.classList.contains("transliteration-symbol")) hideTooltip();
   });
   window.addEventListener("scroll", () => positionTooltip(activeTooltipTarget), true);
   window.addEventListener("resize", () => positionTooltip(activeTooltipTarget));

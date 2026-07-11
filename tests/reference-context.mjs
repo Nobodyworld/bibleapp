@@ -58,6 +58,7 @@ assert.deepEqual(
     book_id: "john",
     chapter: null,
     verse: null,
+    segment_id: null,
     word: {
       token_index: null,
       strong_code: "G3754",

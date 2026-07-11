@@ -1,12 +1,12 @@
-import { DEFAULT_ROUTE } from "./src/config.js?v=original-language-sources-20260710b";
+import { DEFAULT_ROUTE } from "./src/config.js?v=pr13-live-qa-20260710c";
 import { capabilityAvailable, resolveCapability } from "./src/capabilities.js";
-import { createChapterRenderer } from "./src/chapter-renderer.js?v=original-language-sources-20260710b";
+import { createChapterRenderer } from "./src/chapter-renderer.js?v=pr13-live-qa-20260710c";
 import {
   loadManifest,
   loadReaderBookData,
   translationCanLoadBook,
-} from "./src/data-service.js?v=original-language-sources-20260710b";
-import { createDetailViews } from "./src/detail-views.js?v=original-language-sources-20260710b";
+} from "./src/data-service.js?v=pr13-live-qa-20260710c";
+import { createDetailViews } from "./src/detail-views.js?v=pr13-live-qa-20260710c";
 import {
   els,
   goBackDetail,
@@ -18,14 +18,14 @@ import {
   setStatus,
   sortedNumericKeys,
   trackReaderLocation,
-} from "./src/dom.js?v=original-language-sources-20260710b";
+} from "./src/dom.js?v=pr13-live-qa-20260710c";
 import { createReferenceButton as makeReferenceButton, referenceKey, refDomId } from "./src/references.js";
 import { buildReferenceContext, referenceContextKey } from "./src/reference-context.js";
-import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js?v=original-language-sources-20260710b";
+import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js?v=pr13-live-qa-20260710c";
 import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js";
-import { getTagTargets, initStores, listenForUserDataChanges, setTagAssertion } from "./src/stores.js?v=original-language-sources-20260710b";
+import { getTagTargets, initStores, listenForUserDataChanges } from "./src/stores.js?v=pr13-live-qa-20260710c";
 import { studyUnavailableLabel } from "./src/study-empty-state.js";
-import { chapterSwipeDirection, CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js?v=original-language-sources-20260710b";
+import { chapterSwipeDirection, CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js?v=pr13-live-qa-20260710c";
 
 const state = {
   manifest: null,
@@ -107,14 +107,17 @@ function clearReaderHighlight() {
 function highlightReaderContext(options = {}) {
   clearReaderHighlight();
   const wordElement = options.wordElement || null;
-  const verse = options.verse || wordElement?.closest?.(".verse-row")?.dataset?.verse || null;
+  const segmentId = options.segmentId || wordElement?.dataset?.segmentId || wordElement?.closest?.("[data-segment-id]")?.dataset?.segmentId || null;
+  const verse = options.verse || wordElement?.closest?.(".verse-row, .source-bearing-segment")?.dataset?.verse || null;
   const row =
-    wordElement?.closest?.(".verse-row") ||
+    wordElement?.closest?.(".verse-row, .source-bearing-segment") ||
+    (segmentId ? document.querySelector(`[data-segment-id="${CSS.escape(segmentId)}"]`) : null) ||
     (verse ? document.getElementById(refDomId(referenceKey(state.bookId, state.chapter, verse))) : null);
   if (row) row.classList.add("reader-context-verse");
   if (wordElement?.classList) wordElement.classList.add("reader-context-word");
   const context = getReferenceContext({
     verse,
+    segmentId,
     word:
       options.word ||
       (wordElement
@@ -138,7 +141,9 @@ function restoreReaderHighlightFromContext(context) {
     clearReaderHighlight();
     return;
   }
-  const row = document.getElementById(refDomId(referenceKey(state.bookId, state.chapter, context.verse)));
+  const row =
+    (context.segment_id ? document.querySelector(`[data-segment-id="${CSS.escape(context.segment_id)}"]`) : null) ||
+    document.getElementById(refDomId(referenceKey(state.bookId, state.chapter, context.verse)));
   if (!row) return;
   const word = context.word || {};
   const tokens = [...row.querySelectorAll(".strong-token")];
@@ -151,6 +156,7 @@ function restoreReaderHighlightFromContext(context) {
     null;
   highlightReaderContext({
     verse: context.verse,
+    segmentId: context.segment_id,
     wordElement,
     word,
     commit: true,
@@ -327,30 +333,14 @@ function currentScopeTargets() {
   return currentFavoriteTargets();
 }
 
-function syncFavoriteButton(button, target, label) {
-  if (!button || !target) return;
-  const active = getTagTargets(state, "favorite").includes(target.target_id);
-  const star = button.querySelector(".scope-favorite-star");
-  if (star) {
-    star.textContent = active ? "★" : "☆";
-  } else {
-    button.textContent = `${active ? "★" : "☆"} ${label[0].toUpperCase()}${label.slice(1)}`;
-  }
-  button.classList.toggle("active", active);
-  button.setAttribute("aria-pressed", active ? "true" : "false");
-  button.title = `${active ? "Remove" : "Add"} current ${label} ${active ? "from" : "to"} favorites`;
-  button.setAttribute("aria-label", button.title);
-}
-
 function syncFavoriteButtons() {
-  const targets = currentScopeTargets();
-  syncFavoriteButton(els.favoriteBook, targets.book, "book");
-  syncFavoriteButton(els.favoriteChapter, targets.chapter, "chapter");
+  syncScopeControls();
 }
 
-function renderScopeTagControl(mount, target, label, options = {}) {
+function renderScopeMarkControl(mount, target, label, options = {}) {
   if (!mount || !target || !detailViews?.renderTargetTagPicker) return;
   mount.replaceChildren();
+  const favoriteActive = getTagTargets(state, "favorite").includes(target.target_id);
   const refresh = () => {
     syncScopeControls();
     renderer.renderChapter();
@@ -358,15 +348,20 @@ function renderScopeTagControl(mount, target, label, options = {}) {
 
   const trigger = document.createElement("button");
   trigger.type = "button";
-  trigger.className = "scope-tag-button";
-  trigger.textContent = `${label} tags`;
-  trigger.setAttribute("aria-label", `Edit current ${label.toLowerCase()} tags`);
+  trigger.id = label === "Book" ? "favoriteBook" : "favoriteChapter";
+  trigger.className = ["scope-favorite-button", "scope-mark-button", favoriteActive ? "active" : ""]
+    .filter(Boolean)
+    .join(" ");
+  trigger.innerHTML = `<span class="scope-favorite-star" aria-hidden="true">${favoriteActive ? "★" : "☆"}</span><span class="scope-favorite-label">${label}</span>`;
+  trigger.setAttribute("aria-label", `Edit current ${label.toLowerCase()} favorite and tags`);
+  trigger.setAttribute("aria-pressed", favoriteActive ? "true" : "false");
   mount.append(
     detailViews.renderTargetTagPicker(target, {
       trigger,
       align: options.align || "left",
       label: `Current ${label.toLowerCase()}`,
-      title: `${label} tags`,
+      title: `${label} marks`,
+      manageLabel: "Manage other tags",
       onChange: refresh,
     }),
   );
@@ -385,10 +380,8 @@ function renderScopeTagControl(mount, target, label, options = {}) {
 
 function syncScopeControls() {
   const targets = currentScopeTargets();
-  syncFavoriteButton(els.favoriteBook, targets.book, "book");
-  syncFavoriteButton(els.favoriteChapter, targets.chapter, "chapter");
-  renderScopeTagControl(els.bookTagControl, targets.book, "Book");
-  renderScopeTagControl(els.chapterTagControl, targets.chapter, "Chapter");
+  renderScopeMarkControl(els.bookTagControl, targets.book, "Book");
+  renderScopeMarkControl(els.chapterTagControl, targets.chapter, "Chapter");
 }
 
 function syncToolButtons() {
@@ -449,8 +442,6 @@ function showHomePage(options = {}) {
   setStatus("Home");
   if (options.writeUrl !== false) writeHomeRoute({ replace: Boolean(options.replace) });
   els.title.textContent = "Bible App Home";
-  if (els.favoriteBook) els.favoriteBook.hidden = true;
-  if (els.favoriteChapter) els.favoriteChapter.hidden = true;
   if (els.bookTagControl) els.bookTagControl.hidden = true;
   if (els.chapterTagControl) els.chapterTagControl.hidden = true;
   els.content.replaceChildren();
@@ -508,8 +499,6 @@ async function loadBookData() {
   }
 
   fillChapterOptions();
-  if (els.favoriteBook) els.favoriteBook.hidden = false;
-  if (els.favoriteChapter) els.favoriteChapter.hidden = false;
   if (els.bookTagControl) els.bookTagControl.hidden = false;
   if (els.chapterTagControl) els.chapterTagControl.hidden = false;
   renderer.renderChapter();
@@ -663,19 +652,6 @@ function bindEvents() {
   els.prevFloat?.addEventListener("click", () => void goToChapter(-1));
   els.nextFloat?.addEventListener("click", () => void goToChapter(1));
   els.homeButton?.addEventListener("click", () => void navigateToRoute({ home: true }, { writeUrl: true }));
-  els.favoriteBook?.addEventListener("click", () => {
-    const target = currentScopeTargets().book;
-    const active = getTagTargets(state, "favorite").includes(target.target_id);
-    setTagAssertion(state, target, "favorite", !active);
-    syncScopeControls();
-  });
-  els.favoriteChapter?.addEventListener("click", () => {
-    const target = currentScopeTargets().chapter;
-    const active = getTagTargets(state, "favorite").includes(target.target_id);
-    setTagAssertion(state, target, "favorite", !active);
-    syncScopeControls();
-  });
-
   // Theme toggle functionality
   function initializeTheme() {
     const savedTheme = localStorage.getItem("bibleAppTheme");

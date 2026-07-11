@@ -1,4 +1,4 @@
-import { targetId } from "./semantic-targets.js?v=original-language-sources-20260710b";
+import { targetId } from "./semantic-targets.js?v=pr13-live-qa-20260710c";
 
 function targetNodeId(target) {
   if (!target) return null;

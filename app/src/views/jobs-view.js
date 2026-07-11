@@ -1,6 +1,6 @@
-import { createDetailList, setDetail } from "../dom.js?v=original-language-sources-20260710b";
-import { canRunJob, runJob } from "../job-processor.js?v=original-language-sources-20260710b";
-import { completeJob, getAllJobEvents, updateJobStatus } from "../stores.js?v=original-language-sources-20260710b";
+import { createDetailList, setDetail } from "../dom.js?v=pr13-live-qa-20260710c";
+import { canRunJob, runJob } from "../job-processor.js?v=pr13-live-qa-20260710c";
+import { completeJob, getAllJobEvents, updateJobStatus } from "../stores.js?v=pr13-live-qa-20260710c";
 
 function stateLabel(state) {
   return String(state || "unknown").replaceAll("_", " ");

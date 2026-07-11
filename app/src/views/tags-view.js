@@ -1,4 +1,4 @@
-import { createDetailList, setDetail } from "../dom.js?v=original-language-sources-20260710b";
+import { createDetailList, setDetail } from "../dom.js?v=pr13-live-qa-20260710c";
 import { referenceKey } from "../references.js";
 import {
   createCustomTag,
@@ -9,9 +9,9 @@ import {
   setTagAssertion,
   setVerseTag,
   updateCustomTag,
-} from "../stores.js?v=original-language-sources-20260710b";
-import { tagDefinitionId, targetId } from "../semantic-targets.js?v=original-language-sources-20260710b";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=original-language-sources-20260710b";
+} from "../stores.js?v=pr13-live-qa-20260710c";
+import { tagDefinitionId, targetId } from "../semantic-targets.js?v=pr13-live-qa-20260710c";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=pr13-live-qa-20260710c";
 
 function tagIcon(tag) {
   return String(tag?.icon || tag?.label?.slice(0, 1) || "*").slice(0, 3);
@@ -361,12 +361,18 @@ export function createTagsView(ctx) {
   let targetTagMenuDismissalBound = false;
 
   function availableTagsForTarget(target) {
-    return Object.values(ctx.state.tagStore.tags || {}).filter(
-      (tag) =>
-        tag.status !== "retired" &&
-        Array.isArray(tag.allowed_target_types) &&
-        tag.allowed_target_types.includes(target?.target_type),
-    );
+    return Object.values(ctx.state.tagStore.tags || {})
+      .filter(
+        (tag) =>
+          tag.status !== "retired" &&
+          Array.isArray(tag.allowed_target_types) &&
+          tag.allowed_target_types.includes(target?.target_type),
+      )
+      .sort((a, b) => {
+        if (a.id === "favorite") return -1;
+        if (b.id === "favorite") return 1;
+        return String(a.label || a.id).localeCompare(String(b.label || b.id));
+      });
   }
 
   function setTargetTagMenuExpanded(menu, expanded) {

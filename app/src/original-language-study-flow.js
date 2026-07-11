@@ -1,8 +1,8 @@
-import { fetchLexiconEntry } from "./data-service.js?v=original-language-sources-20260710b";
+import { fetchLexiconEntry } from "./data-service.js?v=pr13-live-qa-20260710c";
 import {
   setLanguageTextWithTooltips,
   setTransliterationTextWithTooltips,
-} from "./language-tooltips.js?v=original-language-sources-20260710b";
+} from "./language-tooltips.js?v=pr13-live-qa-20260710c";
 
 const INTERLINEAR_DETAIL_TITLE = "Interlinear";
 const ENHANCED_ATTRIBUTE = "data-original-language-study";
@@ -21,6 +21,74 @@ function languageForCard(card) {
 function hasLanguageScript(text, language) {
   const value = String(text || "");
   return language === "hebrew" ? /[\u0590-\u05ff]/u.test(value) : /[\u0370-\u03ff\u1f00-\u1fff]/u.test(value);
+}
+
+function validStrongCode(value) {
+  const code = String(value || "").trim().toUpperCase();
+  return /^[HG]\d+$/u.test(code) ? code : "";
+}
+
+function lexicalPreview(entry, code, language) {
+  if (!entry) return `No bundled lexicon preview is available for ${code}.`;
+  return [
+    entry.original_word,
+    entry.transliteration,
+    code,
+    language === "hebrew" ? "Hebrew" : "Greek",
+    entry.short_definition || entry.definition,
+  ].filter(Boolean).join(" · ");
+}
+
+function createRelatedEntryControl(item, language, card) {
+  const row = document.createElement("li");
+  const code = validStrongCode(item?.strong_code);
+  const label = String(item?.label || "Related entry").trim();
+  if (!code) {
+    row.textContent = [item?.strong_code, label].filter(Boolean).join(" — ");
+    return row;
+  }
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "link-button compact-link original-language-related-link definition-tooltip";
+  button.textContent = `${code} — ${label}`;
+  button.setAttribute("aria-label", `Open Strong's ${code}: ${label}`);
+  button.dataset.tooltip = `Load a bundled lexicon preview for ${code}.`;
+  let hydration;
+  const hydrate = () => {
+    if (!hydration) {
+      hydration = fetchLexiconEntry(code)
+        .catch(() => null)
+        .then((entry) => {
+          button.dataset.tooltip = lexicalPreview(entry, code, language);
+          button.dataset.previewReady = "true";
+          return entry;
+        });
+    }
+    return hydration;
+  };
+  button.addEventListener("pointerenter", hydrate);
+  button.addEventListener("focus", hydrate);
+  button.addEventListener("pointerdown", hydrate);
+  button.addEventListener("click", async () => {
+    const section = card.closest(".interlinear-verse-section");
+    const entry = await hydrate();
+    button.dispatchEvent(new CustomEvent("language-study:open-strong", {
+      bubbles: true,
+      detail: {
+        strongCode: code,
+        label,
+        language,
+        entry,
+        verseContext: {
+          verse: section?.dataset.verse,
+          segmentId: section?.dataset.segmentId || undefined,
+          reference: section?.querySelector(":scope > h3")?.textContent?.replace(/\s+— Superscription$/u, ""),
+        },
+      },
+    }));
+  });
+  row.append(button);
+  return row;
 }
 
 async function appendLexicalContext(card, source, language, originalIsScript) {
@@ -60,11 +128,7 @@ async function appendLexicalContext(card, source, language, originalIsScript) {
     );
     const list = document.createElement("ul");
     list.className = "original-language-related-entries";
-    related.forEach((item) => {
-      const row = document.createElement("li");
-      row.textContent = `${item.strong_code} — ${item.label || "Related entry"}`;
-      list.append(row);
-    });
+    related.forEach((item) => list.append(createRelatedEntryControl(item, language, card)));
     details.append(list);
   }
   source.after(details);

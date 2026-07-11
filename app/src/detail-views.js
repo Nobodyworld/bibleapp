@@ -1,12 +1,12 @@
-import { createCommentaryOutlineViews } from "./views/commentary-outline-view.js?v=original-language-sources-20260710b";
-import { createInterlinearTranslationViews } from "./views/interlinear-translation-view.js?v=original-language-sources-20260710b";
-import { createJobsView } from "./views/jobs-view.js?v=original-language-sources-20260710b";
-import { createReferenceViews } from "./views/reference-view.js?v=original-language-sources-20260710b";
-import { createSearchView } from "./views/search-view.js?v=original-language-sources-20260710b";
-import { createStrongsView } from "./views/strongs-view.js?v=original-language-sources-20260710b";
-import { createTagsView } from "./views/tags-view.js?v=original-language-sources-20260710b";
-import { createUserDataView } from "./views/user-data-view.js?v=original-language-sources-20260710b";
-import { setDetail } from "./dom.js?v=original-language-sources-20260710b";
+import { createCommentaryOutlineViews } from "./views/commentary-outline-view.js?v=pr13-live-qa-20260710c";
+import { createInterlinearTranslationViews } from "./views/interlinear-translation-view.js?v=pr13-live-qa-20260710c";
+import { createJobsView } from "./views/jobs-view.js?v=pr13-live-qa-20260710c";
+import { createReferenceViews } from "./views/reference-view.js?v=pr13-live-qa-20260710c";
+import { createSearchView } from "./views/search-view.js?v=pr13-live-qa-20260710c";
+import { createStrongsView } from "./views/strongs-view.js?v=pr13-live-qa-20260710c";
+import { createTagsView } from "./views/tags-view.js?v=pr13-live-qa-20260710c";
+import { createUserDataView } from "./views/user-data-view.js?v=pr13-live-qa-20260710c";
+import { setDetail } from "./dom.js?v=pr13-live-qa-20260710c";
 
 export function createDetailViews(ctx) {
   const strongsView = createStrongsView(ctx);

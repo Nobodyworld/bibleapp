@@ -1,5 +1,5 @@
-import { createUserDataExport, getUserDataSummary, importUserData, setPackageStore } from "../stores.js?v=original-language-sources-20260710b";
-import { setDetail } from "../dom.js?v=original-language-sources-20260710b";
+import { createUserDataExport, getUserDataSummary, importUserData, setPackageStore } from "../stores.js?v=pr13-live-qa-20260710c";
+import { setDetail } from "../dom.js?v=pr13-live-qa-20260710c";
 import { resolveCapabilities } from "../capabilities.js";
 import { setCapabilityDisabled } from "../package-state.js";
 

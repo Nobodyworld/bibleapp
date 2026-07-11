@@ -106,9 +106,10 @@ export function chapterSwipeDirection({ deltaX = 0, deltaY = 0, threshold = 72 }
   return deltaX < 0 ? 1 : -1;
 }
 
-export function interlinearTokenIdentity({ verse, tokenIndex, strongCode } = {}) {
+export function interlinearTokenIdentity({ verse, segmentId, tokenIndex, strongCode } = {}) {
   const normalizedVerse = String(verse || "");
   const normalizedIndex = String(tokenIndex ?? "");
+  if (segmentId && normalizedIndex) return `segment:${String(segmentId)}:token:${normalizedIndex}`;
   if (normalizedVerse && normalizedIndex) return `verse:${normalizedVerse}:token:${normalizedIndex}`;
   return strongCode ? `strong:${String(strongCode)}` : "";
 }

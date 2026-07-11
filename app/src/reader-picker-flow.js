@@ -112,6 +112,7 @@ function captureFrozenReaderContext(token, row) {
     bookId: scope.bookId,
     chapter: scope.chapter,
     verse: row?.dataset?.verse || token?.dataset?.verse || "",
+    segmentId: row?.dataset?.segmentId || token?.dataset?.segmentId || "",
     refKey: row?.dataset?.refKey || "",
     interlinearKey: token?.dataset?.interlinearKey || "",
     strongCode: token?.dataset?.strongCode || "",
@@ -126,7 +127,11 @@ function findFrozenReaderRow() {
   }
   if (frozenReaderRow?.isConnected) return frozenReaderRow;
   if (!frozenReaderContext?.verse) return null;
-  const rows = [...document.querySelectorAll("#chapterContent .verse-row")];
+  const rows = [...document.querySelectorAll("#chapterContent .verse-row, #chapterContent .source-bearing-segment")];
+  const bySegment = frozenReaderContext.segmentId
+    ? rows.find((row) => row.dataset.segmentId === frozenReaderContext.segmentId)
+    : null;
+  if (bySegment) return bySegment;
   return rows.find((row) => row.dataset.refKey && row.dataset.refKey === frozenReaderContext.refKey) ||
     rows.find((row) => row.dataset.verse === frozenReaderContext.verse) ||
     null;
@@ -206,7 +211,7 @@ function observeFrozenReaderHighlight() {
 }
 
 function freezeReaderHighlight(token) {
-  const row = token?.closest?.(".verse-row");
+  const row = token?.closest?.(".verse-row, .source-bearing-segment");
   if (!token || !row) return;
   frozenReaderToken = token;
   frozenReaderRow = row;

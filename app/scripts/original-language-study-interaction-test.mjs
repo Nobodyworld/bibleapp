@@ -161,23 +161,24 @@ async function main() {
     await waitFor(page, () => Boolean(document.querySelector(".original-language-word-origin")));
 
     const studyState = await page.evaluate(() => {
-      const firstCard = document.querySelector(".original-language-word-card");
+      const verseSection = document.querySelector(".interlinear-verse-section:not(.interlinear-superscription-section)");
+      const firstCard = verseSection?.querySelector(".original-language-word-card");
       const summary = firstCard?.querySelector(":scope > .original-language-word-summary");
       const source = firstCard?.querySelector(":scope > .original-language-word-source");
       return {
         intro: Boolean(document.querySelector(".original-language-study-intro")),
         sourceCard: Boolean(document.querySelector(".original-language-source-card")),
-        sourceTexts: [...document.querySelectorAll(".original-language-source-card .source-text")].map((node) => ({
+        sourceTexts: [...verseSection.querySelectorAll(".original-language-source-card .source-text")].map((node) => ({
           text: node.textContent.trim(),
           direction: node.dir,
           language: node.lang,
           label: node.previousElementSibling?.textContent.trim() || "",
         })),
-        sourceHeading: document.querySelector(".original-language-source-card > .original-language-section-label")?.textContent.trim() || "",
-        transliterationLabel: document.querySelector(".original-language-transliteration-row .reference-label")?.textContent.trim() || "",
-        transliteration: document.querySelector(".original-language-transliteration")?.textContent.trim() || "",
-        transliterationDescription: document.querySelector(".original-language-transliteration")?.getAttribute("aria-description") || "",
-        transliterationSymbols: [...document.querySelectorAll(".original-language-transliteration .transliteration-symbol")].map((symbol) => ({
+        sourceHeading: verseSection.querySelector(".original-language-source-card > .original-language-section-label")?.textContent.trim() || "",
+        transliterationLabel: verseSection.querySelector(".original-language-transliteration-row .reference-label")?.textContent.trim() || "",
+        transliteration: verseSection.querySelector(".original-language-transliteration")?.textContent.trim() || "",
+        transliterationDescription: verseSection.querySelector(".original-language-transliteration")?.getAttribute("aria-description") || "",
+        transliterationSymbols: [...verseSection.querySelectorAll(".original-language-transliteration .transliteration-symbol")].map((symbol) => ({
           text: symbol.textContent,
           tabIndex: symbol.tabIndex,
           label: symbol.getAttribute("aria-label") || "",
@@ -186,7 +187,17 @@ async function main() {
         summaryBeforeSource: Boolean(summary && source && summary.compareDocumentPosition(source) & Node.DOCUMENT_POSITION_FOLLOWING),
         originalInsideSource: Boolean(source?.querySelector(".token-original")),
         meaningInsideSummary: Boolean(summary?.querySelector(".token-english")),
-        wordOrigin: document.querySelector(".original-language-word-origin")?.textContent.trim() || "",
+        wordOrigin: verseSection.querySelector(".original-language-word-origin")?.textContent.trim() || "",
+        superscription: (() => {
+          const section = document.querySelector(".interlinear-superscription-section[data-segment-id]");
+          return section ? {
+            english: section.querySelector(".original-language-superscription-english")?.textContent.trim(),
+            tokenIndexes: [...section.querySelectorAll(".original-language-word-card")].map((card) => card.dataset.tokenIndex),
+            sourceTexts: [...section.querySelectorAll(".source-text")].map((node) => node.textContent.trim()),
+          } : null;
+        })(),
+        bodyTokenIndexes: [...verseSection.querySelectorAll(".original-language-word-card")].map((card) => card.dataset.tokenIndex),
+        editorialStrongCount: document.querySelectorAll(".presentation-block.section_heading .strong-token").length,
       };
     });
 
@@ -203,8 +214,8 @@ async function main() {
     assertDeepEqual(
       Object.fromEntries(studyState.sourceTexts.map((source) => [source.label, source.text])),
       {
-        "Westminster Leningrad Codex": "מִזְמֹ֥ור לְדָוִ֑ד יְהוָ֥ה רֹ֝עִ֗י לֹ֣א אֶחְסָֽר׃",
-        "WLC — Consonants Only": "מזמור לדוד יהוה רעי לא אחסר׃",
+        "Westminster Leningrad Codex": "יְהוָ֥ה רֹ֝עִ֗י לֹ֣א אֶחְסָֽר׃",
+        "WLC — Consonants Only": "יהוה רעי לא אחסר׃",
       },
       `rendered Hebrew source text must match the generated corpus exactly: ${JSON.stringify(studyState)}`,
     );
@@ -222,12 +233,58 @@ async function main() {
         studyState.transliterationSymbols.every((symbol) => symbol.tabIndex === 0 && symbol.label.includes("not exact pronunciation")),
       `study transliteration symbols lack keyboard-accessible explanations: ${JSON.stringify(studyState)}`,
     );
+    const touchTooltip = await page.evaluate(() => {
+      const symbol = [...document.querySelectorAll(".interlinear-verse-section:not(.interlinear-superscription-section) .transliteration-symbol")]
+        .find((node) => node.textContent === "ō");
+      symbol?.click();
+      const layer = document.querySelector(".language-tooltip-layer");
+      return { visible: Boolean(layer && !layer.hidden), text: layer?.textContent || "" };
+    });
+    assert(touchTooltip.visible && /long o vowel/i.test(touchTooltip.text), `touch transliteration help did not open: ${JSON.stringify(touchTooltip)}`);
     assert(studyState.wordCards > 0, `word study cards missing: ${JSON.stringify(studyState)}`);
+    assert(
+      studyState.superscription?.english === "A Psalm of David." &&
+        JSON.stringify(studyState.superscription.tokenIndexes) === JSON.stringify(["1", "2"]) &&
+        studyState.superscription.sourceTexts.length === 2 &&
+        !studyState.bodyTokenIndexes.includes("1") && !studyState.bodyTokenIndexes.includes("2") &&
+        studyState.editorialStrongCount === 0,
+      `canonical superscription mapping or editorial exclusion failed: ${JSON.stringify(studyState)}`,
+    );
     assert(studyState.wordOrigin.includes("Word origin"), `word origin details missing: ${JSON.stringify(studyState)}`);
     assert(
       studyState.summaryBeforeSource && studyState.originalInsideSource && studyState.meaningInsideSummary,
       `word study card structure is incomplete: ${JSON.stringify(studyState)}`,
     );
+
+    const layoutState = await page.evaluate(() => {
+      const cards = [...document.querySelectorAll(".interlinear-verse-section:not(.interlinear-superscription-section) .original-language-word-card")];
+      return {
+        widths: cards.slice(0, 4).map((card) => ({
+          card: card.getBoundingClientRect().width,
+          summary: card.querySelector(":scope > .original-language-word-summary")?.getBoundingClientRect().width || 0,
+          source: card.querySelector(":scope > .original-language-word-source")?.getBoundingClientRect().width || 0,
+        })),
+        overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    assert(
+      layoutState.widths.length >= 2 && layoutState.widths.every(({ card, summary, source }) => Math.abs(card - summary) <= 2 && Math.abs(card - source) <= 2) && layoutState.overflow <= 1,
+      `short and long Language Study sections must fill their card without horizontal overflow: ${JSON.stringify(layoutState)}`,
+    );
+
+    const related = page.locator(".interlinear-verse-section:not(.interlinear-superscription-section) .original-language-related-link").first();
+    assert(await related.count(), "Hebrew related Strong's control is missing");
+    const historyBeforePreview = await page.evaluate(() => ({ title: document.querySelector("#detailTitle")?.textContent, back: document.querySelector("#detailBack")?.disabled }));
+    await related.focus();
+    await waitFor(page, () => document.querySelector(".interlinear-verse-section:not(.interlinear-superscription-section) .original-language-related-link")?.dataset.previewReady === "true");
+    const previewState = await related.evaluate((node) => ({ tooltip: node.dataset.tooltip, label: node.getAttribute("aria-label") }));
+    const historyAfterPreview = await page.evaluate(() => ({ title: document.querySelector("#detailTitle")?.textContent, back: document.querySelector("#detailBack")?.disabled }));
+    assert(previewState.tooltip.includes("Hebrew") && /H\d+/.test(previewState.tooltip) && previewState.label.startsWith("Open Strong's"), `Hebrew related preview is incomplete: ${JSON.stringify(previewState)}`);
+    assertDeepEqual(historyAfterPreview, historyBeforePreview, "previewing a related entry must not mutate panel history");
+    await related.click();
+    await waitFor(page, () => document.querySelector("#detailTitle")?.textContent === "Strong's");
+    await page.locator("#detailBack").click();
+    await waitFor(page, () => document.querySelector("#detailTitle")?.textContent === "Interlinear" && Boolean(document.querySelector(".original-language-study-intro")));
 
     await page.evaluate(() => {
       const pane = document.querySelector("#detailContent");
@@ -246,8 +303,9 @@ async function main() {
     assert(
       await page.evaluate(
         () =>
-          document.querySelectorAll(".interlinear-verse-section[data-verse='1'] .original-language-source-card").length === 1 &&
-          document.querySelectorAll(".interlinear-verse-section[data-verse='1'] .original-language-transliteration-row").length === 1,
+          document.querySelectorAll(".interlinear-verse-section[data-verse='1']:not(.interlinear-superscription-section) .original-language-source-card").length === 1 &&
+          document.querySelectorAll(".interlinear-verse-section[data-verse='1']:not(.interlinear-superscription-section) .original-language-transliteration-row").length === 1 &&
+          document.querySelectorAll(".interlinear-superscription-section[data-segment-id] .original-language-source-card").length === 1,
       ),
       "source or transliteration cards were duplicated during lazy enhancement",
     );
@@ -287,7 +345,14 @@ async function main() {
       `rendered Greek source text must match the generated corpus exactly: ${JSON.stringify(greekState)}`,
     );
 
-    console.log(JSON.stringify({ status: "ok", assertions: 14 }, null, 2));
+    await waitFor(page, () => Boolean(document.querySelector(".original-language-related-link")));
+    const greekRelated = page.locator(".original-language-related-link").first();
+    assert(await greekRelated.count(), "Greek related Strong's control is missing");
+    await greekRelated.focus();
+    await waitFor(page, () => document.querySelector(".original-language-related-link")?.dataset.previewReady === "true");
+    assert((await greekRelated.getAttribute("data-tooltip")).includes("Greek"), "Greek related preview must identify its language");
+
+    console.log(JSON.stringify({ status: "ok", assertions: 21 }, null, 2));
   } finally {
     await browser.close();
     await new Promise((resolveClose) => server.close(resolveClose));

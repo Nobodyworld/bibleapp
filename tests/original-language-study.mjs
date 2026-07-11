@@ -14,11 +14,29 @@ assert(
   "The side-panel tool must present the feature as Language Study.",
 );
 assert(
-  /original-language-study-flow\.js\?v=original-language-sources-20260710b/.test(index),
+  /original-language-study-flow\.js\?v=pr13-live-qa-20260710c/.test(index),
   "The original-language study enhancement module must load after the app modules.",
 );
 assert(
-  /data-service\.js\?v=original-language-sources-20260710b/.test(flow),
+  /createRelatedEntryControl/.test(flow) &&
+    /language-study:open-strong/.test(flow) &&
+    /pointerenter/.test(flow) && /focus/.test(flow) && /pointerdown/.test(flow) &&
+    /\^\[HG\]/.test(flow),
+  "Source-backed Hebrew and Greek Strong's relations must preview and navigate through app-controlled controls.",
+);
+assert(
+  /\.interlinear-lazy-reader > \.verse-context-tabs\s*{[\s\S]*?position:\s*sticky;/.test(styles) &&
+    /\.original-language-verse-reference\s*{[\s\S]*?position:\s*sticky;[\s\S]*?background:\s*var\(--panel-alt\);/.test(styles),
+  "Context tabs and full verse references must remain sticky with opaque themed backgrounds.",
+);
+assert(
+  /\.interlinear-token\.original-language-word-card\s*{[\s\S]*?width:\s*100%;/.test(styles) &&
+    /\.original-language-word-summary,[\s\S]*?\.original-language-word-source\s*{[\s\S]*?width:\s*100%;/.test(styles) &&
+    /\.original-language-word-origin\s*{[\s\S]*?width:\s*100%;/.test(styles),
+  "Cards and their direct visual sections must fill the available grid track width.",
+);
+assert(
+  /data-service\.js\?v=pr13-live-qa-20260710c/.test(flow),
   "The study flow must version the original-language source data contract.",
 );
 assert(
@@ -69,4 +87,4 @@ assert(
   "Original-language word cards must collapse to one column on narrow screens.",
 );
 
-console.log(JSON.stringify({ status: "ok", assertions: 9 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 12 }, null, 2));

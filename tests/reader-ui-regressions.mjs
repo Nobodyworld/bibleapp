@@ -36,17 +36,19 @@ assert(/\.reader-nav-arrow\s*{[\s\S]*?width:\s*20px;[\s\S]*?min-height:\s*56px;/
 assert(/\.reader-floating-nav\s*{[\s\S]*?top:\s*176px;/.test(css), "Floating chapter navigation must sit below the reader header.");
 assert(/\.detail-floating-nav\s*{[\s\S]*?top:\s*18px;[\s\S]*?margin:\s*0 24px 0 0;/.test(css), "Detail history controls must sit slightly lower and left of the panel edge.");
 assert(
-  /class="scope-favorite-star"/.test(index) &&
-    /class="scope-favorite-label"/.test(index) &&
-    /querySelector\("\.scope-favorite-star"\)/.test(app),
-  "Book and chapter favorites must expose separately styled star and label spans.",
+  (index.match(/class="scope-mark-control"/g) || []).length === 2 &&
+    !/Book tags|Chapter tags/.test(index) &&
+    /class="scope-favorite-star"/.test(app) &&
+    /class="scope-favorite-label"/.test(app),
+  "Exactly one consolidated Book control and one consolidated Chapter control must be mounted.",
 );
 assert(
-  /id="bookTagControl" class="scope-tag-control"/.test(index) &&
-    /id="chapterTagControl" class="scope-tag-control"/.test(index) &&
+  /id="bookTagControl" class="scope-mark-control"/.test(index) &&
+    /id="chapterTagControl" class="scope-mark-control"/.test(index) &&
     /function syncScopeControls\(\)/.test(app) &&
-    /renderTargetTagPicker\(target/.test(app),
-  "Book and chapter tag controls must mount beside reader scope favorites and reuse target tag pickers.",
+    /renderTargetTagPicker\(target/.test(app) &&
+    /Favorite/.test(tagsView),
+  "Favorite and non-favorite tags must share each consolidated scope picker.",
 );
 assert(
   /id="bookPickerButton"/.test(index) &&
@@ -69,7 +71,7 @@ assert(
   "Light-theme footnote contrast and keyboard focus treatment must remain explicit.",
 );
 assert(
-  /reader-picker-flow\.js\?v=original-language-sources-20260710b/.test(index),
+  /reader-picker-flow\.js\?v=pr13-live-qa-20260710c/.test(index),
   "The reader picker flow helper must load after the main app module.",
 );
 assert(
@@ -179,8 +181,8 @@ assert(
   "Study Marks must expose a scripture-centered book/chapter/verse hierarchy.",
 );
 assert(
-  /styles\.css\?v=original-language-sources-20260710b/.test(index) &&
-    /app\.js\?v=original-language-sources-20260710b/.test(index) &&
+  /styles\.css\?v=pr13-live-qa-20260710c/.test(index) &&
+    /app\.js\?v=pr13-live-qa-20260710c/.test(index) &&
     !/full-audit-20260701|browser-comments-20260702/.test(index),
   "Browser-visible app and stylesheet entry points must use the current cache-buster key.",
 );
