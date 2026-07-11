@@ -1,4 +1,4 @@
-import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=pr13-live-qa-20260711d";
+import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=pr13-live-qa-20260711e";
 import { resolvePassageText } from "./data-service.js";
 import { referenceKey, refDomId, parseLocationFromHref } from "./references.js";
 import {
@@ -6,12 +6,12 @@ import {
   ensureStores,
   getRedLetterRanges,
   getTaggedTargetsForReference,
-} from "./stores.js?v=pr13-live-qa-20260711d";
+} from "./stores.js?v=pr13-live-qa-20260711e";
 import {
   createTextSpanTarget,
   createVerseTarget,
   resolveTextSpanAnchor,
-} from "./semantic-targets.js?v=pr13-live-qa-20260711d";
+} from "./semantic-targets.js?v=pr13-live-qa-20260711e";
 import { mapStrongChapterRanges, resolveSourceBearingPresentationSegment } from "./strongs.js";
 import { createStudyEmptyState, studyUnavailableLabel } from "./study-empty-state.js";
 import { interlinearTokenIdentity } from "./ui-contracts.js";

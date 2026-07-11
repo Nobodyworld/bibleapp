@@ -1,5 +1,5 @@
-import { loadLanguageMetadata } from "./data-service.js?v=pr13-live-qa-20260711d";
-import { analyzeOriginalWord, gematriaValueForUnit, wordHasLanguageScript } from "./language.js";
+import { loadLanguageMetadata } from "./data-service.js?v=pr13-live-qa-20260711e";
+import { analyzeOriginalWord, gematriaValueForUnit, languageUnitDisplayGlyph, wordHasLanguageScript } from "./language.js";
 
 const HEBREW_RUN = /[\u0591-\u05c7\u05d0-\u05ea]+/gu;
 const GREEK_RUN = /[\u0300-\u036f\u0370-\u03ff\u1f00-\u1fff]+/gu;
@@ -149,11 +149,7 @@ function displayMarkChar(record) {
 }
 
 export function languageUnitText(unit) {
-  const markChars = (unit.marks || []).map((record) => record.char || "");
-  const text = unit.standalone && markChars[0] === unit.char
-    ? markChars.join("")
-    : `${unit.char || ""}${markChars.join("")}`;
-  return text.normalize("NFC");
+  return languageUnitDisplayGlyph(unit);
 }
 
 export function transliterationSymbolDescription(character, sourceLabel = "Bundled Strong's/interlinear transliteration") {

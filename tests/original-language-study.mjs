@@ -3,10 +3,11 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [index, styles, flow] = await Promise.all([
+const [index, styles, flow, strongReferenceControl] = await Promise.all([
   readFile(new URL("../app/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/styles-polish.css", import.meta.url), "utf8"),
   readFile(new URL("../app/src/original-language-study-flow.js", import.meta.url), "utf8"),
+  readFile(new URL("../app/src/strong-reference-control.js", import.meta.url), "utf8"),
 ]);
 
 assert(
@@ -14,14 +15,15 @@ assert(
   "The side-panel tool must present the feature as Language Study.",
 );
 assert(
-  /original-language-study-flow\.js\?v=pr13-live-qa-20260711d/.test(index),
+  /original-language-study-flow\.js\?v=pr13-live-qa-20260711e/.test(index),
   "The original-language study enhancement module must load after the app modules.",
 );
 assert(
   /createRelatedEntryControl/.test(flow) &&
     /language-study:open-strong/.test(flow) &&
-    /pointerenter/.test(flow) && /focus/.test(flow) && /pointerdown/.test(flow) &&
-    /\^\[HG\]/.test(flow),
+    /createStrongReferenceControl/.test(flow) &&
+    /pointerenter/.test(strongReferenceControl) && /focus/.test(strongReferenceControl) && /pointerdown/.test(strongReferenceControl) &&
+    /\^\[HG\]/.test(strongReferenceControl),
   "Source-backed Hebrew and Greek Strong's relations must preview and navigate through app-controlled controls.",
 );
 assert(
@@ -36,7 +38,7 @@ assert(
   "Cards and their direct visual sections must fill the available grid track width.",
 );
 assert(
-  /data-service\.js\?v=pr13-live-qa-20260711d/.test(flow),
+  /data-service\.js\?v=pr13-live-qa-20260711e/.test(flow),
   "The study flow must version the original-language source data contract.",
 );
 assert(

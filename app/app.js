@@ -1,12 +1,12 @@
-import { DEFAULT_ROUTE } from "./src/config.js?v=pr13-live-qa-20260711d";
+import { DEFAULT_ROUTE } from "./src/config.js?v=pr13-live-qa-20260711e";
 import { capabilityAvailable, resolveCapability } from "./src/capabilities.js";
-import { createChapterRenderer } from "./src/chapter-renderer.js?v=pr13-live-qa-20260711d";
+import { createChapterRenderer } from "./src/chapter-renderer.js?v=pr13-live-qa-20260711e";
 import {
   loadManifest,
   loadReaderBookData,
   translationCanLoadBook,
-} from "./src/data-service.js?v=pr13-live-qa-20260711d";
-import { createDetailViews } from "./src/detail-views.js?v=pr13-live-qa-20260711d";
+} from "./src/data-service.js?v=pr13-live-qa-20260711e";
+import { createDetailViews } from "./src/detail-views.js?v=pr13-live-qa-20260711e";
 import {
   els,
   goBackDetail,
@@ -18,14 +18,14 @@ import {
   setStatus,
   sortedNumericKeys,
   trackReaderLocation,
-} from "./src/dom.js?v=pr13-live-qa-20260711d";
+} from "./src/dom.js?v=pr13-live-qa-20260711e";
 import { createReferenceButton as makeReferenceButton, referenceKey, refDomId } from "./src/references.js";
 import { buildReferenceContext, referenceContextKey } from "./src/reference-context.js";
-import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js?v=pr13-live-qa-20260711d";
+import { createBookTarget, createChapterTarget } from "./src/semantic-targets.js?v=pr13-live-qa-20260711e";
 import { normalizeRoute, parseReaderRoute, writeReaderRoute } from "./src/routing.js";
-import { getTagTargets, initStores, listenForUserDataChanges } from "./src/stores.js?v=pr13-live-qa-20260711d";
+import { getTagTargets, initStores, listenForUserDataChanges } from "./src/stores.js?v=pr13-live-qa-20260711e";
 import { studyUnavailableLabel } from "./src/study-empty-state.js";
-import { chapterSwipeDirection, CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js?v=pr13-live-qa-20260711d";
+import { chapterSwipeDirection, CONTROL_STATES, resolveControlState } from "./src/ui-contracts.js?v=pr13-live-qa-20260711e";
 
 const state = {
   manifest: null,

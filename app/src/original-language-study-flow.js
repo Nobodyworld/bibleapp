@@ -1,8 +1,9 @@
-import { fetchLexiconEntry } from "./data-service.js?v=pr13-live-qa-20260711d";
+import { fetchLexiconEntry } from "./data-service.js?v=pr13-live-qa-20260711e";
 import {
   setLanguageTextWithTooltips,
   setTransliterationTextWithTooltips,
-} from "./language-tooltips.js?v=pr13-live-qa-20260711d";
+} from "./language-tooltips.js?v=pr13-live-qa-20260711e";
+import { createStrongReferenceControl } from "./strong-reference-control.js?v=pr13-live-qa-20260711e";
 
 const INTERLINEAR_DETAIL_TITLE = "Interlinear";
 const ENHANCED_ATTRIBUTE = "data-original-language-study";
@@ -28,17 +29,6 @@ function validStrongCode(value) {
   return /^[HG]\d+$/u.test(code) ? code : "";
 }
 
-function lexicalPreview(entry, code, language) {
-  if (!entry) return `No bundled lexicon preview is available for ${code}.`;
-  return [
-    entry.original_word,
-    entry.transliteration,
-    code,
-    language === "hebrew" ? "Hebrew" : "Greek",
-    entry.short_definition || entry.definition,
-  ].filter(Boolean).join(" · ");
-}
-
 function createRelatedEntryControl(item, language, card) {
   const row = document.createElement("li");
   const code = validStrongCode(item?.strong_code);
@@ -47,31 +37,11 @@ function createRelatedEntryControl(item, language, card) {
     row.textContent = [item?.strong_code, label].filter(Boolean).join(" — ");
     return row;
   }
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "link-button compact-link original-language-related-link definition-tooltip";
-  button.textContent = `${code} — ${label}`;
-  button.setAttribute("aria-label", `Open Strong's ${code}: ${label}`);
-  button.dataset.tooltip = `Load a bundled lexicon preview for ${code}.`;
-  let hydration;
-  const hydrate = () => {
-    if (!hydration) {
-      hydration = fetchLexiconEntry(code)
-        .catch(() => null)
-        .then((entry) => {
-          button.dataset.tooltip = lexicalPreview(entry, code, language);
-          button.dataset.previewReady = "true";
-          return entry;
-        });
-    }
-    return hydration;
-  };
-  button.addEventListener("pointerenter", hydrate);
-  button.addEventListener("focus", hydrate);
-  button.addEventListener("pointerdown", hydrate);
-  button.addEventListener("click", async () => {
+  const button = createStrongReferenceControl({ ...item, strong_code: code, language }, {
+    label: `${code} — ${label}`,
+    onActivate: async () => {
     const section = card.closest(".interlinear-verse-section");
-    const entry = await hydrate();
+    const entry = await fetchLexiconEntry(code).catch(() => null);
     button.dispatchEvent(new CustomEvent("language-study:open-strong", {
       bubbles: true,
       detail: {
@@ -86,7 +56,9 @@ function createRelatedEntryControl(item, language, card) {
         },
       },
     }));
+    },
   });
+  button.classList.add("link-button", "compact-link", "original-language-related-link");
   row.append(button);
   return row;
 }

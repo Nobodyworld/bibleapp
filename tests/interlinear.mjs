@@ -2,7 +2,7 @@
 
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { summarizeHebrewGematriaTokens } from "../app/src/language.js";
+import { analyzeOriginalWord, languageUnitDisplayGlyph, summarizeHebrewGematriaTokens } from "../app/src/language.js";
 import { languageUnitText, transliterationSymbolDescription } from "../app/src/language-tooltips.js";
 import {
   normalizeInterlinearVerseTokens,
@@ -94,6 +94,28 @@ assert.match(transliterationSymbolDescription("î"), /circumflex.*vowel distinct
 assert.match(transliterationSymbolDescription("·"), /separat(?:es|ing) syllables or morphemes.*not pronounced/i);
 assert.equal(transliterationSymbolDescription("x"), "");
 
+const greekFixtureMetadata = {
+  alphabet: { letters: [
+    { letter: "ε", uppercase: "Ε", lowercase: "ε", name: "Epsilon", transliteration: "e" },
+    { letter: "κ", uppercase: "Κ", lowercase: "κ", name: "Kappa", transliteration: "k" },
+    { letter: "ω", uppercase: "Ω", lowercase: "ω", name: "Omega", transliteration: "ō" },
+    { letter: "ν", uppercase: "Ν", lowercase: "ν", name: "Nu", transliteration: "n" },
+  ] },
+  marks: { marks: [] },
+};
+const markedGreek = analyzeOriginalWord("ἑκών", "greek", greekFixtureMetadata);
+assert.deepEqual(markedGreek.units.map((unit) => unit.char), ["ε", "κ", "ω", "ν"]);
+assert.deepEqual(markedGreek.units.map(languageUnitDisplayGlyph), ["ἑ", "κ", "ώ", "ν"]);
+for (const [source, expected] of [
+  ["ἐ", "ἐ"], ["ὲ", "ὲ"], ["ῶ", "ῶ"], ["ϊ", "ϊ"], ["ᾳ", "ᾳ"], ["ἄ", "ἄ"],
+]) {
+  const analysis = analyzeOriginalWord(source, "greek", greekFixtureMetadata);
+  assert.equal(languageUnitDisplayGlyph(analysis.units[0]), expected);
+  assert.equal(languageUnitDisplayGlyph(analysis.units[0]), expected, "Repeated rendering must not duplicate marks.");
+}
+assert.equal(languageUnitDisplayGlyph({ char: "κ", marks: [] }), "κ");
+assert.equal(languageUnitDisplayGlyph({ char: "\u0301", marks: [{ char: "\u0301" }], standalone: true }), "◌́");
+
 const psalmStrong = {
   1: [
     [1, "A Psalm", "hebrew", "H4210", 4210, "מִזְמוֹר", "N", "psalm"],
@@ -137,7 +159,7 @@ console.log(
   JSON.stringify(
     {
       status: "ok",
-      assertions: 23,
+      assertions: 40,
       corrected_reference: "john:4:1:10",
     },
     null,

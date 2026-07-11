@@ -80,7 +80,7 @@ assert(
   "Light-theme footnote contrast and keyboard focus treatment must remain explicit.",
 );
 assert(
-  /reader-picker-flow\.js\?v=pr13-live-qa-20260711d/.test(index),
+  /reader-picker-flow\.js\?v=pr13-live-qa-20260711e/.test(index),
   "The reader picker flow helper must load after the main app module.",
 );
 assert(
@@ -176,6 +176,16 @@ assert(
 );
 assert(/setMorphologyHelp\(pos,\s*morphology,\s*language\)/.test(strongsView), "Strong's morphology must expose definition help.");
 assert(
+  /glyph\.textContent = languageUnitDisplayGlyph\(unit\)/.test(strongsView) &&
+    /marksTitle\.textContent = `\$\{languageTitle\(analysis\.language\)\} marks \/ symbols`/.test(strongsView),
+  "Strong's letter tiles must reconstruct marked graphemes while retaining the separate marks and symbols section.",
+);
+assert(
+  /resolveStrongSeeSegments\(paragraph, refs\)/.test(strongsView) &&
+    /createStrongReferenceControl\(segment\.ref/.test(strongsView),
+  "Structured concordance see-references must render through the shared Strong's control behavior.",
+);
+assert(
   /appendLexicalRow\(rows, "Transliteration", createTransliterationValue\(entry\.transliteration\)\)/.test(strongsView) &&
     /appendLexicalRow\(rows, "Phonetic spelling", entry\.phonetic_spelling\)/.test(strongsView) &&
     /function appendLexicalRow[\s\S]*?if \(!value\) return;/.test(strongsView),
@@ -190,10 +200,10 @@ assert(
   "Study Marks must expose a scripture-centered book/chapter/verse hierarchy.",
 );
 assert(
-  /styles\.css\?v=pr13-live-qa-20260711d/.test(index) &&
-    /app\.js\?v=pr13-live-qa-20260711d/.test(index) &&
+  /styles\.css\?v=pr13-live-qa-20260711e/.test(index) &&
+    /app\.js\?v=pr13-live-qa-20260711e/.test(index) &&
     !/full-audit-20260701|browser-comments-20260702/.test(index),
   "Browser-visible app and stylesheet entry points must use the current cache-buster key.",
 );
 
-console.log(JSON.stringify({ status: "ok", assertions: 49 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 51 }, null, 2));

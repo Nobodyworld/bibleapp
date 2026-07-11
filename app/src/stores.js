@@ -1,4 +1,4 @@
-import { DEFAULT_TAGS, JOB_TYPES, STORAGE_KEYS } from "./config.js?v=pr13-live-qa-20260711d";
+import { DEFAULT_TAGS, JOB_TYPES, STORAGE_KEYS } from "./config.js?v=pr13-live-qa-20260711e";
 import {
   createVerseTarget,
   createTagAssertion,
@@ -10,7 +10,7 @@ import {
   tagAssertionId,
   tagDefinitionId,
   normalizeTarget,
-} from "./semantic-targets.js?v=pr13-live-qa-20260711d";
+} from "./semantic-targets.js?v=pr13-live-qa-20260711e";
 import { aggregatePollResponses, createPollResponse, normalizePollResponse } from "./semantic-polls.js";
 import { createDefaultPackageStore, normalizePackageStore } from "./package-state.js";
 
