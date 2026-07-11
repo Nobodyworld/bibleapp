@@ -43,6 +43,15 @@ assert(
   "Exactly one consolidated Book control and one consolidated Chapter control must be mounted.",
 );
 assert(
+  /const renderLines = lines\.every\(\(line\) => \(line\.class \|\| "reg"\) === "reg" && !line\.style\)[\s\S]*?char_length: verseText\.length/.test(renderer),
+  "Ordinary prose line records must collapse archive wrapping into one consistently spaced verse line while styled presentation lines remain distinct.",
+);
+assert(
+  /target\.closest\?\.\("\.detail-pane"\)/.test(await readFile(new URL("../app/src/language-tooltips.js", import.meta.url), "utf8")) &&
+    /\.definition-tooltip\[data-tooltip\]::after\s*{[\s\S]*?display:\s*none !important;/.test(css),
+  "Side-panel definition and language tooltips must use the panel-aware fixed tooltip layer instead of overflowing pseudo-elements.",
+);
+assert(
   /id="bookTagControl" class="scope-mark-control"/.test(index) &&
     /id="chapterTagControl" class="scope-mark-control"/.test(index) &&
     /function syncScopeControls\(\)/.test(app) &&
@@ -71,7 +80,7 @@ assert(
   "Light-theme footnote contrast and keyboard focus treatment must remain explicit.",
 );
 assert(
-  /reader-picker-flow\.js\?v=pr13-live-qa-20260710c/.test(index),
+  /reader-picker-flow\.js\?v=pr13-live-qa-20260711d/.test(index),
   "The reader picker flow helper must load after the main app module.",
 );
 assert(
@@ -181,10 +190,10 @@ assert(
   "Study Marks must expose a scripture-centered book/chapter/verse hierarchy.",
 );
 assert(
-  /styles\.css\?v=pr13-live-qa-20260710c/.test(index) &&
-    /app\.js\?v=pr13-live-qa-20260710c/.test(index) &&
+  /styles\.css\?v=pr13-live-qa-20260711d/.test(index) &&
+    /app\.js\?v=pr13-live-qa-20260711d/.test(index) &&
     !/full-audit-20260701|browser-comments-20260702/.test(index),
   "Browser-visible app and stylesheet entry points must use the current cache-buster key.",
 );
 
-console.log(JSON.stringify({ status: "ok", assertions: 47 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 49 }, null, 2));

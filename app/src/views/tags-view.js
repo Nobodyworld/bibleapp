@@ -1,4 +1,4 @@
-import { createDetailList, setDetail } from "../dom.js?v=pr13-live-qa-20260710c";
+import { createDetailList, setDetail } from "../dom.js?v=pr13-live-qa-20260711d";
 import { referenceKey } from "../references.js";
 import {
   createCustomTag,
@@ -9,9 +9,9 @@ import {
   setTagAssertion,
   setVerseTag,
   updateCustomTag,
-} from "../stores.js?v=pr13-live-qa-20260710c";
-import { tagDefinitionId, targetId } from "../semantic-targets.js?v=pr13-live-qa-20260710c";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=pr13-live-qa-20260710c";
+} from "../stores.js?v=pr13-live-qa-20260711d";
+import { tagDefinitionId, targetId } from "../semantic-targets.js?v=pr13-live-qa-20260711d";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=pr13-live-qa-20260711d";
 
 function tagIcon(tag) {
   return String(tag?.icon || tag?.label?.slice(0, 1) || "*").slice(0, 3);

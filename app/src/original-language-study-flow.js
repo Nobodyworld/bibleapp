@@ -1,8 +1,8 @@
-import { fetchLexiconEntry } from "./data-service.js?v=pr13-live-qa-20260710c";
+import { fetchLexiconEntry } from "./data-service.js?v=pr13-live-qa-20260711d";
 import {
   setLanguageTextWithTooltips,
   setTransliterationTextWithTooltips,
-} from "./language-tooltips.js?v=pr13-live-qa-20260710c";
+} from "./language-tooltips.js?v=pr13-live-qa-20260711d";
 
 const INTERLINEAR_DETAIL_TITLE = "Interlinear";
 const ENHANCED_ATTRIBUTE = "data-original-language-study";

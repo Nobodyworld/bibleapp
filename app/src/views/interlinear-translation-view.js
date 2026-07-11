@@ -4,24 +4,24 @@ import {
   fetchLexiconEntry,
   loadLanguageMetadata,
   loadOriginalSourceTexts,
-} from "../data-service.js?v=pr13-live-qa-20260710c";
-import { createDetailList, els, setDetail, setDetailMessage, textNode } from "../dom.js?v=pr13-live-qa-20260710c";
+} from "../data-service.js?v=pr13-live-qa-20260711d";
+import { createDetailList, els, setDetail, setDetailMessage, textNode } from "../dom.js?v=pr13-live-qa-20260711d";
 import {
   setLanguageTextWithTooltips,
   setTransliterationTextWithTooltips,
-} from "../language-tooltips.js?v=pr13-live-qa-20260710c";
-import { setMorphologyHelp } from "../morphology-tooltips.js?v=pr13-live-qa-20260710c";
+} from "../language-tooltips.js?v=pr13-live-qa-20260711d";
+import { setMorphologyHelp } from "../morphology-tooltips.js?v=pr13-live-qa-20260711d";
 import { referenceKey } from "../references.js";
 import { analyzeOriginalWord, summarizeHebrewGematriaTokens, wordHasLanguageScript } from "../language.js";
 import {
   resolveInterlinearVerseTokens,
   resolveSourceBearingPresentationSegment,
-} from "../strongs.js?v=pr13-live-qa-20260710c";
-import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=pr13-live-qa-20260710c";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=pr13-live-qa-20260710c";
+} from "../strongs.js?v=pr13-live-qa-20260711d";
+import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=pr13-live-qa-20260711d";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=pr13-live-qa-20260711d";
 import { createStudyEmptyState } from "../study-empty-state.js";
 import { interlinearTokenIdentity } from "../ui-contracts.js";
-import { createSourceTokenTarget } from "../semantic-targets.js?v=pr13-live-qa-20260710c";
+import { createSourceTokenTarget } from "../semantic-targets.js?v=pr13-live-qa-20260711d";
 
 function normalizeWordMapSpan(raw, bsbVerseText) {
   const start = Number(raw[2] || 0);

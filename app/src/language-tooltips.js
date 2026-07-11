@@ -1,4 +1,4 @@
-import { loadLanguageMetadata } from "./data-service.js?v=pr13-live-qa-20260710c";
+import { loadLanguageMetadata } from "./data-service.js?v=pr13-live-qa-20260711d";
 import { analyzeOriginalWord, gematriaValueForUnit, wordHasLanguageScript } from "./language.js";
 
 const HEBREW_RUN = /[\u0591-\u05c7\u05d0-\u05ea]+/gu;
@@ -36,7 +36,7 @@ function clamp(value, min, max) {
 
 function tooltipTarget(node) {
   return node?.closest?.(
-    ".language-letter-hover[data-tooltip], .letter-unit[data-tooltip], .transliteration-symbol[data-tooltip]",
+    ".language-letter-hover[data-tooltip], .letter-unit[data-tooltip], .transliteration-symbol[data-tooltip], .definition-tooltip[data-tooltip]",
   ) || null;
 }
 
@@ -59,16 +59,26 @@ function ensureTooltipLayer() {
   function positionTooltip(target) {
     if (!target || tooltipLayer.hidden) return;
     const rect = target.getBoundingClientRect();
-    const tooltipRect = tooltipLayer.getBoundingClientRect();
     const margin = 10;
     const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
     const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const panelRect = target.closest?.(".detail-pane")?.getBoundingClientRect();
+    const bounds = panelRect
+      ? {
+          left: Math.max(margin, panelRect.left + margin),
+          right: Math.min(viewportWidth - margin, panelRect.right - margin),
+          top: Math.max(margin, panelRect.top + margin),
+          bottom: Math.min(viewportHeight - margin, panelRect.bottom - margin),
+        }
+      : { left: margin, right: viewportWidth - margin, top: margin, bottom: viewportHeight - margin };
+    tooltipLayer.style.maxWidth = `${Math.max(120, Math.min(320, bounds.right - bounds.left))}px`;
+    const tooltipRect = tooltipLayer.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const above = rect.top - tooltipRect.height - margin;
     const below = rect.bottom + margin;
-    const top = above >= margin ? above : Math.min(below, viewportHeight - tooltipRect.height - margin);
-    tooltipLayer.style.left = `${clamp(centerX - tooltipRect.width / 2, margin, viewportWidth - tooltipRect.width - margin)}px`;
-    tooltipLayer.style.top = `${clamp(top, margin, viewportHeight - tooltipRect.height - margin)}px`;
+    const top = above >= bounds.top ? above : below;
+    tooltipLayer.style.left = `${clamp(centerX - tooltipRect.width / 2, bounds.left, bounds.right - tooltipRect.width)}px`;
+    tooltipLayer.style.top = `${clamp(top, bounds.top, bounds.bottom - tooltipRect.height)}px`;
   }
 
   function showTooltip(target) {
@@ -149,7 +159,7 @@ export function languageUnitText(unit) {
 export function transliterationSymbolDescription(character, sourceLabel = "Bundled Strong's/interlinear transliteration") {
   const description = TRANSLITERATION_SYMBOLS.get(character);
   if (!description) return "";
-  return `${character}: ${description}. ${sourceLabel} is scholarly transliteration, not exact pronunciation.`;
+  return `${character}: ${description}.`;
 }
 
 export function setTransliterationTextWithTooltips(node, text, options = {}) {

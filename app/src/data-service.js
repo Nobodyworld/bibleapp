@@ -30,7 +30,7 @@ export async function tryFetchJson(path) {
 }
 
 export function loadManifest() {
-  return fetchJson(`${DATA_ROOT}/manifest.json?v=pr13-live-qa-20260710c`);
+  return fetchJson(`${DATA_ROOT}/manifest.json?v=pr13-live-qa-20260711d`);
 }
 
 async function datasetAvailable(key) {

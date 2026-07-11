@@ -1,6 +1,6 @@
-import { JOB_TYPES } from "./config.js?v=pr13-live-qa-20260710c";
+import { JOB_TYPES } from "./config.js?v=pr13-live-qa-20260711d";
 import { fetchWordMapBook } from "./data-service.js";
-import { parseReferenceKey, referenceKeyFromTarget, targetId } from "./semantic-targets.js?v=pr13-live-qa-20260710c";
+import { parseReferenceKey, referenceKeyFromTarget, targetId } from "./semantic-targets.js?v=pr13-live-qa-20260711d";
 
 const PROCESSOR_VERSIONS = {
   [JOB_TYPES.tagIndexRefresh]: "tag-index-refresh-v1",

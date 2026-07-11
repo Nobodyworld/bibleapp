@@ -88,9 +88,10 @@ assert.equal(
   languageUnitText({ char: "Ε", standalone: false, marks: [{ char: "̓" }] }),
   "Ἐ",
 );
-assert.match(transliterationSymbolDescription("ō"), /macron marking a long o vowel.*not exact pronunciation/i);
-assert.match(transliterationSymbolDescription("î"), /circumflex.*vowel distinction or contraction.*not exact pronunciation/i);
-assert.match(transliterationSymbolDescription("·"), /separat(?:es|ing) syllables or morphemes.*not pronounced.*not exact pronunciation/i);
+assert.match(transliterationSymbolDescription("ō"), /macron marking a long o vowel/i);
+assert.doesNotMatch(transliterationSymbolDescription("ō"), /not exact pronunciation/i);
+assert.match(transliterationSymbolDescription("î"), /circumflex.*vowel distinction or contraction/i);
+assert.match(transliterationSymbolDescription("·"), /separat(?:es|ing) syllables or morphemes.*not pronounced/i);
 assert.equal(transliterationSymbolDescription("x"), "");
 
 const psalmStrong = {
@@ -136,7 +137,7 @@ console.log(
   JSON.stringify(
     {
       status: "ok",
-      assertions: 22,
+      assertions: 23,
       corrected_reference: "john:4:1:10",
     },
     null,

@@ -10,9 +10,9 @@ const appSource = await readFile(new URL("../app/app.js", import.meta.url), "utf
 const indexSource = await readFile(new URL("../app/index.html", import.meta.url), "utf8");
 const sourceById = new Map(manifest.original_language_sources.map((source) => [source.id, source]));
 
-assert(/manifest\.json\?v=pr13-live-qa-20260710c/.test(dataServiceSource));
-assert(/data-service\.js\?v=pr13-live-qa-20260710c/.test(appSource));
-assert(/app\.js\?v=pr13-live-qa-20260710c/.test(indexSource));
+assert(/manifest\.json\?v=pr13-live-qa-20260711d/.test(dataServiceSource));
+assert(/data-service\.js\?v=pr13-live-qa-20260711d/.test(appSource));
+assert(/app\.js\?v=pr13-live-qa-20260711d/.test(indexSource));
 
 for (const id of ["wlc", "wlco", "nestle", "tr94"]) {
   assert(sourceById.has(id), `Missing ${id} source registration.`);

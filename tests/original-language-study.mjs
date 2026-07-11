@@ -14,7 +14,7 @@ assert(
   "The side-panel tool must present the feature as Language Study.",
 );
 assert(
-  /original-language-study-flow\.js\?v=pr13-live-qa-20260710c/.test(index),
+  /original-language-study-flow\.js\?v=pr13-live-qa-20260711d/.test(index),
   "The original-language study enhancement module must load after the app modules.",
 );
 assert(
@@ -36,7 +36,7 @@ assert(
   "Cards and their direct visual sections must fill the available grid track width.",
 );
 assert(
-  /data-service\.js\?v=pr13-live-qa-20260710c/.test(flow),
+  /data-service\.js\?v=pr13-live-qa-20260711d/.test(flow),
   "The study flow must version the original-language source data contract.",
 );
 assert(

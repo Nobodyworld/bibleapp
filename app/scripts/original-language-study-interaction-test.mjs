@@ -125,6 +125,23 @@ async function main() {
 
   try {
     const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
+    await page.goto(`${url}/#/read/bsb/philemon/1/1`, { waitUntil: "load" });
+    await waitFor(page, () => Boolean(document.querySelector("#chapterTitle")?.textContent.includes("Philemon 1")));
+    const philemonSpacing = await page.evaluate(() => {
+      const ordinary = [...document.querySelectorAll(".verse-row .verse-line.reg")];
+      const verseOne = document.querySelector(".verse-row[data-verse='1']");
+      const heights = ordinary.slice(0, 8).map((line) => Number(line.getBoundingClientRect().height.toFixed(2)));
+      return {
+        verseOneLines: verseOne?.querySelectorAll(".verse-line.reg").length || 0,
+        ordinaryLineCounts: [...document.querySelectorAll(".verse-row")].slice(0, 8).map((row) => row.querySelectorAll(".verse-line.reg").length),
+        heights,
+        headingGap: document.querySelector(".presentation-block.section_heading")?.getBoundingClientRect().height || 0,
+      };
+    });
+    assert(
+      philemonSpacing.verseOneLines === 1 && philemonSpacing.ordinaryLineCounts.every((count) => count === 1) && philemonSpacing.headingGap > 0,
+      `Philemon ordinary prose retained archive wrap spacing or lost intentional headings: ${JSON.stringify(philemonSpacing)}`,
+    );
     await page.goto(url, { waitUntil: "load" });
     await waitFor(page, () => document.readyState === "complete" && !document.body.textContent.includes("Loading data"));
     await waitFor(page, () => Boolean(document.querySelector("#chapterTitle")?.textContent.includes("Psalms 23")));
@@ -151,7 +168,7 @@ async function main() {
         strongTransliteration.convention === "bundled-strongs-interlinear" &&
         strongTransliteration.description.includes("separate from phonetic spelling") &&
         strongTransliteration.description.includes("not exact pronunciation") &&
-        strongTransliteration.symbols.every((symbol) => symbol.tabIndex === 0 && symbol.label.includes("not exact pronunciation")),
+        strongTransliteration.symbols.every((symbol) => symbol.tabIndex === 0 && !symbol.label.includes("not exact pronunciation")),
       `Strong's transliteration guidance is incomplete: ${JSON.stringify(strongTransliteration)}`,
     );
     await waitFor(page, () => [...document.querySelectorAll("button")].some((button) => button.textContent.trim() === "Int"));
@@ -230,7 +247,7 @@ async function main() {
         studyState.transliterationDescription.includes("not exact pronunciation") &&
         studyState.transliterationSymbols.some((symbol) => symbol.text === "ō") &&
         studyState.transliterationSymbols.some((symbol) => symbol.text === "·") &&
-        studyState.transliterationSymbols.every((symbol) => symbol.tabIndex === 0 && symbol.label.includes("not exact pronunciation")),
+        studyState.transliterationSymbols.every((symbol) => symbol.tabIndex === 0 && !symbol.label.includes("not exact pronunciation")),
       `study transliteration symbols lack keyboard-accessible explanations: ${JSON.stringify(studyState)}`,
     );
     const touchTooltip = await page.evaluate(() => {
@@ -277,6 +294,16 @@ async function main() {
     const historyBeforePreview = await page.evaluate(() => ({ title: document.querySelector("#detailTitle")?.textContent, back: document.querySelector("#detailBack")?.disabled }));
     await related.focus();
     await waitFor(page, () => document.querySelector(".interlinear-verse-section:not(.interlinear-superscription-section) .original-language-related-link")?.dataset.previewReady === "true");
+    await related.hover();
+    const tooltipContainment = await page.evaluate(() => {
+      const tooltip = document.querySelector(".language-tooltip-layer:not([hidden])");
+      const panel = document.querySelector(".detail-pane");
+      if (!tooltip || !panel) return null;
+      const tip = tooltip.getBoundingClientRect();
+      const bounds = panel.getBoundingClientRect();
+      return { left: tip.left >= bounds.left, right: tip.right <= bounds.right, top: tip.top >= Math.max(0, bounds.top), bottom: tip.bottom <= Math.min(innerHeight, bounds.bottom) };
+    });
+    assert(tooltipContainment && Object.values(tooltipContainment).every(Boolean), `related-entry tooltip escaped the detail panel: ${JSON.stringify(tooltipContainment)}`);
     const previewState = await related.evaluate((node) => ({ tooltip: node.dataset.tooltip, label: node.getAttribute("aria-label") }));
     const historyAfterPreview = await page.evaluate(() => ({ title: document.querySelector("#detailTitle")?.textContent, back: document.querySelector("#detailBack")?.disabled }));
     assert(previewState.tooltip.includes("Hebrew") && /H\d+/.test(previewState.tooltip) && previewState.label.startsWith("Open Strong's"), `Hebrew related preview is incomplete: ${JSON.stringify(previewState)}`);
@@ -352,7 +379,7 @@ async function main() {
     await waitFor(page, () => document.querySelector(".original-language-related-link")?.dataset.previewReady === "true");
     assert((await greekRelated.getAttribute("data-tooltip")).includes("Greek"), "Greek related preview must identify its language");
 
-    console.log(JSON.stringify({ status: "ok", assertions: 21 }, null, 2));
+    console.log(JSON.stringify({ status: "ok", assertions: 23 }, null, 2));
   } finally {
     await browser.close();
     await new Promise((resolveClose) => server.close(resolveClose));

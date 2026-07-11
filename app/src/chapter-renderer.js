@@ -1,4 +1,4 @@
-import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=pr13-live-qa-20260710c";
+import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=pr13-live-qa-20260711d";
 import { resolvePassageText } from "./data-service.js";
 import { referenceKey, refDomId, parseLocationFromHref } from "./references.js";
 import {
@@ -6,12 +6,12 @@ import {
   ensureStores,
   getRedLetterRanges,
   getTaggedTargetsForReference,
-} from "./stores.js?v=pr13-live-qa-20260710c";
+} from "./stores.js?v=pr13-live-qa-20260711d";
 import {
   createTextSpanTarget,
   createVerseTarget,
   resolveTextSpanAnchor,
-} from "./semantic-targets.js?v=pr13-live-qa-20260710c";
+} from "./semantic-targets.js?v=pr13-live-qa-20260711d";
 import { mapStrongChapterRanges, resolveSourceBearingPresentationSegment } from "./strongs.js";
 import { createStudyEmptyState, studyUnavailableLabel } from "./study-empty-state.js";
 import { interlinearTokenIdentity } from "./ui-contracts.js";
@@ -826,7 +826,11 @@ export function createChapterRenderer(ctx) {
       { class: "reg", char_offset: 0, char_length: verseText.length, order: 1 },
     ];
 
-    lines
+    const renderLines = lines.every((line) => (line.class || "reg") === "reg" && !line.style)
+      ? [{ class: "reg", char_offset: 0, char_length: verseText.length, order: 1 }]
+      : lines;
+
+    renderLines
       .slice()
       .sort((a, b) => Number(a.order || 0) - Number(b.order || 0))
       .forEach((line) => {
