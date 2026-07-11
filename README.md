@@ -1,10 +1,18 @@
 # Bible App Reader
 
 Bible App Reader is a local-first Bible study workspace that runs as a static
-browser application. It combines multi-translation reading, Hebrew and Greek
-Language Study, commentary, cross-references, Strong's lexicons, structured
-study marks, and portable browser-local data without requiring an account,
-hosted backend, analytics service, or remote application API.
+browser application. It combines multi-translation reading, hover-first
+supplemental context, Hebrew and Greek Language Study, commentary,
+cross-references, Strong's lexicons, structured study marks, and portable
+browser-local data without requiring an account, hosted backend, analytics
+service, or remote application API.
+
+The app is deliberately packed with supplemental study data without placing all
+of it on the reading surface at once. Reader words, references,
+original-language forms, morphology, transliteration marks, and related lexical
+entries reveal context on demand through hover, keyboard focus, touch, and
+explicit activation. The reader stays primary while deeper material remains
+close at hand.
 
 The repository is designed as both a public product showcase and an auditable
 source distribution. Bible text, original-language records, commentary,
@@ -16,7 +24,8 @@ server.
 
 | Capability | Practical value |
 |---|---|
-| Local-first study | Reading and research do not depend on a hosted service or account. |
+| Hover-first study | Supplemental word, reference, language, and lexical context appears on demand without permanently crowding the reader. |
+| Local-first reading | Reading and research do not depend on a hosted service or account. |
 | Integrated context | Reader text, commentary, outlines, cross-references, Strong's data, and source-language records remain connected in one workspace. |
 | Original-language depth | Hebrew and Greek cards separate source text, transliteration, pronunciation guidance, dictionary form, morphology, glosses, word origin, and related entries. |
 | Structured study marks | Favorites and tags can be attached at book, chapter, verse, text-span, and source-token scope. |
@@ -24,6 +33,25 @@ server.
 | Auditable package | Source manifests, notices, deterministic data tools, package inventory, and verification scripts are included in the repository. |
 
 ## Study Experience
+
+### Hover-first supplemental context
+
+- Hovering or focusing a reader word can show transient Strong's and language
+  detail without changing the reading location.
+- Reference controls can preview the referenced passage before navigation.
+- Language and transliteration elements explain letters, marks, and scholarly
+  notation on demand.
+- Clicking or activating a transient item can pin or open persistent detail when
+  deeper study is wanted.
+- Transient previews do not intentionally mutate panel history or replace a
+  locked study panel.
+- Tooltips and previews are bounded to the visible panel and viewport.
+- Pointer interactions have keyboard and practical touch equivalents.
+- Extended Language Study content is loaded incrementally rather than rendering
+  every word card into the reader at once.
+
+The interaction model is functional today and is being unified further under
+issue #16.
 
 ### Reader and navigation
 
@@ -50,7 +78,7 @@ server.
 - Lazy verse loading so extended chapter study does not render every card at
   once.
 
-### Study Marks and local data
+### Study Marks and browser-local data
 
 - One Book mark control and one Chapter mark control, each combining Favorite
   and applicable tags in a target-aware menu.
@@ -59,8 +87,13 @@ server.
 - Canonical semantic targets for books, chapters, verses, ranges, text spans,
   source tokens, and source-token spans.
 - Study Marks dashboard for reviewing tagged and favorited targets.
-- Study Data tools for browser-local storage, export, import, and recovery.
-- Local Processing tools for deterministic study jobs and generated analysis.
+- Browser-local summary counts, JSON export/import, storage recovery, and
+  capability controls.
+
+The current Translation workspace, Processing screen, and Study Data screen are
+being reassessed rather than presented as finished information architecture.
+Word-level meaning tagging is tracked in issue #18, and user-data/settings
+simplification is tracked in issue #19.
 
 ### Resilience and accessibility
 
@@ -72,11 +105,26 @@ server.
   coverage where static or browser verification is practical.
 - Tooltips and previews are constrained to the visible panel and viewport.
 
+## Context and Side-Panel Direction
+
+Study information exists at different scopes:
+
+- a **word** owns lexical, source-language, morphology, and saved-meaning data;
+- a **verse** owns parallel text, references, commentary, verse tags, and the
+  containing context for a selected word;
+- a **chapter** owns chapter navigation and chapter-level Language Study entry;
+- a **book** owns outline and book-level study context;
+- global/user tools own settings, backup, restore, package, and diagnostic data.
+
+The current interface exposes these capabilities, but their grouping and tab
+order are not yet final. The intended direction is a stable contextual hierarchy
+with **Word first whenever word context exists**, followed by broader verse,
+chapter, and book context. That work is tracked in issue #17.
+
 ## Screenshots
 
 The gallery uses expandable images so the application can be reviewed directly
-from GitHub. PR #15 will refresh the captures after the README rewrite is
-complete.
+from GitHub. The captures will be refreshed after the intended UI work is stable.
 
 ### Reader and Navigation
 
@@ -141,14 +189,14 @@ complete.
 </details>
 
 <details>
-<summary>Study Data</summary>
+<summary>Current Study Data screen — redesign tracked in issue #19</summary>
 
 ![Study Data panel](docs/images/study-data.png)
 
 </details>
 
 <details>
-<summary>Local Processing</summary>
+<summary>Current Local Processing screen — redesign tracked in issue #19</summary>
 
 ![Local Processing panel](docs/images/local-processing.png)
 
@@ -278,6 +326,9 @@ Further documentation:
 - [UI functionality contract](app/docs/UI_FUNCTIONALITY_SCHEMA.md)
 - [Test inventory](tests/TEST_INVENTORY.md)
 
+Repository-wide documentation and loose-file reconciliation is tracked in issue
+#15.
+
 ## Package Inventory and Repository Size
 
 The current full-study package contains:
@@ -331,6 +382,10 @@ repository-security posture.
   in issue #7.
 - The bundled package increases clone and checkout size; future distribution
   options are tracked in issue #6.
+- The side-panel context hierarchy is functional but not final; redesign is
+  tracked in issue #17.
+- Translation/rendering and user-data/processing tools are under focused
+  simplification in issues #18 and #19.
 - Publication activation, repository settings, and eligible GitHub security
   features remain tracked in issue #5.
 - Bundled data should be redistributed only after reviewing the included source
@@ -338,18 +393,20 @@ repository-security posture.
 
 ## Project Status
 
-The current public-showcase sequence is:
+Active and planned public-showcase work is tracked by scope rather than assumed
+future pull-request numbers:
 
-1. PR #14 — README feature/value rewrite.
-2. PR #15 — screenshot refresh.
-3. PR #16 — final public-release audit.
+- PR #14 — README feature/value rewrite;
+- issue #15 — documentation and loose-file reconciliation;
+- issue #16 — hover-first supplemental study UX;
+- issue #17 — word-first contextual side-panel hierarchy;
+- issue #18 — word-tag meaning utility replacing the current Translation surface;
+- issue #19 — Processing and Study Data simplification;
+- public screenshot refresh after the intended UI stabilizes;
+- final public-release audit and issue #5 activation checklist.
 
-Open planning and release issues are deliberately not closed by this README
-work:
-
-- #5 — public release activation checklist;
-- #6 — post-public data-pack and performance plan;
-- #7 — cross-browser public QA pass.
+Issues #6 and #7 remain post-public performance and broader manual browser-QA
+work unless they reveal a severe blocker.
 
 ## Contributing
 
