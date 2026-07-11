@@ -117,6 +117,9 @@ async function launchBrowser() {
   });
   const playwrightPage = await context.newPage();
   const page = {
+    async press(selector, key) {
+      await playwrightPage.locator(selector).press(key);
+    },
     async send(method, params = {}) {
       if (method === "Page.enable" || method === "Runtime.enable") return {};
       if (method === "Page.navigate") {
@@ -508,15 +511,23 @@ async function runQa(page) {
     ),
     "book, chapter, and verse favorite controls were not initialized",
   );
+  assert(
+    await evaluate(page, `document.querySelectorAll('.scope-mark-button').length === 2 && ![...document.querySelectorAll('button')].some((button) => /^(Book|Chapter) tags$/.test(button.textContent.trim()))`),
+    "reader must expose exactly one consolidated Book control and one consolidated Chapter control",
+  );
   await click(page, "#favoriteBook");
+  await waitFor(page, "document.querySelector('#bookTagControl .tag-picker-option[aria-label=\"Add Favorite tag\"]')");
+  await click(page, '#bookTagControl .tag-picker-option[aria-label="Add Favorite tag"]');
   await waitFor(page, "document.querySelector('#favoriteBook')?.getAttribute('aria-pressed') === 'true'");
   await click(page, "#favoriteChapter");
+  await waitFor(page, "document.querySelector('#chapterTagControl .tag-picker-option[aria-label=\"Add Favorite tag\"]')");
+  await click(page, '#chapterTagControl .tag-picker-option[aria-label="Add Favorite tag"]');
   await waitFor(page, "document.querySelector('#favoriteChapter')?.getAttribute('aria-pressed') === 'true'");
-  await click(page, "#bookTagControl .scope-tag-button");
+  await page.press("#favoriteBook", "Enter");
   await waitFor(page, "document.querySelector('#bookTagControl .tag-picker-option[aria-label=\"Add Inquiry tag\"]')");
   await click(page, '#bookTagControl .tag-picker-option[aria-label="Add Inquiry tag"]');
   await waitFor(page, "document.querySelector('#bookTagControl .target-tag-badge')?.textContent.includes('Inquiry')");
-  await click(page, "#chapterTagControl .scope-tag-button");
+  await page.press("#favoriteChapter", " ");
   await waitFor(page, "document.querySelector('#chapterTagControl .tag-picker-option[aria-label=\"Add Inquiry tag\"]')");
   await click(page, '#chapterTagControl .tag-picker-option[aria-label="Add Inquiry tag"]');
   await waitFor(page, "document.querySelector('#chapterTagControl .target-tag-badge')?.textContent.includes('Inquiry')");
@@ -613,7 +624,11 @@ async function runQa(page) {
     "Favorites panel did not group book, chapter, and verse targets",
   );
   await click(page, "#favoriteBook");
+  await waitFor(page, "document.querySelector('#bookTagControl .tag-picker-option[aria-label=\"Remove Favorite tag\"]')");
+  await click(page, '#bookTagControl .tag-picker-option[aria-label="Remove Favorite tag"]');
   await click(page, "#favoriteChapter");
+  await waitFor(page, "document.querySelector('#chapterTagControl .tag-picker-option[aria-label=\"Remove Favorite tag\"]')");
+  await click(page, '#chapterTagControl .tag-picker-option[aria-label="Remove Favorite tag"]');
   await click(page, ".verse-favorite-button.active");
   await waitFor(
     page,
@@ -756,21 +771,67 @@ async function runQa(page) {
   await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Footnote'");
   state = await getQaState(page);
   assert(state.detailText.includes("Footnote"), "footnote detail did not open");
-  const footnoteMarkerStyle = await evaluate(
+  const footnoteThemeBefore = await evaluate(page, "document.documentElement.getAttribute('data-theme')");
+  if (footnoteThemeBefore !== "light") {
+    await click(page, "#themeToggle");
+    await waitFor(page, "document.documentElement.getAttribute('data-theme') === 'light'");
+  }
+  await waitFor(page, "getComputedStyle(document.querySelector('.fn-marker')).color === 'rgb(35, 71, 251)'");
+  const lightFootnoteStyle = await evaluate(
     page,
     `(() => {
       const marker = document.querySelector('.fn-marker');
+      marker.blur();
       const style = getComputedStyle(marker);
       const textStyle = getComputedStyle(marker?.closest('.verse-line') || document.body);
-      return { borderTopWidth: style.borderTopWidth, backgroundColor: style.backgroundColor, color: style.color, textColor: textStyle.color };
+      const detailMarker = document.querySelector('.footnote-detail-marker');
+      const result = { borderTopWidth: style.borderTopWidth, backgroundColor: style.backgroundColor, color: style.color, textColor: textStyle.color, detailColor: getComputedStyle(detailMarker).color };
+      marker.focus();
+      result.focusColor = getComputedStyle(marker).color;
+      result.focusOutline = getComputedStyle(marker).outlineStyle;
+      marker.blur();
+      return result;
     })()`,
   );
-  assert(footnoteMarkerStyle.borderTopWidth === "0px", "footnote marker still has a visible box border");
-  assert(
-    footnoteMarkerStyle.color !== footnoteMarkerStyle.textColor,
-    `footnote marker should be visually distinct from verse text: ${JSON.stringify(footnoteMarkerStyle)}`,
+  await click(page, "#themeToggle");
+  await waitFor(page, "document.documentElement.getAttribute('data-theme') === 'dark'");
+  await waitFor(page, "getComputedStyle(document.querySelector('.fn-marker')).color === 'rgb(158, 175, 255)'");
+  const darkFootnoteStyle = await evaluate(
+    page,
+    `(() => {
+      const marker = document.querySelector('.fn-marker');
+      marker.blur();
+      const style = getComputedStyle(marker);
+      const detailMarker = document.querySelector('.footnote-detail-marker');
+      const result = { theme: document.documentElement.getAttribute('data-theme'), color: style.color, detailColor: getComputedStyle(detailMarker).color };
+      marker.focus();
+      result.focusColor = getComputedStyle(marker).color;
+      result.focusOutline = getComputedStyle(marker).outlineStyle;
+      marker.blur();
+      return result;
+    })()`,
   );
-  assert(footnoteMarkerStyle.color === "rgb(35, 71, 251)", `footnote marker should use the requested blue: ${JSON.stringify(footnoteMarkerStyle)}`);
+  if (footnoteThemeBefore !== "dark") {
+    await click(page, "#themeToggle");
+    await waitFor(page, `document.documentElement.getAttribute('data-theme') === ${JSON.stringify(footnoteThemeBefore)}`);
+  }
+  assert(lightFootnoteStyle.borderTopWidth === "0px", "footnote marker still has a visible box border");
+  assert(
+    lightFootnoteStyle.color !== lightFootnoteStyle.textColor,
+    `footnote marker should be visually distinct from verse text: ${JSON.stringify(lightFootnoteStyle)}`,
+  );
+  assert(
+    lightFootnoteStyle.color === "rgb(35, 71, 251)" &&
+      lightFootnoteStyle.detailColor === "rgb(35, 71, 251)" &&
+      lightFootnoteStyle.focusOutline === "solid",
+    `light-theme footnote contrast regressed: ${JSON.stringify(lightFootnoteStyle)}`,
+  );
+  assert(
+    darkFootnoteStyle.color === "rgb(158, 175, 255)" &&
+      darkFootnoteStyle.detailColor === "rgb(158, 175, 255)" &&
+      darkFootnoteStyle.focusOutline === "solid",
+    `dark-theme footnote marker, detail, or focus contrast is incorrect: ${JSON.stringify(darkFootnoteStyle)}`,
+  );
   pass("footnote popup");
 
   await click(page, ".verse-study-button");

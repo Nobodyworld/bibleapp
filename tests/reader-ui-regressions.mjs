@@ -36,17 +36,28 @@ assert(/\.reader-nav-arrow\s*{[\s\S]*?width:\s*20px;[\s\S]*?min-height:\s*56px;/
 assert(/\.reader-floating-nav\s*{[\s\S]*?top:\s*176px;/.test(css), "Floating chapter navigation must sit below the reader header.");
 assert(/\.detail-floating-nav\s*{[\s\S]*?top:\s*18px;[\s\S]*?margin:\s*0 24px 0 0;/.test(css), "Detail history controls must sit slightly lower and left of the panel edge.");
 assert(
-  /class="scope-favorite-star"/.test(index) &&
-    /class="scope-favorite-label"/.test(index) &&
-    /querySelector\("\.scope-favorite-star"\)/.test(app),
-  "Book and chapter favorites must expose separately styled star and label spans.",
+  (index.match(/class="scope-mark-control"/g) || []).length === 2 &&
+    !/Book tags|Chapter tags/.test(index) &&
+    /class="scope-favorite-star"/.test(app) &&
+    /class="scope-favorite-label"/.test(app),
+  "Exactly one consolidated Book control and one consolidated Chapter control must be mounted.",
 );
 assert(
-  /id="bookTagControl" class="scope-tag-control"/.test(index) &&
-    /id="chapterTagControl" class="scope-tag-control"/.test(index) &&
+  /const renderLines = lines\.every\(\(line\) => \(line\.class \|\| "reg"\) === "reg" && !line\.style\)[\s\S]*?char_length: verseText\.length/.test(renderer),
+  "Ordinary prose line records must collapse archive wrapping into one consistently spaced verse line while styled presentation lines remain distinct.",
+);
+assert(
+  /target\.closest\?\.\("\.detail-pane"\)/.test(await readFile(new URL("../app/src/language-tooltips.js", import.meta.url), "utf8")) &&
+    /\.definition-tooltip\[data-tooltip\]::after\s*{[\s\S]*?display:\s*none !important;/.test(css),
+  "Side-panel definition and language tooltips must use the panel-aware fixed tooltip layer instead of overflowing pseudo-elements.",
+);
+assert(
+  /id="bookTagControl" class="scope-mark-control"/.test(index) &&
+    /id="chapterTagControl" class="scope-mark-control"/.test(index) &&
     /function syncScopeControls\(\)/.test(app) &&
-    /renderTargetTagPicker\(target/.test(app),
-  "Book and chapter tag controls must mount beside reader scope favorites and reuse target tag pickers.",
+    /renderTargetTagPicker\(target/.test(app) &&
+    /Favorite/.test(tagsView),
+  "Favorite and non-favorite tags must share each consolidated scope picker.",
 );
 assert(
   /id="bookPickerButton"/.test(index) &&
@@ -57,7 +68,19 @@ assert(
 );
 assert(/\.fn-marker\s*{[\s\S]*?color:\s*#2347fb;/.test(css), "Footnote markers must use the requested blue.");
 assert(
-  /reader-picker-flow\.js\?v=reader-picker-flow-20260709/.test(index),
+  /:root\[data-theme="dark"\] \.fn-marker\s*{[\s\S]*?color:\s*#9eafff\s*!important;/.test(css) &&
+    /:root\[data-theme="dark"\] \.fn-marker:hover\s*{[\s\S]*?color:\s*#c5ceff\s*!important;/.test(css) &&
+    /:root\[data-theme="dark"\] \.fn-marker:focus-visible\s*{[\s\S]*?outline:\s*2px solid #9eafff[\s\S]*?color:\s*#f0f2ff\s*!important;/.test(css),
+  "Dark footnotes must use lighter default, hover, and keyboard-focus colors with a visible focus outline.",
+);
+assert(
+  /html\[data-theme="light"\] \.fn-marker\s*{[\s\S]*?color:\s*#2347fb\s*!important;/.test(css) &&
+    /html\[data-theme="light"\] \.fn-marker:hover\s*{[\s\S]*?color:\s*#1232c8\s*!important;/.test(css) &&
+    /html\[data-theme="light"\] \.fn-marker:focus-visible\s*{[\s\S]*?outline:\s*2px solid #2347fb[\s\S]*?color:\s*#0b238f\s*!important;/.test(css),
+  "Light-theme footnote contrast and keyboard focus treatment must remain explicit.",
+);
+assert(
+  /reader-picker-flow\.js\?v=pr13-live-qa-20260711e/.test(index),
   "The reader picker flow helper must load after the main app module.",
 );
 assert(
@@ -153,6 +176,22 @@ assert(
 );
 assert(/setMorphologyHelp\(pos,\s*morphology,\s*language\)/.test(strongsView), "Strong's morphology must expose definition help.");
 assert(
+  /glyph\.textContent = languageUnitDisplayGlyph\(unit\)/.test(strongsView) &&
+    /marksTitle\.textContent = `\$\{languageTitle\(analysis\.language\)\} marks \/ symbols`/.test(strongsView),
+  "Strong's letter tiles must reconstruct marked graphemes while retaining the separate marks and symbols section.",
+);
+assert(
+  /resolveStrongSeeSegments\(paragraph, refs\)/.test(strongsView) &&
+    /createStrongReferenceControl\(segment\.ref/.test(strongsView),
+  "Structured concordance see-references must render through the shared Strong's control behavior.",
+);
+assert(
+  /appendLexicalRow\(rows, "Transliteration", createTransliterationValue\(entry\.transliteration\)\)/.test(strongsView) &&
+    /appendLexicalRow\(rows, "Phonetic spelling", entry\.phonetic_spelling\)/.test(strongsView) &&
+    /function appendLexicalRow[\s\S]*?if \(!value\) return;/.test(strongsView),
+  "Strong's transliteration and phonetic spelling must remain separate, and missing fields must be omitted.",
+);
+assert(
   /Study Marks by Scripture/.test(tagsView) &&
     /Book\/chapter tags/.test(tagsView) &&
     /English word\/phrase tags/.test(tagsView) &&
@@ -161,10 +200,10 @@ assert(
   "Study Marks must expose a scripture-centered book/chapter/verse hierarchy.",
 );
 assert(
-  /styles\.css\?v=browser-comments-20260707b/.test(index) &&
-    /app\.js\?v=browser-comments-20260707b/.test(index) &&
+  /styles\.css\?v=pr13-live-qa-20260711e/.test(index) &&
+    /app\.js\?v=pr13-live-qa-20260711e/.test(index) &&
     !/full-audit-20260701|browser-comments-20260702/.test(index),
   "Browser-visible app and stylesheet entry points must use the current cache-buster key.",
 );
 
-console.log(JSON.stringify({ status: "ok", assertions: 44 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 51 }, null, 2));

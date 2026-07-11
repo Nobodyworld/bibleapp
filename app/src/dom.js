@@ -11,8 +11,6 @@ export const els = {
   chapterPickerButton: document.querySelector("#chapterPickerButton"),
   chapterPickerPanel: document.querySelector("#chapterPickerPanel"),
   title: document.querySelector("#chapterTitle"),
-  favoriteBook: document.querySelector("#favoriteBook"),
-  favoriteChapter: document.querySelector("#favoriteChapter"),
   bookTagControl: document.querySelector("#bookTagControl"),
   chapterTagControl: document.querySelector("#chapterTagControl"),
   content: document.querySelector("#chapterContent"),
@@ -98,11 +96,12 @@ function canStoreCurrentDetail() {
 function snapshotReaderContextFromDom() {
   const word = document.querySelector(".reader-context-word");
   const verseRow =
-    word?.closest?.(".verse-row") ||
+    word?.closest?.(".verse-row, .source-bearing-segment") ||
     document.querySelector(".reader-context-verse");
   if (!verseRow) return null;
   return {
     verse: verseRow.dataset.verse || null,
+    segment_id: verseRow.dataset.segmentId || word?.dataset?.segmentId || null,
     word: word
       ? {
           interlinearKey: word.dataset.interlinearKey || "",

@@ -4,12 +4,17 @@ import {
   fetchWordMapBook,
   loadLanguageMetadata,
 } from "../data-service.js";
-import { isDetailHoverLocked, setDetail, textNode } from "../dom.js?v=browser-comments-20260707b";
+import { isDetailHoverLocked, setDetail, textNode } from "../dom.js?v=pr13-live-qa-20260711e";
 import { capabilityMessage } from "../capabilities.js";
-import { languageUnitTooltip, setLanguageTextWithTooltips } from "../language-tooltips.js";
-import { setMorphologyHelp } from "../morphology-tooltips.js?v=browser-comments-20260707b";
-import { analyzeOriginalWord, gematriaValueForUnit, wordHasLanguageScript } from "../language.js";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=browser-comments-20260707b";
+import {
+  languageUnitTooltip,
+  setLanguageTextWithTooltips,
+  setTransliterationTextWithTooltips,
+} from "../language-tooltips.js?v=pr13-live-qa-20260711e";
+import { setMorphologyHelp } from "../morphology-tooltips.js?v=pr13-live-qa-20260711e";
+import { analyzeOriginalWord, gematriaValueForUnit, languageUnitDisplayGlyph, wordHasLanguageScript } from "../language.js";
+import { createStrongReferenceControl, resolveStrongSeeSegments } from "../strong-reference-control.js?v=pr13-live-qa-20260711e";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=pr13-live-qa-20260711e";
 
 function languageTitle(language) {
   return language === "hebrew" ? "Hebrew" : "Greek";
@@ -62,7 +67,7 @@ function renderWordBreakdown(analysis, wordInfo = null) {
 
     const glyph = document.createElement("span");
     glyph.className = "letter-glyph";
-    glyph.textContent = unit.char;
+    glyph.textContent = languageUnitDisplayGlyph(unit);
 
     const name = document.createElement("span");
     name.className = "letter-name";
@@ -207,6 +212,14 @@ function appendLexicalRow(list, label, value, language = null) {
   list.append(term, detail);
 }
 
+function createTransliterationValue(value) {
+  if (!value) return null;
+  const node = document.createElement("span");
+  node.className = "lexical-transliteration";
+  setTransliterationTextWithTooltips(node, value, { sourceLabel: "Bundled Strong's transliteration" });
+  return node;
+}
+
 function createOriginValue(entry, openStrongCode) {
   if (!entry?.word_origin && !entry?.word_origin_refs?.length) return null;
   const wrap = document.createElement("span");
@@ -214,35 +227,11 @@ function createOriginValue(entry, openStrongCode) {
   const refs = entry.word_origin_refs || [];
   const createOriginLink = (ref) => {
     const label = ref.label || ref.original_word || ref.strong_code || "Origin word";
-    const button = createInternalStrongButton(ref, label, openStrongCode);
-    button.classList.add("strong-origin-link", "definition-tooltip");
-    button.dataset.tooltip = `${label}${ref.strong_code ? ` (${ref.strong_code})` : ""} — Loading definition…`;
-    button.setAttribute(
-      "aria-label",
-      `Open definition for ${label}${ref.strong_code ? `, ${ref.strong_code}` : ""}`,
-    );
-    let hydration;
-    const hydrateTooltip = () => {
-      if (!ref.strong_code || hydration) return;
-      hydration = fetchLexiconEntry(ref.strong_code)
-        .then((originEntry) => {
-          if (!originEntry) return;
-          const original = originEntry.original_word || label;
-          const transliteration =
-            originEntry.transliteration && originEntry.transliteration !== original
-              ? ` (${originEntry.transliteration})`
-              : "";
-          const definition = compactDefinition(originEntry);
-          button.dataset.tooltip = [original + transliteration, ref.strong_code, definition]
-            .filter(Boolean)
-            .join(" — ");
-        })
-        .catch(() => {
-          button.dataset.tooltip = `${label}${ref.strong_code ? ` (${ref.strong_code})` : ""}`;
-        });
-    };
-    button.addEventListener("pointerenter", hydrateTooltip);
-    button.addEventListener("focus", hydrateTooltip);
+    const button = createStrongReferenceControl(ref, {
+      label,
+      onActivate: (item) => openStrongCode(item.strong_code, item.language),
+    });
+    button.classList.add("strong-origin-link");
     return button;
   };
 
@@ -274,7 +263,7 @@ function appendLexicalSummary(container, entry, openStrongCode) {
   const rows = document.createElement("dl");
 
   appendLexicalRow(rows, "Original word", entry.original_word, entry.language);
-  appendLexicalRow(rows, "Transliteration", entry.transliteration);
+  appendLexicalRow(rows, "Transliteration", createTransliterationValue(entry.transliteration));
   appendLexicalRow(rows, "Phonetic spelling", entry.phonetic_spelling);
   appendLexicalRow(rows, "Part of speech", entry.part_of_speech);
   appendLexicalRow(rows, "Short definition", entry.short_definition);
@@ -429,7 +418,7 @@ function appendTranslationRenderings(container, token, options = {}, viewCtx = n
     });
 }
 
-function appendLexiconConcordance(container, entry) {
+function appendLexiconConcordance(container, entry, openStrongCode) {
   const sections = [];
   const seen = new Set();
 
@@ -458,7 +447,7 @@ function appendLexiconConcordance(container, entry) {
     details.open = Boolean(open);
     const summary = document.createElement("summary");
     summary.textContent = label;
-    const body = formatLexiconText(text);
+    const body = formatLexiconText(text, entry.word_origin_refs || [], openStrongCode);
     body.className = "concordance-text";
     details.append(summary, body);
     wrap.append(details);
@@ -467,7 +456,7 @@ function appendLexiconConcordance(container, entry) {
   container.append(wrap);
 }
 
-function formatLexiconText(text) {
+function formatLexiconText(text, refs = [], openStrongCode = null) {
   const body = document.createElement("div");
   const normalized = String(text || "")
     .replace(/\r\n?/g, "\n")
@@ -482,7 +471,20 @@ function formatLexiconText(text) {
   (paragraphs.length ? paragraphs : [normalized.trim()]).forEach((paragraph) => {
     const line = document.createElement("p");
     line.className = /^\d+\s/.test(paragraph) ? "lexicon-line section-line" : "lexicon-line";
-    line.textContent = paragraph;
+    resolveStrongSeeSegments(paragraph, refs).forEach((segment) => {
+      if (!segment.label) {
+        line.append(textNode(segment.text));
+        return;
+      }
+      line.append(textNode(segment.text));
+      const control = segment.ref && openStrongCode
+        ? createStrongReferenceControl(segment.ref, {
+            label: segment.label,
+            onActivate: (item) => openStrongCode(item.strong_code, item.language),
+          })
+        : null;
+      line.append(control || textNode(segment.label));
+    });
     body.append(line);
   });
   return body;
@@ -636,6 +638,9 @@ export function createStrongsView(ctx = null) {
       }
       const translitText = token.transliteration || entry?.transliteration || "";
       setOptionalLine(translit, translitText && translitText !== sourceWord ? translitText : "");
+      if (!translit.hidden) {
+        setTransliterationTextWithTooltips(translit, translitText, { sourceLabel: "Bundled Strong's transliteration" });
+      }
       const morphology = token.morphology || entry?.part_of_speech || "";
       pos.hidden = !morphology;
       if (morphology) setMorphologyHelp(pos, morphology, language);
@@ -693,7 +698,7 @@ export function createStrongsView(ctx = null) {
         if (!renderedTokenBreakdown && entry.original_word) {
           appendLanguageBreakdown(extra, { ...token, language: entry.language || token.language }, entry.original_word);
         }
-        appendLexiconConcordance(extra, entry);
+        appendLexiconConcordance(extra, entry, openStrongCode);
       })
       .catch(() => {
         if (wrap.isConnected) extra.textContent = "Lexicon entry could not be loaded.";

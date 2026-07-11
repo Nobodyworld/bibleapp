@@ -1,14 +1,18 @@
 # UI Functionality Contract
 
-Reviewed: 2026-07-01
+Reviewed: 2026-07-11
 
 ## Control placement
 
 - The chapter tool group contains Search, Tags, Translate, Jobs, and Data.
-- Outline and Interlinear are side-panel tools only.
+- Outline and Language Study are side-panel tools only.
+- `Language Study` is the user-facing name. Existing `Interlinear` identifiers, capability names, data contracts, and test names remain intentionally internal.
 - Mobile exposes a Study panel launcher so side-panel-only tools remain reachable.
 - Verse context tabs expose Parallel, Refs, Cmt, Int, and Tags when their scoped actions apply.
-- Book, chapter, verse-row, verse-context, and Interlinear source-token favorite stars are direct `tag:favorite` toggles and expose state through `aria-pressed`.
+- There is exactly one Book mark control and one Chapter mark control. Each trigger displays `☆` or `★` from its Favorite state, reports that state through `aria-pressed`, and opens one target-aware menu containing Favorite and the other tags applicable to that target.
+- Book and Chapter mark triggers expose menu state through `aria-haspopup="menu"` and `aria-expanded`. Active non-favorite tags remain visible outside the closed menu as persistent editable badges.
+- Book and Chapter mark controls rerender after tag changes and after navigation so their stars, badges, targets, and menu contents remain current.
+- Verse-row, verse-context, and Language Study source-token favorite stars remain direct `tag:favorite` toggles and expose state through `aria-pressed`.
 - Interlinear source-token tag actions open the target-aware tag editor. The editor only presents active tags whose `allowed_target_types` include `source_token`.
 - Selecting reader text exposes Favorite, Tags, Study, Draft, and Red letters actions. Favorite and Tags use one canonical `text_span` target.
 
@@ -24,7 +28,7 @@ Every study control resolves to exactly one state:
 | `capability_unavailable` | no | A required package or capability is disabled, missing, or invalid. |
 | `data_unavailable` | no | The capability exists, but the current book, chapter, or verse has no applicable data. |
 
-The side-panel Interlinear control and Translation workspace require the interlinear capability plus at least one tokenized verse in the current chapter. The verse `Int` tab requires tokens for that exact verse. Disabled controls use native `disabled`, `aria-disabled`, a reason in `title`, and unavailable styling.
+The side-panel Language Study control and Translation workspace require the internal interlinear capability plus at least one tokenized verse in the current chapter. The verse `Int` tab requires tokens for that exact verse. Disabled controls use native `disabled`, `aria-disabled`, a reason in `title`, and unavailable styling.
 
 ## Panel interaction modes
 
@@ -56,8 +60,18 @@ Reader and panel tokens match by `verse + token_index`. Strong's code is used on
 - A verse inspection renders one verse initially and appends the next verse as the user nears the bottom of `#detailContent`.
 - Cards must constrain both original-language and English/gloss columns so long words wrap without overlapping.
 - Hebrew-only analysis such as gematria and Hebrew mark details must not render for Greek tokens.
+- Original-language analysis separates base-letter records from attached mark metadata. Each visible Greek letter glyph reconstructs its base letter plus every attached mark and safely normalizes the display cluster.
+- Greek breathing marks, accents, diaeresis, iota subscript, and multiple attached marks remain on the visible glyph. Letter names and base transliterations continue to come from the base alphabet record.
+- The separate `Greek marks / symbols` list remains explanatory detail. The shared Hebrew analysis and gematria behavior remain intact.
 - Each card's favorite and tag actions use the exact canonical `source_token` target built from its verse reference and token metadata; they do not infer identity from display text.
 - Active non-favorite source-token tags render as editable card badges without replacing the favorite star.
+
+## Strong's reference controls
+
+- Word origin, Language Study related entries, and valid concordance `see GREEK` / `see HEBREW` references share the Strong's reference-control contract.
+- Destinations resolve from exact structured metadata. Unresolved references remain plain text.
+- Pointer, keyboard, focus, and touch access hydrate app-controlled previews without changing panel history. Activating a resolved reference opens the destination Strong's entry, and panel Back restores the originating panel.
+- App-controlled language and Strong's previews are clamped or flipped within the intersection of the visible detail panel and viewport.
 
 ## Reader text-span selection
 
@@ -95,7 +109,10 @@ IndexedDB initialization and migration have a three-second boundary. If the brow
 
 - `tests/ui-contracts.mjs`: availability, panel transitions, control schema, token identity.
 - `tests/reference-context.mjs`: hierarchy normalization and stable keys.
-- `tests/interlinear.mjs`: packaged interlinear data contracts.
+- `tests/interlinear.mjs`: packaged interlinear data contracts, Greek marked-glyph reconstruction, and shared Hebrew gematria behavior.
 - `tests/module-singletons.mjs`: one release key and singleton URLs for stateful runtime modules.
-- `tests/reader-ui-regressions.mjs`: source-level reader layout and navigation-reset regressions.
+- `tests/strong-reference-control.mjs`: exact concordance reference resolution and unresolved plain-text fallback.
+- `tests/reader-ui-regressions.mjs`: source-level reader layout, panel-aware tooltip, concordance control, and navigation-reset regressions.
+- `tests/original-language-study.mjs`: visible Language Study naming and source-backed study/reference behavior.
+- `app/scripts/original-language-study-interaction-test.mjs`: rendered source/transliteration rows, lazy study enhancement, related-reference preview/navigation/history, and tooltip-containment behavior when the browser runner is available.
 - `app/scripts/interaction-test.mjs`: rendered interaction behavior, including reader text-span selection, favorite controls, editable target badges, source-token tagging, Favorites grouping, panel history, and cleanup, when the browser runner is available.

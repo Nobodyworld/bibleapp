@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-03T02:44:40.091Z",
+  "generated_at": "2026-07-10T20:19:10.395Z",
   "distribution": "source-notices-retained",
   "source_manifest": "data/source-manifest.json",
   "note": "Package inventory for the local-first application. Bundled-data rights and provenance are recorded in data/source-manifest.json.",
@@ -34,14 +34,18 @@
         "footnotes-bsb",
         "presentation-bsb",
         "language-metadata",
-        "semantic-seeds"
+        "semantic-seeds",
+        "source-wlc",
+        "source-wlco",
+        "source-nestle-1904",
+        "source-tr94"
       ],
-      "files": 2672,
-      "bytes": 942267872,
-      "mb": 898.62,
-      "gzip_bytes": 177303170,
-      "gzip_mb": 169.09,
-      "sha256": "sha256:8f9cd125c7b0380d29b5d81545db39054b8f4b11589bfa9d765361f8142651b5",
+      "files": 2804,
+      "bytes": 954311610,
+      "mb": 910.1,
+      "gzip_bytes": 180460807,
+      "gzip_mb": 172.1,
+      "sha256": "sha256:910de6211e387d2f2179e917031b4fe578ac078be7a870d471b9b3d422d11451",
       "largest_shard": {
         "path": "data/search/commentaries/gill/psalms.json",
         "bytes": 10293768
@@ -631,6 +635,86 @@
       "largest_shard": {
         "path": "data/semantic/tag-definitions.json",
         "bytes": 3691
+      }
+    },
+    {
+      "id": "source-wlc",
+      "label": "Westminster Leningrad Codex (WLC)",
+      "description": "Pointed Hebrew source-script verse corpus used by Original Language Study.",
+      "dependencies": [],
+      "paths": [
+        "data/verses/wlc"
+      ],
+      "license_note": "Extracted from the reviewed OpenBible archive; provenance and archive terms are recorded in data/source-manifest.json and NOTICE.md.",
+      "files": 39,
+      "bytes": 5588466,
+      "mb": 5.33,
+      "gzip_bytes": 1462229,
+      "gzip_mb": 1.39,
+      "sha256": "sha256:74ac4d6843cc5a1d52ba7c8028c88b395b36024de1246e3c48a8bce4b945bfcf",
+      "largest_shard": {
+        "path": "data/verses/wlc/jeremiah.json",
+        "bytes": 392320
+      }
+    },
+    {
+      "id": "source-wlco",
+      "label": "WLC — Consonants Only (WLCO)",
+      "description": "Consonants-only Hebrew source-script verse corpus used by Original Language Study.",
+      "dependencies": [],
+      "paths": [
+        "data/verses/wlco"
+      ],
+      "license_note": "Extracted from the reviewed OpenBible archive; provenance and archive terms are recorded in data/source-manifest.json and NOTICE.md.",
+      "files": 39,
+      "bytes": 2997031,
+      "mb": 2.86,
+      "gzip_bytes": 792423,
+      "gzip_mb": 0.76,
+      "sha256": "sha256:deaef31b147848fc46e6ec4cb8d0f315de45f53dbf22b978cddee062dda0f807",
+      "largest_shard": {
+        "path": "data/verses/wlco/jeremiah.json",
+        "bytes": 211720
+      }
+    },
+    {
+      "id": "source-nestle-1904",
+      "label": "Nestle Greek New Testament 1904",
+      "description": "Nestle 1904 Greek source-script verse corpus used by Original Language Study.",
+      "dependencies": [],
+      "paths": [
+        "data/verses/nestle"
+      ],
+      "license_note": "Extracted from the reviewed OpenBible archive; provenance and archive terms are recorded in data/source-manifest.json and NOTICE.md.",
+      "files": 27,
+      "bytes": 1710845,
+      "mb": 1.63,
+      "gzip_bytes": 447351,
+      "gzip_mb": 0.43,
+      "sha256": "sha256:b4ecb6308bd9b0e2532b9173dc80c0b709c6812414402347760440efb2f63619",
+      "largest_shard": {
+        "path": "data/verses/nestle/luke.json",
+        "bytes": 241384
+      }
+    },
+    {
+      "id": "source-tr94",
+      "label": "Scrivener Textus Receptus 1894 (TR94)",
+      "description": "Scrivener 1894 Greek source-script verse corpus used by Original Language Study.",
+      "dependencies": [],
+      "paths": [
+        "data/verses/tr94"
+      ],
+      "license_note": "Extracted from the reviewed OpenBible archive; provenance and archive terms are recorded in data/source-manifest.json and NOTICE.md.",
+      "files": 27,
+      "bytes": 1747396,
+      "mb": 1.67,
+      "gzip_bytes": 455634,
+      "gzip_mb": 0.43,
+      "sha256": "sha256:2f3d473400ba4e48fe652fa48f06802de80ecf2e4eb00a5adebbbdd389def2c3",
+      "largest_shard": {
+        "path": "data/verses/tr94/luke.json",
+        "bytes": 247202
       }
     }
   ]

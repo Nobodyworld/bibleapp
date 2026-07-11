@@ -82,6 +82,38 @@ function runtimePackDefinitions(appManifest) {
       paths: ["data/semantic"],
       license_note: "Application semantic metadata.",
     },
+    "source-wlc": {
+      id: "source-wlc",
+      label: "Westminster Leningrad Codex (WLC)",
+      description: "Pointed Hebrew source-script verse corpus used by Original Language Study.",
+      dependencies: [],
+      paths: ["data/verses/wlc"],
+      license_note: "Extracted from the reviewed OpenBible archive; provenance and archive terms are recorded in data/source-manifest.json and NOTICE.md.",
+    },
+    "source-wlco": {
+      id: "source-wlco",
+      label: "WLC — Consonants Only (WLCO)",
+      description: "Consonants-only Hebrew source-script verse corpus used by Original Language Study.",
+      dependencies: [],
+      paths: ["data/verses/wlco"],
+      license_note: "Extracted from the reviewed OpenBible archive; provenance and archive terms are recorded in data/source-manifest.json and NOTICE.md.",
+    },
+    "source-nestle-1904": {
+      id: "source-nestle-1904",
+      label: "Nestle Greek New Testament 1904",
+      description: "Nestle 1904 Greek source-script verse corpus used by Original Language Study.",
+      dependencies: [],
+      paths: ["data/verses/nestle"],
+      license_note: "Extracted from the reviewed OpenBible archive; provenance and archive terms are recorded in data/source-manifest.json and NOTICE.md.",
+    },
+    "source-tr94": {
+      id: "source-tr94",
+      label: "Scrivener Textus Receptus 1894 (TR94)",
+      description: "Scrivener 1894 Greek source-script verse corpus used by Original Language Study.",
+      dependencies: [],
+      paths: ["data/verses/tr94"],
+      license_note: "Extracted from the reviewed OpenBible archive; provenance and archive terms are recorded in data/source-manifest.json and NOTICE.md.",
+    },
   };
 }
 

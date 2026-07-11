@@ -1,15 +1,27 @@
-import { fetchVerseBook, fetchWordMapBook, loadLanguageMetadata, loadOriginalSourceTexts } from "../data-service.js";
-import { createDetailList, els, setDetail, setDetailMessage, textNode } from "../dom.js?v=browser-comments-20260707b";
-import { setLanguageTextWithTooltips } from "../language-tooltips.js";
-import { setMorphologyHelp } from "../morphology-tooltips.js?v=browser-comments-20260707b";
+import {
+  fetchVerseBook,
+  fetchWordMapBook,
+  fetchLexiconEntry,
+  loadLanguageMetadata,
+  loadOriginalSourceTexts,
+} from "../data-service.js?v=pr13-live-qa-20260711e";
+import { createDetailList, els, setDetail, setDetailMessage, textNode } from "../dom.js?v=pr13-live-qa-20260711e";
+import {
+  setLanguageTextWithTooltips,
+  setTransliterationTextWithTooltips,
+} from "../language-tooltips.js?v=pr13-live-qa-20260711e";
+import { setMorphologyHelp } from "../morphology-tooltips.js?v=pr13-live-qa-20260711e";
 import { referenceKey } from "../references.js";
 import { analyzeOriginalWord, summarizeHebrewGematriaTokens, wordHasLanguageScript } from "../language.js";
-import { resolveInterlinearVerseTokens } from "../strongs.js?v=browser-comments-20260707b";
-import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=browser-comments-20260707b";
-import { createVerseContextTabs } from "./verse-context-tabs.js?v=browser-comments-20260707b";
+import {
+  resolveInterlinearVerseTokens,
+  resolveSourceBearingPresentationSegment,
+} from "../strongs.js?v=pr13-live-qa-20260711e";
+import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=pr13-live-qa-20260711e";
+import { createVerseContextTabs } from "./verse-context-tabs.js?v=pr13-live-qa-20260711e";
 import { createStudyEmptyState } from "../study-empty-state.js";
 import { interlinearTokenIdentity } from "../ui-contracts.js";
-import { createSourceTokenTarget } from "../semantic-targets.js?v=browser-comments-20260707b";
+import { createSourceTokenTarget } from "../semantic-targets.js?v=pr13-live-qa-20260711e";
 
 function normalizeWordMapSpan(raw, bsbVerseText) {
   const start = Number(raw[2] || 0);
@@ -180,13 +192,31 @@ async function calculateHebrewVerseGematria(tokens) {
 export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown, showStrong }) {
   let stopInterlinearLazyLoad = () => {};
 
+  function superscriptionForVerse(verse) {
+    const blocks = ctx.state.presentation?.chapters?.[ctx.state.chapter]?.blocks || [];
+    for (const block of blocks) {
+      if (String(block.before_verse || "") !== String(verse)) continue;
+      const segment = resolveSourceBearingPresentationSegment({
+        bookId: ctx.state.bookId,
+        chapter: ctx.state.chapter,
+        block,
+        rawStrongByVerse: ctx.state.strongs?.chapters?.[ctx.state.chapter],
+        rawInterlinearByVerse: ctx.state.interlinear?.chapters?.[ctx.state.chapter],
+      });
+      if (segment) return segment;
+    }
+    return null;
+  }
+
   function interlinearTokensForVerse(verse) {
+    const superscription = superscriptionForVerse(verse);
     return resolveInterlinearVerseTokens({
       rawInterlinearByVerse: ctx.state.interlinear?.chapters?.[ctx.state.chapter],
       rawStrongByVerse: ctx.state.strongs?.chapters?.[ctx.state.chapter],
       chapterVerses: ctx.state.verseBook?.chapters?.[ctx.state.chapter],
       targetVerse: verse,
       reference: { bookId: ctx.state.bookId, chapter: ctx.state.chapter },
+      excludedTokenIndexes: superscription?.token_indexes || [],
     });
   }
 
@@ -196,14 +226,53 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
       .sort((a, b) => Number(a) - Number(b));
   }
 
+  function splitSourceText(text, wordCount) {
+    const words = String(text || "").trim().split(/\s+/u);
+    return {
+      superscription: words.slice(0, wordCount).join(" "),
+      verse: words.slice(wordCount).join(" "),
+    };
+  }
+
+  async function sourceTextsForVerse(tokens, verse, part = "verse") {
+    const sources = await loadOriginalSourceTexts(ctx.state, tokens[0]?.language, verse);
+    const superscription = superscriptionForVerse(verse);
+    if (!superscription) return sources;
+    const wordCount = superscription.interlinear_tokens.length;
+    return sources.map((source) => ({ ...source, text: splitSourceText(source.text, wordCount)[part] })).filter((source) => source.text);
+  }
+
+  function createSourceTextList(sourceTexts, language, wordInfoLookup) {
+    const sourceList = document.createElement("div");
+    sourceList.className = "source-text-list";
+    sourceTexts.forEach((source) => {
+      const item = document.createElement("div");
+      const label = document.createElement("div");
+      label.className = "reference-label";
+      label.textContent = source.label;
+      const text = document.createElement("div");
+      text.className = source.id === "wlc" || source.id === "wlco" ? "source-text rtl-text" : "source-text";
+      text.lang = language === "hebrew" ? "he" : "grc";
+      text.dir = language === "hebrew" ? "rtl" : "ltr";
+      item.dataset.sourceId = source.id;
+      item.className = source.variant === "consonants-only" ? "source-text-row secondary" : "source-text-row";
+      setLanguageTextWithTooltips(text, source.text, language, { wordInfoLookup });
+      item.append(label, text);
+      sourceList.append(item);
+    });
+    return sourceList;
+  }
+
   function createInterlinearTokenCard(token, options = {}) {
     const card = document.createElement("div");
     card.className = "interlinear-token";
     card.dataset.tokenIndex = String(token.token_index ?? "");
     card.dataset.strongCode = token.strong_code || "";
     card.dataset.verse = String(token.verse || options.verseContext?.verse || "");
+    card.dataset.segmentId = String(token.segment_id || options.verseContext?.segmentId || "");
     card.dataset.interlinearKey = interlinearTokenIdentity({
       verse: card.dataset.verse,
+      segmentId: card.dataset.segmentId,
       tokenIndex: card.dataset.tokenIndex,
       strongCode: card.dataset.strongCode,
     });
@@ -215,8 +284,13 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     const transliteration = document.createElement("div");
     transliteration.className = "token-translit";
     const translitText = token.transliteration || "";
-    transliteration.textContent = translitText && translitText !== (token.original || "") ? translitText : "";
-    transliteration.hidden = !transliteration.textContent;
+    const visibleTransliteration = translitText && translitText !== (token.original || "") ? translitText : "";
+    transliteration.hidden = !visibleTransliteration;
+    if (visibleTransliteration) {
+      setTransliterationTextWithTooltips(transliteration, visibleTransliteration, {
+        sourceLabel: "Bundled interlinear transliteration",
+      });
+    }
 
     const meta = document.createElement("div");
     meta.className = "token-meta";
@@ -234,9 +308,11 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
           ...options.verseContext,
           verse: card.dataset.verse,
           reference: ctx.currentReference(card.dataset.verse),
+          segmentId: card.dataset.segmentId || undefined,
         };
         ctx.highlightReaderContext?.({
           verse: tokenVerseContext.verse,
+          segmentId: tokenVerseContext.segmentId,
           word: {
             tokenIndex: token.token_index,
             strongCode: token.strong_code,
@@ -321,6 +397,20 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     }
     appendLanguageBreakdown(card, token);
 
+    const highlight = (commit = false) => ctx.highlightReaderContext?.({
+      verse: card.dataset.verse,
+      segmentId: card.dataset.segmentId || undefined,
+      word: {
+        tokenIndex: token.token_index,
+        strongCode: token.strong_code,
+        language: token.language,
+        original: token.original,
+      },
+      commit,
+    });
+    card.addEventListener("pointerenter", () => highlight(false));
+    card.addEventListener("focusin", () => highlight(false));
+
     if (options.workspace && options.referenceKey) {
       if (options.wordMapLookup) appendWorkspaceWordMap(card, token, wordMapForToken(token, options.wordMapLookup));
 
@@ -341,6 +431,36 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     return card;
   }
 
+  async function createSuperscriptionSection(verse) {
+    const segment = superscriptionForVerse(verse);
+    if (!segment) return null;
+    const reference = ctx.currentReference(verse);
+    const section = document.createElement("section");
+    section.className = "interlinear-verse-section interlinear-superscription-section";
+    section.dataset.verse = String(verse);
+    section.dataset.segmentId = segment.segment_id;
+    const heading = document.createElement("h3");
+    heading.textContent = `${reference} — Superscription`;
+    const english = document.createElement("p");
+    english.className = "original-language-superscription-english";
+    english.textContent = segment.text;
+    const list = document.createElement("div");
+    list.className = "interlinear-token-list";
+    const verseContext = { reference, verse: String(verse), segmentId: segment.segment_id };
+    segment.interlinear_tokens.forEach((token) => list.append(createInterlinearTokenCard(token, { verseContext })));
+    section.append(heading, english);
+    const sourceTexts = await sourceTextsForVerse(segment.interlinear_tokens, verse, "superscription");
+    if (sourceTexts.length) {
+      section.append(createSourceTextList(
+        sourceTexts,
+        segment.interlinear_tokens[0].language,
+        createOriginalWordInfoLookup(segment.interlinear_tokens),
+      ));
+    }
+    section.append(list);
+    return section;
+  }
+
   async function createInterlinearVerseSection(verse) {
     const reference = ctx.currentReference(verse);
     const tokens = interlinearTokensForVerse(verse);
@@ -356,22 +476,9 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     const wordInfoLookup = createOriginalWordInfoLookup(tokens);
     section.append(heading);
 
-    const sourceTexts = await loadOriginalSourceTexts(ctx.state, tokens[0].language, verse);
+    const sourceTexts = await sourceTextsForVerse(tokens, verse, "verse");
     if (sourceTexts.length) {
-      const sourceList = document.createElement("div");
-      sourceList.className = "source-text-list";
-      sourceTexts.forEach((source) => {
-        const item = document.createElement("div");
-        const label = document.createElement("div");
-        label.className = "reference-label";
-        label.textContent = source.label;
-        const text = document.createElement("div");
-        text.className = source.id === "wlc" || source.id === "wlco" ? "source-text rtl-text" : "source-text";
-        setLanguageTextWithTooltips(text, source.text, tokens[0].language, { wordInfoLookup });
-        item.append(label, text);
-        sourceList.append(item);
-      });
-      section.append(sourceList);
+      section.append(createSourceTextList(sourceTexts, tokens[0].language, wordInfoLookup));
     }
 
     const tokenList = document.createElement("div");
@@ -419,12 +526,34 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     const wrap = document.createElement("div");
     wrap.className = "interlinear-lazy-reader";
     wrap.dataset.detailRestore = "interlinear-lazy-reader";
-    wrap.append(createVerseContextTabs(ctx, reference, verse, "interlinear", ctx.studyContext?.strong), initialSection);
+    wrap.append(createVerseContextTabs(ctx, reference, verse, "interlinear", ctx.studyContext?.strong));
+    const superscriptionSection = await createSuperscriptionSection(verse);
+    if (superscriptionSection) wrap.append(superscriptionSection);
+    wrap.append(initialSection);
     const status = document.createElement("p");
     status.className = "interlinear-lazy-status";
     status.setAttribute("role", "status");
     wrap.append(status);
     setDetail("Interlinear", wrap, options);
+
+    wrap.addEventListener("language-study:open-strong", async (event) => {
+      const detail = event.detail || {};
+      const scrollTop = pane?.scrollTop || 0;
+      const entry = detail.entry || await fetchLexiconEntry(detail.strongCode).catch(() => null);
+      wrap.addEventListener("detail:restore", () => window.requestAnimationFrame(() => {
+        if (pane) pane.scrollTop = scrollTop;
+      }), { once: true });
+      showStrong({
+        strong_code: detail.strongCode,
+        strong_number: Number(String(detail.strongCode || "").slice(1)) || null,
+        language: detail.language,
+        original: entry?.original_word || "",
+        transliteration: entry?.transliteration || "",
+        english: detail.label || entry?.short_definition || "Related entry",
+        gloss: entry?.short_definition || "",
+        morphology: entry?.part_of_speech || "",
+      }, { pin: true, forceHistory: true, verseContext: detail.verseContext });
+    });
 
     const verses = interlinearVerses();
     let currentIndex = verses.indexOf(String(verse));
@@ -453,6 +582,8 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
       status.textContent = `Loading ${ctx.currentReference(nextVerse)}…`;
       const section = await createInterlinearVerseSection(nextVerse);
       if (section && wrap.isConnected) {
+        const superscription = await createSuperscriptionSection(nextVerse);
+        if (superscription) wrap.insertBefore(superscription, status);
         wrap.insertBefore(section, status);
         currentIndex += 1;
       }

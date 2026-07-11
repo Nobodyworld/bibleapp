@@ -9,8 +9,8 @@
     />
     <title>Bible App Reader</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231d4ed8'/%3E%3Ctext x='8' y='12' font-size='10' font-family='sans-serif' fill='white' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E" />
-    <link rel="stylesheet" href="./styles.css?v=browser-comments-20260707b" />
-    <link rel="stylesheet" href="./styles-polish.css?v=study-marks-20260708" />
+    <link rel="stylesheet" href="./styles.css?v=pr13-live-qa-20260711e" />
+    <link rel="stylesheet" href="./styles-polish.css?v=pr13-live-qa-20260711e" />
   </head>
   <body>
     <header class="app-header">
@@ -59,10 +59,8 @@
             <div class="chapter-heading-title">
               <h2 id="chapterTitle">Loading...</h2>
               <div class="chapter-favorite-actions" aria-label="Current reading favorites">
-                <button id="favoriteBook" class="scope-favorite-button" type="button" title="Add current book to favorites" aria-label="Add current book to favorites" aria-pressed="false"><span class="scope-favorite-star" aria-hidden="true">☆</span><span class="scope-favorite-label">Book</span></button>
-                <span id="bookTagControl" class="scope-tag-control"></span>
-                <button id="favoriteChapter" class="scope-favorite-button" type="button" title="Add current chapter to favorites" aria-label="Add current chapter to favorites" aria-pressed="false"><span class="scope-favorite-star" aria-hidden="true">☆</span><span class="scope-favorite-label">Chapter</span></button>
-                <span id="chapterTagControl" class="scope-tag-control"></span>
+                <span id="bookTagControl" class="scope-mark-control"></span>
+                <span id="chapterTagControl" class="scope-mark-control"></span>
               </div>
             </div>
             <div class="chapter-stepper" aria-label="Chapter navigation">
@@ -130,9 +128,9 @@
             <span aria-hidden="true">☷</span>
             <span>Outline</span>
           </button>
-          <button id="showInterlinear" class="detail-tool-button" type="button" title="Interlinear words">
+          <button id="showInterlinear" class="detail-tool-button" type="button" title="Original language study">
             <span aria-hidden="true">א</span>
-            <span>Interlinear</span>
+            <span>Language Study</span>
           </button>
         </nav>
         <div id="detailContext" class="detail-context" hidden></div>
@@ -150,7 +148,8 @@
       </aside>
     </main>
 
-    <script type="module" src="./app.js?v=browser-comments-20260707b"></script>
-    <script type="module" src="./src/reader-picker-flow.js?v=reader-picker-flow-20260709"></script>
+    <script type="module" src="./app.js?v=pr13-live-qa-20260711e"></script>
+    <script type="module" src="./src/reader-picker-flow.js?v=pr13-live-qa-20260711e"></script>
+    <script type="module" src="./src/original-language-study-flow.js?v=pr13-live-qa-20260711e"></script>
   </body>
 </html>

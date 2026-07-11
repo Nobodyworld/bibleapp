@@ -112,6 +112,7 @@ export function buildReferenceContext(input = {}) {
     book_id: bookId,
     chapter: positiveInteger(input.chapter),
     verse: positiveInteger(input.verse),
+    segment_id: normalizedId(input.segment_id || input.segmentId),
     word: word ? Object.freeze(word) : null,
   });
 }

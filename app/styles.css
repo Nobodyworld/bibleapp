@@ -4265,15 +4265,32 @@ button {
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: #2347fb !important;
+  color: #9eafff !important;
 }
 
-:root[data-theme="dark"] .fn-marker:hover,
-:root[data-theme="dark"] .fn-marker:focus-visible {
+.definition-tooltip[data-tooltip]::after {
+  display: none !important;
+}
+
+:root[data-theme="dark"] .fn-marker:hover {
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: #6f83ff !important;
+  color: #c5ceff !important;
+}
+
+:root[data-theme="dark"] .fn-marker:focus-visible {
+  border: 0 !important;
+  outline: 2px solid #9eafff !important;
+  outline-offset: 2px;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #f0f2ff !important;
+  text-decoration: underline;
+}
+
+:root[data-theme="dark"] .footnote-detail-marker {
+  color: #9eafff !important;
 }
 
 :root[data-theme="dark"] .tagged-text-span {
@@ -4473,10 +4490,23 @@ html[data-theme="light"] .fn-marker {
   color: #2347fb !important;
 }
 
-html[data-theme="light"] .fn-marker:hover,
-html[data-theme="light"] .fn-marker:focus-visible {
+html[data-theme="light"] .fn-marker:hover {
   border: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
   color: #1232c8 !important;
+}
+
+html[data-theme="light"] .fn-marker:focus-visible {
+  border: 0 !important;
+  outline: 2px solid #2347fb !important;
+  outline-offset: 2px;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #0b238f !important;
+  text-decoration: underline;
+}
+
+html[data-theme="light"] .footnote-detail-marker {
+  color: #2347fb !important;
 }

@@ -30,5 +30,39 @@
     "Cross-reference graph and word-map analysis data generated from packaged records.",
     "Hebrew and Greek interlinear records assembled from packaged text and Strong's mappings.",
     "Supplemental workbook translations imported into the same per-book JSON format."
+  ],
+  "original_language_sources": [
+    {
+      "id": "wlc",
+      "name": "Westminster Leningrad Codex",
+      "archive_path": "wlc",
+      "output_path": "data/verses/wlc",
+      "coverage": "39 Old Testament books; 929 chapters; 23,144 nonempty verse records",
+      "transformation": "Source-script verse text extracted from archived XHTML and normalized to Unicode NFC; no transliteration or English text is substituted."
+    },
+    {
+      "id": "wlco",
+      "name": "WLC — Consonants Only",
+      "archive_path": "wlco",
+      "output_path": "data/verses/wlco",
+      "coverage": "39 Old Testament books; 929 chapters; 23,144 nonempty verse records",
+      "transformation": "Consonants-only source-script verse text extracted from archived XHTML and normalized to Unicode NFC; no transliteration or English text is substituted."
+    },
+    {
+      "id": "nestle",
+      "name": "Nestle Greek New Testament 1904",
+      "archive_path": "nestle",
+      "output_path": "data/verses/nestle",
+      "coverage": "27 New Testament books; 260 chapters; 7,938 nonempty verse records",
+      "transformation": "Greek source-script verse text extracted from archived XHTML and normalized to Unicode NFC; empty and non-applicable placeholders are omitted."
+    },
+    {
+      "id": "tr94",
+      "name": "Scrivener’s Textus Receptus 1894",
+      "archive_path": "tr94",
+      "output_path": "data/verses/tr94",
+      "coverage": "27 New Testament books; 260 chapters; 7,957 nonempty verse records",
+      "transformation": "Greek source-script verse text extracted from archived XHTML and normalized to Unicode NFC; empty and non-applicable placeholders are omitted."
+    }
   ]
 }

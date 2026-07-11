@@ -1,4 +1,4 @@
-import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=browser-comments-20260707b";
+import { els, isDetailHoverLocked, setDetail, setStatus, sortedNumericKeys, textNode } from "./dom.js?v=pr13-live-qa-20260711e";
 import { resolvePassageText } from "./data-service.js";
 import { referenceKey, refDomId, parseLocationFromHref } from "./references.js";
 import {
@@ -6,13 +6,13 @@ import {
   ensureStores,
   getRedLetterRanges,
   getTaggedTargetsForReference,
-} from "./stores.js?v=browser-comments-20260707b";
+} from "./stores.js?v=pr13-live-qa-20260711e";
 import {
   createTextSpanTarget,
   createVerseTarget,
   resolveTextSpanAnchor,
-} from "./semantic-targets.js?v=browser-comments-20260707b";
-import { mapStrongChapterRanges } from "./strongs.js";
+} from "./semantic-targets.js?v=pr13-live-qa-20260711e";
+import { mapStrongChapterRanges, resolveSourceBearingPresentationSegment } from "./strongs.js";
 import { createStudyEmptyState, studyUnavailableLabel } from "./study-empty-state.js";
 import { interlinearTokenIdentity } from "./ui-contracts.js";
 
@@ -613,9 +613,10 @@ export function createChapterRenderer(ctx) {
       token.dataset.tokenIndex = String(tokenRange.token.token_index ?? "");
       token.dataset.strongCode = tokenRange.token.strong_code || "";
       token.dataset.verse = String(tokenRange.verseContext?.verse || "");
+      token.dataset.segmentId = String(tokenRange.verseContext?.segmentId || "");
       markTextSegment(token, point, next, segmentTargets);
       token.dataset.interlinearKey = interlinearTokenIdentity({
-        verse: token.dataset.verse,
+        verse: token.dataset.segmentId || token.dataset.verse,
         tokenIndex: token.dataset.tokenIndex,
         strongCode: token.dataset.strongCode,
       });
@@ -657,11 +658,39 @@ export function createChapterRenderer(ctx) {
     });
   }
 
-  function renderPresentationBlock(block, headingNotes, reference) {
+  function renderPresentationBlock(block, headingNotes, reference, sourceSegment = null) {
     const node = document.createElement("div");
     node.className = `presentation-block ${block.kind || ""}`;
+    if (sourceSegment) {
+      node.classList.add("source-bearing-segment");
+      node.dataset.segmentId = sourceSegment.segment_id;
+      node.dataset.verse = sourceSegment.before_verse;
+      node.dataset.sourceBearing = "true";
+    }
     const label = document.createElement("span");
-    label.textContent = block.text;
+    if (sourceSegment) {
+      const tokenRanges = sourceSegment.strong_ranges.map((range) => ({
+        ...range,
+        verseContext: {
+          reference,
+          verse: sourceSegment.before_verse,
+          segmentId: sourceSegment.segment_id,
+        },
+      }));
+      appendTextWithAnnotations(
+        label,
+        sourceSegment.text,
+        0,
+        sourceSegment.text.length,
+        [],
+        tokenRanges,
+        [],
+        [],
+        reference,
+      );
+    } else {
+      label.textContent = block.text;
+    }
     node.append(label);
 
     headingNotes
@@ -797,7 +826,11 @@ export function createChapterRenderer(ctx) {
       { class: "reg", char_offset: 0, char_length: verseText.length, order: 1 },
     ];
 
-    lines
+    const renderLines = lines.every((line) => (line.class || "reg") === "reg" && !line.style)
+      ? [{ class: "reg", char_offset: 0, char_length: verseText.length, order: 1 }]
+      : lines;
+
+    renderLines
       .slice()
       .sort((a, b) => Number(a.order || 0) - Number(b.order || 0))
       .forEach((line) => {
@@ -917,7 +950,14 @@ export function createChapterRenderer(ctx) {
       blocks
         .filter((block) => block.before_verse === verse)
         .forEach((block) => {
-          els.content.append(renderPresentationBlock(block, headingNotes, reference));
+          const sourceSegment = resolveSourceBearingPresentationSegment({
+            bookId: ctx.state.bookId,
+            chapter: ctx.state.chapter,
+            block,
+            rawStrongByVerse: strongs,
+            rawInterlinearByVerse: interlinear,
+          });
+          els.content.append(renderPresentationBlock(block, headingNotes, reference, sourceSegment));
         });
       els.content.append(
         renderVerse(reference, verse, chapterVerses[verse], {

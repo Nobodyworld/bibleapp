@@ -132,6 +132,15 @@ export function analyzeOriginalWord(word, language, metadata) {
   };
 }
 
+export function languageUnitDisplayGlyph(unit) {
+  const marks = (unit?.marks || []).map((record) => record?.char || "").filter(Boolean);
+  if (unit?.standalone && marks[0] === unit?.char) {
+    const standalone = marks.join("");
+    return standalone.match(/^\p{Mark}/u) ? `◌${standalone}`.normalize("NFC") : standalone.normalize("NFC");
+  }
+  return `${unit?.char || ""}${marks.join("")}`.normalize("NFC");
+}
+
 export function summarizeHebrewGematriaTokens(tokens, metadata) {
   const hebrewTokens = (tokens || []).filter(
     (token) =>

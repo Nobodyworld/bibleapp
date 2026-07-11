@@ -1,8 +1,32 @@
-import { loadLanguageMetadata } from "./data-service.js";
-import { analyzeOriginalWord, gematriaValueForUnit, wordHasLanguageScript } from "./language.js";
+import { loadLanguageMetadata } from "./data-service.js?v=pr13-live-qa-20260711e";
+import { analyzeOriginalWord, gematriaValueForUnit, languageUnitDisplayGlyph, wordHasLanguageScript } from "./language.js";
 
 const HEBREW_RUN = /[\u0591-\u05c7\u05d0-\u05ea]+/gu;
 const GREEK_RUN = /[\u0300-\u036f\u0370-\u03ff\u1f00-\u1fff]+/gu;
+const TRANSLITERATION_SYMBOLS = new Map([
+  ["ā", "macron marking a long a vowel in the bundled OpenBible transliteration convention"],
+  ["ē", "macron marking a long e vowel in the bundled OpenBible transliteration convention"],
+  ["ī", "macron marking a long i vowel in the bundled OpenBible transliteration convention"],
+  ["ō", "macron marking a long o vowel in the bundled OpenBible transliteration convention"],
+  ["ū", "macron marking a long u vowel in the bundled OpenBible transliteration convention"],
+  ["â", "circumflex marking the convention-specific a-vowel distinction or contraction in bundled Strong's data"],
+  ["ê", "circumflex marking the convention-specific e-vowel distinction or contraction in bundled Strong's data"],
+  ["î", "circumflex marking the convention-specific i-vowel distinction or contraction in bundled Strong's data"],
+  ["ô", "circumflex marking the convention-specific o-vowel distinction or contraction in bundled Strong's data"],
+  ["û", "circumflex marking the convention-specific u-vowel distinction or contraction in bundled Strong's data"],
+  ["ḥ", "dot below distinguishing the Hebrew consonant represented by h from an unmarked Latin h"],
+  ["ṣ", "dot below distinguishing the Hebrew consonant represented by s from an unmarked Latin s"],
+  ["ṭ", "dot below distinguishing the Hebrew consonant represented by t from an unmarked Latin t"],
+  ["ḏ", "line below distinguishing the Hebrew consonant represented by d from an unmarked Latin d"],
+  ["ḵ", "line below distinguishing the Hebrew consonant represented by k from an unmarked Latin k"],
+  ["ṯ", "line below distinguishing the Hebrew consonant represented by t from an unmarked Latin t"],
+  ["š", "caron representing the Hebrew sh consonant in the bundled OpenBible transliteration convention"],
+  ["ś", "acute mark distinguishing this Hebrew s consonant from the convention's other s forms"],
+  ["‘", "source-language consonant marker representing Hebrew ayin; it is not punctuation"],
+  ["’", "source-language consonant marker representing Hebrew aleph; it is not punctuation"],
+  ["ʿ", "source-language consonant marker representing Hebrew ayin; it is not punctuation"],
+  ["·", "middle dot separating syllables or morphemes; the separator itself is not pronounced"],
+]);
 let tooltipLayer = null;
 let activeTooltipTarget = null;
 
@@ -11,7 +35,9 @@ function clamp(value, min, max) {
 }
 
 function tooltipTarget(node) {
-  return node?.closest?.(".language-letter-hover[data-tooltip], .letter-unit[data-tooltip]") || null;
+  return node?.closest?.(
+    ".language-letter-hover[data-tooltip], .letter-unit[data-tooltip], .transliteration-symbol[data-tooltip], .definition-tooltip[data-tooltip]",
+  ) || null;
 }
 
 function ensureTooltipLayer() {
@@ -33,16 +59,26 @@ function ensureTooltipLayer() {
   function positionTooltip(target) {
     if (!target || tooltipLayer.hidden) return;
     const rect = target.getBoundingClientRect();
-    const tooltipRect = tooltipLayer.getBoundingClientRect();
     const margin = 10;
     const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
     const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+    const panelRect = target.closest?.(".detail-pane")?.getBoundingClientRect();
+    const bounds = panelRect
+      ? {
+          left: Math.max(margin, panelRect.left + margin),
+          right: Math.min(viewportWidth - margin, panelRect.right - margin),
+          top: Math.max(margin, panelRect.top + margin),
+          bottom: Math.min(viewportHeight - margin, panelRect.bottom - margin),
+        }
+      : { left: margin, right: viewportWidth - margin, top: margin, bottom: viewportHeight - margin };
+    tooltipLayer.style.maxWidth = `${Math.max(120, Math.min(320, bounds.right - bounds.left))}px`;
+    const tooltipRect = tooltipLayer.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const above = rect.top - tooltipRect.height - margin;
     const below = rect.bottom + margin;
-    const top = above >= margin ? above : Math.min(below, viewportHeight - tooltipRect.height - margin);
-    tooltipLayer.style.left = `${clamp(centerX - tooltipRect.width / 2, margin, viewportWidth - tooltipRect.width - margin)}px`;
-    tooltipLayer.style.top = `${clamp(top, margin, viewportHeight - tooltipRect.height - margin)}px`;
+    const top = above >= bounds.top ? above : below;
+    tooltipLayer.style.left = `${clamp(centerX - tooltipRect.width / 2, bounds.left, bounds.right - tooltipRect.width)}px`;
+    tooltipLayer.style.top = `${clamp(top, bounds.top, bounds.bottom - tooltipRect.height)}px`;
   }
 
   function showTooltip(target) {
@@ -92,6 +128,15 @@ function ensureTooltipLayer() {
   document.addEventListener("focusout", (event) => {
     if (activeTooltipTarget && event.target === activeTooltipTarget) hideTooltip();
   });
+  document.addEventListener("click", (event) => {
+    const target = tooltipTarget(event.target);
+    if (target?.classList.contains("transliteration-symbol")) {
+      event.stopPropagation();
+      showTooltip(target);
+      return;
+    }
+    if (activeTooltipTarget?.classList.contains("transliteration-symbol")) hideTooltip();
+  });
   window.addEventListener("scroll", () => positionTooltip(activeTooltipTarget), true);
   window.addEventListener("resize", () => positionTooltip(activeTooltipTarget));
 
@@ -103,8 +148,42 @@ function displayMarkChar(record) {
   return char.match(/\p{Mark}/u) ? `\u25CC${char}` : char;
 }
 
-function unitText(unit) {
-  return `${unit.char || ""}${(unit.marks || []).map((record) => record.char || "").join("")}`;
+export function languageUnitText(unit) {
+  return languageUnitDisplayGlyph(unit);
+}
+
+export function transliterationSymbolDescription(character, sourceLabel = "Bundled Strong's/interlinear transliteration") {
+  const description = TRANSLITERATION_SYMBOLS.get(character);
+  if (!description) return "";
+  return `${character}: ${description}.`;
+}
+
+export function setTransliterationTextWithTooltips(node, text, options = {}) {
+  const source = String(text || "");
+  const sourceLabel = options.sourceLabel || "Bundled Strong's/interlinear transliteration";
+  node.dataset.transliterationConvention = "bundled-strongs-interlinear";
+  node.setAttribute(
+    "aria-description",
+    `${sourceLabel}. Scholarly transliteration is kept separate from phonetic spelling and is not exact pronunciation.`,
+  );
+  node.title = `${sourceLabel}; scholarly transliteration, not exact pronunciation.`;
+  node.replaceChildren();
+  ensureTooltipLayer();
+  for (const character of source) {
+    const description = transliterationSymbolDescription(character, sourceLabel);
+    if (!description) {
+      node.append(document.createTextNode(character));
+      continue;
+    }
+    const symbol = document.createElement("span");
+    symbol.className = "transliteration-symbol";
+    symbol.textContent = character;
+    symbol.dataset.tooltip = description;
+    symbol.setAttribute("aria-label", description);
+    symbol.tabIndex = 0;
+    node.append(symbol);
+  }
+  return Boolean(source);
 }
 
 function wordInfoText(wordInfo) {
@@ -119,7 +198,7 @@ export function languageUnitTooltip(unit, language, options = {}) {
   const letterName = letter?.name || unit.marks?.[0]?.mark?.name || unit.code_point;
   const sound = letter?.transliteration || letter?.sound || "";
   const value = language === "hebrew" ? gematriaValueForUnit(unit) : 0;
-  const glyph = unitText(unit);
+  const glyph = languageUnitText(unit);
   const context = wordInfoText(options.wordInfo);
   const parts = [];
   if (context) parts.push(`word: ${context}`, "");
@@ -161,7 +240,7 @@ function renderAnalyzedRun(text, language, metadata, options = {}) {
   analysis.units.forEach((unit) => {
     const span = document.createElement("span");
     span.className = unit.standalone ? "language-letter-hover mark-hover" : "language-letter-hover";
-    span.textContent = unitText(unit);
+    span.textContent = languageUnitText(unit);
     span.dataset.tooltip = languageUnitTooltip(unit, language, { wordInfo });
     span.setAttribute("aria-label", span.dataset.tooltip);
     span.tabIndex = 0;

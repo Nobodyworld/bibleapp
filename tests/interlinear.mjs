@@ -2,8 +2,13 @@
 
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
-import { summarizeHebrewGematriaTokens } from "../app/src/language.js";
-import { normalizeInterlinearVerseTokens, resolveInterlinearVerseTokens } from "../app/src/strongs.js";
+import { analyzeOriginalWord, languageUnitDisplayGlyph, summarizeHebrewGematriaTokens } from "../app/src/language.js";
+import { languageUnitText, transliterationSymbolDescription } from "../app/src/language-tooltips.js";
+import {
+  normalizeInterlinearVerseTokens,
+  resolveInterlinearVerseTokens,
+  resolveSourceBearingPresentationSegment,
+} from "../app/src/strongs.js";
 
 const rawTokens = [
   [6, "hoti", "hoti", "Conj", "G3754", 3754, "that", "demonstrative, that", "greek"],
@@ -71,12 +76,90 @@ const actualHebrewGematria = summarizeHebrewGematriaTokens(
 );
 assert.equal(actualHebrewGematria.total, 3);
 assert.equal(actualHebrewGematria.tokens.length, 1);
+assert.equal(
+  languageUnitText({ char: "׃", standalone: true, marks: [{ char: "׃" }] }),
+  "׃",
+);
+assert.equal(
+  languageUnitText({ char: "א", standalone: false, marks: [{ char: "ְ" }] }),
+  "אְ",
+);
+assert.equal(
+  languageUnitText({ char: "Ε", standalone: false, marks: [{ char: "̓" }] }),
+  "Ἐ",
+);
+assert.match(transliterationSymbolDescription("ō"), /macron marking a long o vowel/i);
+assert.doesNotMatch(transliterationSymbolDescription("ō"), /not exact pronunciation/i);
+assert.match(transliterationSymbolDescription("î"), /circumflex.*vowel distinction or contraction/i);
+assert.match(transliterationSymbolDescription("·"), /separat(?:es|ing) syllables or morphemes.*not pronounced/i);
+assert.equal(transliterationSymbolDescription("x"), "");
+
+const greekFixtureMetadata = {
+  alphabet: { letters: [
+    { letter: "ε", uppercase: "Ε", lowercase: "ε", name: "Epsilon", transliteration: "e" },
+    { letter: "κ", uppercase: "Κ", lowercase: "κ", name: "Kappa", transliteration: "k" },
+    { letter: "ω", uppercase: "Ω", lowercase: "ω", name: "Omega", transliteration: "ō" },
+    { letter: "ν", uppercase: "Ν", lowercase: "ν", name: "Nu", transliteration: "n" },
+  ] },
+  marks: { marks: [] },
+};
+const markedGreek = analyzeOriginalWord("ἑκών", "greek", greekFixtureMetadata);
+assert.deepEqual(markedGreek.units.map((unit) => unit.char), ["ε", "κ", "ω", "ν"]);
+assert.deepEqual(markedGreek.units.map(languageUnitDisplayGlyph), ["ἑ", "κ", "ώ", "ν"]);
+for (const [source, expected] of [
+  ["ἐ", "ἐ"], ["ὲ", "ὲ"], ["ῶ", "ῶ"], ["ϊ", "ϊ"], ["ᾳ", "ᾳ"], ["ἄ", "ἄ"],
+]) {
+  const analysis = analyzeOriginalWord(source, "greek", greekFixtureMetadata);
+  assert.equal(languageUnitDisplayGlyph(analysis.units[0]), expected);
+  assert.equal(languageUnitDisplayGlyph(analysis.units[0]), expected, "Repeated rendering must not duplicate marks.");
+}
+assert.equal(languageUnitDisplayGlyph({ char: "κ", marks: [] }), "κ");
+assert.equal(languageUnitDisplayGlyph({ char: "\u0301", marks: [{ char: "\u0301" }], standalone: true }), "◌́");
+
+const psalmStrong = {
+  1: [
+    [1, "A Psalm", "hebrew", "H4210", 4210, "מִזְמוֹר", "N", "psalm"],
+    [2, "of David", "hebrew", "H1732", 1732, "לְדָוִד", "Np", "David"],
+    [3, "The LORD", "hebrew", "H3068", 3068, "יְהוָה", "Np", "LORD"],
+    [4, "is my shepherd", "hebrew", "H7462", 7462, "רֹעִי", "V", "shepherd"],
+  ],
+};
+const psalmInterlinear = {
+  1: [
+    [1, "מִזְמוֹר", "mizmor", "N", "H4210", 4210, "A Psalm", "psalm", "hebrew"],
+    [2, "לְדָוִד", "ledavid", "Np", "H1732", 1732, "of David", "David", "hebrew"],
+    [3, "יְהוָה", "YHWH", "Np", "H3068", 3068, "The LORD", "LORD", "hebrew"],
+    [4, "רֹעִי", "roi", "V", "H7462", 7462, "is my shepherd", "shepherd", "hebrew"],
+  ],
+};
+const superscription = resolveSourceBearingPresentationSegment({
+  bookId: "psalms",
+  chapter: 23,
+  block: { kind: "psalm_superscription", before_verse: "1", text: "A Psalm of David." },
+  rawStrongByVerse: psalmStrong,
+  rawInterlinearByVerse: psalmInterlinear,
+});
+assert.equal(superscription.segment_id, "psalms:23:psalm_superscription:1");
+assert.deepEqual(superscription.token_indexes, ["1", "2"]);
+assert.equal(resolveSourceBearingPresentationSegment({
+  bookId: "psalms", chapter: 23,
+  block: { kind: "section_heading", before_verse: "1", text: "The LORD Is My Shepherd" },
+  rawStrongByVerse: psalmStrong, rawInterlinearByVerse: psalmInterlinear,
+}), null);
+assert.deepEqual(resolveInterlinearVerseTokens({
+  rawInterlinearByVerse: psalmInterlinear,
+  rawStrongByVerse: psalmStrong,
+  chapterVerses: { 1: "The LORD is my shepherd" },
+  targetVerse: 1,
+  reference: { bookId: "psalms", chapter: 23 },
+  excludedTokenIndexes: superscription.token_indexes,
+}).map((token) => token.token_index), [3, 4]);
 
 console.log(
   JSON.stringify(
     {
       status: "ok",
-      assertions: 9,
+      assertions: 40,
       corrected_reference: "john:4:1:10",
     },
     null,

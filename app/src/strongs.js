@@ -104,12 +104,58 @@ export function mapStrongChapterRanges(chapterVerses, rawStrongByVerse) {
   return result;
 }
 
+function comparableSourceText(value) {
+  return String(value || "")
+    .normalize("NFC")
+    .toLocaleLowerCase("en")
+    .replace(/[^\p{Letter}\p{Number}]+/gu, " ")
+    .trim();
+}
+
+export function resolveSourceBearingPresentationSegment({
+  bookId,
+  chapter,
+  block,
+  rawStrongByVerse,
+  rawInterlinearByVerse,
+} = {}) {
+  if (String(bookId || "").toLowerCase() !== "psalms" || block?.kind !== "psalm_superscription") return null;
+  const beforeVerse = String(block.before_verse || "");
+  const strongRanges = mapStrongRanges(String(block.text || ""), rawStrongByVerse?.[beforeVerse] || []);
+  if (!strongRanges.length) return null;
+  const matchedText = strongRanges.map((range) => String(block.text || "").slice(range.start, range.end)).join(" ");
+  if (comparableSourceText(matchedText) !== comparableSourceText(block.text)) return null;
+
+  const tokenIndexes = new Set(strongRanges.map((range) => String(range.token?.token_index ?? "")));
+  const interlinearTokens = normalizeInterlinearVerseTokens(rawInterlinearByVerse?.[beforeVerse] || [], {
+    bookId,
+    chapter,
+    verse: beforeVerse,
+  }).filter((token) => tokenIndexes.has(String(token.token_index ?? "")));
+  if (interlinearTokens.length !== tokenIndexes.size) return null;
+
+  const segmentId = `${String(bookId).toLowerCase()}:${chapter}:psalm_superscription:${beforeVerse}`;
+  return {
+    segment_id: segmentId,
+    before_verse: beforeVerse,
+    text: String(block.text || ""),
+    strong_ranges: strongRanges,
+    interlinear_tokens: interlinearTokens.map((token) => ({
+      ...token,
+      verse: beforeVerse,
+      segment_id: segmentId,
+    })),
+    token_indexes: [...tokenIndexes],
+  };
+}
+
 export function resolveInterlinearVerseTokens({
   rawInterlinearByVerse,
   rawStrongByVerse,
   chapterVerses,
   targetVerse,
   reference = {},
+  excludedTokenIndexes = [],
 } = {}) {
   const target = String(targetVerse || "");
   const anchors = Object.keys(rawInterlinearByVerse || {})
@@ -122,10 +168,11 @@ export function resolveInterlinearVerseTokens({
   const nextAnchor = Number(anchors[anchorIndex + 1] || Number.MAX_SAFE_INTEGER);
   if (Number(target) >= nextAnchor) return [];
 
+  const excluded = new Set((excludedTokenIndexes || []).map(String));
   const tokens = normalizeInterlinearVerseTokens(rawInterlinearByVerse[anchor], {
     ...reference,
     verse: anchor,
-  });
+  }).filter((token) => !excluded.has(String(token.token_index ?? "")));
   if (!tokens.length) return [];
 
   const mappedRanges = mapStrongChapterRanges(chapterVerses || {}, rawStrongByVerse || {});
