@@ -6,8 +6,9 @@ Reviewed: 2026-07-12
 
 - The chapter tool group contains Search, Study Marks, Translate, Processing, and Study Data.
 - Contextual side-panel navigation follows one visible scope order: `Word → Verse → Chapter → Book`.
-- Word and Verse controls render in `#detailContext` when a verse detail is active. Chapter and Book controls remain immediately after that contextual surface so the hierarchy stays stable.
-- Word is present only when canonical word/source-token context exists, and it is always the first scope when present.
+- Word and Verse controls render in `#detailContext` when a verse detail is active. Chapter and Book controls remain persistently mounted immediately after that contextual surface so containing-scope tools stay reachable while Word and Verse views change.
+- The derived order and tool ownership remain centralized in `src/panel-context-model.js`; persistent Chapter and Book mounts do not create independent scope state.
+- Word is present only when canonical word/source-token context exists for the active verse, and it is always the first scope when present.
 - Verse owns Parallel, References, Commentary, verse Language Study, Tags, and the verse Favorite control.
 - Chapter owns the chapter-level Language Study entry. Book owns Outline.
 - A compact context summary identifies the selected word and containing verse without repeating explanatory prose inside each detail view.
@@ -36,6 +37,15 @@ The panel distinguishes direct data ownership from inherited containing context:
 | Global/user | Settings, personal data, maintenance, diagnostics | Reserved for the later Settings/My Data redesign |
 
 A word can inherit navigation to its containing Verse, Chapter, and Book tools, but those tools remain visibly attached to their true scope. Word detail must never imply that cross-references or commentary belong to the lexical entry itself.
+
+`src/active-word-context.js` is the explicit authority for the selected word available to contextual navigation. It stores only a token plus navigation options, suppresses forced duplicate history entries, rejects a stored word when its verse does not match the active verse, and clears through existing navigation/reset paths. View code must not read or write an ad hoc `studyContext.strong` property.
+
+## Responsive panel placement
+
+- Desktop keeps the side panel sticky beside the reader and requires the detail heading to remain visible.
+- From `769px` through `960px`, the shell becomes one column and the app header becomes three rows. The detail panel therefore uses a larger sticky offset and reduced viewport height so its heading and context summary begin below the header.
+- At `768px` and below, the detail panel becomes the existing full-screen mobile surface.
+- Context controls wrap; the scoped navigation must not create horizontal document or panel overflow.
 
 ## Control availability
 
@@ -128,12 +138,13 @@ IndexedDB initialization and migration have a three-second boundary. If the brow
 ## Executable validation
 
 - `tests/ui-contracts.mjs`: availability, panel transitions, control schema, corrected data scopes, and token identity.
-- `tests/panel-context-model.mjs`: Word-first scope order, tool ownership, summary labels, shell ordering, full visible labels, and responsive wrapping contracts.
+- `tests/panel-context-model.mjs`: Word-first scope order, tool ownership, active-word API, shell ordering, full visible labels, responsive wrapping, and narrow sticky-offset contracts.
 - `tests/reference-context.mjs`: hierarchy normalization and stable keys.
 - `tests/interlinear.mjs`: packaged interlinear data contracts, Greek marked-glyph reconstruction, and shared Hebrew gematria behavior.
 - `tests/module-singletons.mjs`: one release key and singleton URLs for stateful runtime modules.
 - `tests/strong-reference-control.mjs`: exact concordance reference resolution and unresolved plain-text fallback.
 - `tests/reader-ui-regressions.mjs`: source-level reader layout, panel-aware tooltip, concordance control, and navigation-reset regressions.
 - `tests/original-language-study.mjs`: visible Language Study naming and source-backed study/reference behavior.
+- `app/scripts/panel-context-interaction-test.mjs`: desktop, narrow, and mobile Word-first ordering, inherited Verse navigation, Verse-only clearing, horizontal-overflow checks, sticky-header placement, visible headings, and browser-error coverage.
 - `app/scripts/original-language-study-interaction-test.mjs`: rendered source/transliteration rows, lazy study enhancement, related-reference preview/navigation/history, and tooltip-containment behavior when the browser runner is available.
 - `app/scripts/interaction-test.mjs`: rendered interaction behavior, including reader text-span selection, favorite controls, editable target badges, source-token tagging, Favorites grouping, panel history, and cleanup, when the browser runner is available.
