@@ -1,3 +1,4 @@
+import { clearActiveWordContext, getActiveWordContext, setActiveWordContext } from "./active-word-context.js?v=pr13-live-qa-20260711e";
 import { createCommentaryOutlineViews } from "./views/commentary-outline-view.js?v=pr13-live-qa-20260711e";
 import { createInterlinearTranslationViews } from "./views/interlinear-translation-view.js?v=pr13-live-qa-20260711e";
 import { createJobsView } from "./views/jobs-view.js?v=pr13-live-qa-20260711e";
@@ -9,11 +10,30 @@ import { createUserDataView } from "./views/user-data-view.js?v=pr13-live-qa-202
 import { setDetail } from "./dom.js?v=pr13-live-qa-20260711e";
 
 export function createDetailViews(ctx) {
-  const strongsView = createStrongsView(ctx);
+  ctx.getActiveWordContext = (verse = null) => getActiveWordContext(ctx, verse);
+  ctx.setActiveWordContext = (context) => setActiveWordContext(ctx, context);
+  ctx.clearActiveWordContext = () => clearActiveWordContext(ctx);
+
+  const strongsCtx = Object.create(ctx);
+  Object.defineProperty(strongsCtx, "studyContext", {
+    value: null,
+    writable: false,
+  });
+  const strongsView = createStrongsView(strongsCtx);
+  const showStrong = (token, options = {}) => {
+    if (options.verseContext && !options.hover) {
+      ctx.setActiveWordContext({
+        token,
+        options,
+      });
+    }
+    return strongsView.showStrong(token, options);
+  };
+
   const commentaryOutlineViews = createCommentaryOutlineViews(ctx);
   const interlinearTranslationViews = createInterlinearTranslationViews(ctx, {
     appendLanguageBreakdown: strongsView.appendLanguageBreakdown,
-    showStrong: strongsView.showStrong,
+    showStrong,
   });
   const jobsView = createJobsView(ctx);
   const referenceViews = createReferenceViews(ctx);
@@ -35,9 +55,9 @@ export function createDetailViews(ctx) {
     showTranslationVerseWorkspace: interlinearTranslationViews.showTranslationVerseWorkspace,
     showTranslationWorkspaceIndex: interlinearTranslationViews.showTranslationWorkspaceIndex,
     showParallelVerse: referenceViews.showParallelVerse,
-    showSearch: createSearchView(ctx, { showStrong: strongsView.showStrong }),
+    showSearch: createSearchView(ctx, { showStrong }),
     showStudyUnavailable: (title, node, options = {}) => setDetail(title, node, options),
-    showStrong: strongsView.showStrong,
+    showStrong,
     showJobs: jobsView,
     showFavorites: tagsView.showFavorites,
     showTargetTagEditor: tagsView.showTargetTagEditor,
