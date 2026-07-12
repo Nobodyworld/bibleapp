@@ -1,0 +1,46 @@
+name: Panel Context Visual Review
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/panel-context-visual-review.yml"
+      - "app/scripts/panel-context-interaction-test.mjs"
+      - "app/src/active-word-context.js"
+      - "app/src/detail-views.js"
+      - "app/src/views/verse-context-tabs.js"
+      - "app/styles-context.css"
+      - "app/index.html"
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Capture desktop, narrow, and mobile panel states
+        shell: pwsh
+        run: |
+          $env:PANEL_CONTEXT_SCREENSHOT_DIR = "artifacts/panel-context"
+          node ./app/scripts/panel-context-interaction-test.mjs
+
+      - name: Upload panel context screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: panel-context-visual-review
+          path: artifacts/panel-context/*.png
+          if-no-files-found: error
+          retention-days: 1
