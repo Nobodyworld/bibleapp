@@ -108,6 +108,12 @@ async function capturePanel(page, mode, stateName) {
 async function contextState(page) {
   return page.evaluate(() => {
     const nav = document.querySelector("#detailContext .panel-context-navigation");
+    const pane = document.querySelector(".detail-pane");
+    const appHeader = document.querySelector(".app-header");
+    const detailHeader = document.querySelector(".detail-header");
+    const paneRect = pane?.getBoundingClientRect();
+    const appHeaderRect = appHeader?.getBoundingClientRect();
+    const detailHeaderRect = detailHeader?.getBoundingClientRect();
     const groupScopes = [...document.querySelectorAll("#detailContext .panel-context-group")].map(
       (node) => node.dataset.panelScope,
     );
@@ -134,8 +140,22 @@ async function contextState(page) {
       parallelDisabled: parallelButton?.disabled ?? null,
       navOverflow: nav ? nav.scrollWidth - nav.clientWidth : 0,
       documentOverflow: document.documentElement.scrollWidth - window.innerWidth,
+      panelHeaderGap:
+        paneRect && appHeaderRect ? Math.round((paneRect.top - appHeaderRect.bottom) * 100) / 100 : null,
+      detailHeaderTop: detailHeaderRect ? Math.round(detailHeaderRect.top * 100) / 100 : null,
     };
   });
+}
+
+function assertPanelPlacement(state, mode, mobile) {
+  if (mobile) {
+    assert(state.detailHeaderTop >= 0, `${mode}: detail heading is clipped above the viewport`);
+    return;
+  }
+  assert(
+    state.panelHeaderGap >= 8,
+    `${mode}: sticky detail panel overlaps the app header: ${JSON.stringify({ panelHeaderGap: state.panelHeaderGap })}`,
+  );
 }
 
 async function runScenario(browser, baseUrl, mode) {
@@ -181,6 +201,7 @@ async function runScenario(browser, baseUrl, mode) {
     assert.match(wordState.summary, /H\d+.*Proverbs 1:1|Proverbs 1:1.*H\d+/, `${mode}: summary must identify word and verse`);
     assert(wordState.navOverflow <= 1, `${mode}: Word-first navigation has horizontal overflow`);
     assert(wordState.documentOverflow <= 1, `${mode}: document has horizontal overflow`);
+    assertPanelPlacement(wordState, mode, mobile);
     await capturePanel(page, mode, "word");
 
     await click(
@@ -193,6 +214,7 @@ async function runScenario(browser, baseUrl, mode) {
     assert.deepEqual(inheritedState.groupScopes, ["word", "verse"], `${mode}: inherited Word and Verse groups are out of order`);
     assert.deepEqual(inheritedState.active, ["verse:Parallel"], `${mode}: Parallel must be the current Verse view`);
     assert.equal(inheritedState.wordDisabled, false, `${mode}: inherited Word control must remain available`);
+    assertPanelPlacement(inheritedState, mode, mobile);
     await capturePanel(page, mode, "inherited-verse");
 
     await click(page, "#showOutline");
@@ -205,12 +227,14 @@ async function runScenario(browser, baseUrl, mode) {
     assert.deepEqual(verseOnlyState.active, ["verse:Parallel"], `${mode}: Verse-only Parallel state is incorrect`);
     assert(verseOnlyState.navOverflow <= 1, `${mode}: Verse-only navigation has horizontal overflow`);
     assert(verseOnlyState.documentOverflow <= 1, `${mode}: cleared layout has horizontal overflow`);
+    assertPanelPlacement(verseOnlyState, mode, mobile);
     assert.deepEqual(pageErrors, [], `${mode}: browser errors were reported`);
     await capturePanel(page, mode, "verse-only");
 
     return {
       mode,
       viewport: VIEWPORTS[mode],
+      panelHeaderGap: wordState.panelHeaderGap,
       wordOrder: wordState.scopeOrder,
       inheritedOrder: inheritedState.scopeOrder,
       verseOnlyOrder: verseOnlyState.scopeOrder,
