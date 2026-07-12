@@ -19,7 +19,7 @@ export const PANEL_EVENTS = Object.freeze({
 export const STUDY_CONTROL_SCHEMA = Object.freeze({
   toolbarSearch: {
     capabilityId: "search",
-    dataScope: "package",
+    dataScope: "book",
     action: "showSearch",
     lockOnActivate: true,
   },
@@ -55,7 +55,7 @@ export const STUDY_CONTROL_SCHEMA = Object.freeze({
   },
   verseCommentary: {
     capabilityId: "commentary",
-    dataScope: "package",
+    dataScope: "verse",
     action: "showCommentary",
     lockOnActivate: true,
   },
