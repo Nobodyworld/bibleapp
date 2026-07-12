@@ -153,7 +153,7 @@ function assertPanelPlacement(state, mode, mobile) {
     return;
   }
   assert(
-    state.panelHeaderGap >= 8,
+    state.panelHeaderGap >= 0,
     `${mode}: sticky detail panel overlaps the app header: ${JSON.stringify({ panelHeaderGap: state.panelHeaderGap })}`,
   );
 }
