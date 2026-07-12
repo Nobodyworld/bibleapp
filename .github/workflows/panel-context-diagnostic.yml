@@ -1,0 +1,65 @@
+name: Panel Context Diagnostic
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/panel-context-diagnostic.yml"
+      - "app/index.html"
+      - "app/src/panel-context-model.js"
+      - "app/src/ui-contracts.js"
+      - "app/src/views/verse-context-tabs.js"
+      - "app/styles-context.css"
+      - "app/docs/UI_FUNCTIONALITY_SCHEMA.md"
+      - "tests/panel-context-model.mjs"
+      - "tests/ui-contracts.mjs"
+      - "package.json"
+
+permissions:
+  contents: read
+
+jobs:
+  node-24-segments:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+
+      - name: Set up Node.js 24
+        uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run panel context contracts
+        run: node ./tests/ui-contracts.mjs && node ./tests/panel-context-model.mjs
+
+      - name: Run reader source regressions
+        run: node ./tests/reader-ui-regressions.mjs && node ./tests/original-language-study.mjs
+
+      - name: Run remaining static verification
+        run: node ./tests/integrity.mjs && node ./tests/serve-app.mjs && node ./tests/run.mjs && node ./tests/capabilities.mjs && node ./tests/analysis.mjs && node ./tests/interlinear.mjs && node ./tests/strong-reference-control.mjs && node ./tests/original-language-source-importer.mjs && node ./tests/original-language-source-data.mjs && node ./tests/morphology.mjs && node ./tests/module-singletons.mjs && node ./tests/reference-context.mjs && node ./tests/tags.mjs
+
+      - name: Run domain and documentation verification
+        run: npm run test:domain && npm run inventory:check && node ./app/scripts/accessibility-test.mjs && node ./app/scripts/doc-consistency-test.mjs
+
+      - name: Run desktop interaction journey
+        run: node ./app/scripts/interaction-test.mjs
+
+      - name: Run frozen-highlight journey
+        run: node ./app/scripts/frozen-highlight-interaction-test.mjs
+
+      - name: Run Language Study journey
+        run: node ./app/scripts/original-language-study-interaction-test.mjs
+
+      - name: Run Strong preview hydration journey
+        run: node ./app/scripts/strong-preview-hydration-test.mjs
+
+      - name: Run mobile interaction journey
+        run: node ./app/scripts/interaction-test.mjs --mobile
+
+      - name: Run publish audit
+        run: npm run audit
