@@ -72,8 +72,8 @@ assert.match(index, /data-panel-scope="chapter"[\s\S]*?id="showInterlinear"/);
 assert.match(index, /data-panel-scope="book"[\s\S]*?id="showOutline"/);
 assert.match(index, /styles-context\.css\?v=pr13-live-qa-20260711e/);
 
-assert.match(tabsSource, /panelToolsForScope\("word"\)/);
-assert.match(tabsSource, /panelToolsForScope\("verse"\)/);
+assert.match(tabsSource, /scope === "word" \|\| scope === "verse"/);
+assert.match(tabsSource, /panelToolsForScope\(scope\)/);
 assert.match(tabsSource, /dataset\.visibleLabel/);
 assert.match(tabsSource, /dataPanelScope|panelScope/);
 assert.match(contextCss, /\.panel-context-controls\s*{[\s\S]*?flex-wrap:\s*wrap;/);
