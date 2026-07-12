@@ -18,6 +18,12 @@ export function strongReferencePreview(entry, ref, label) {
   return [original, transliteration, ref?.strong_code, language, compactStrongDefinition(entry)].filter(Boolean).join(" · ");
 }
 
+function refreshVisibleTooltip(button) {
+  if (!button.isConnected) return;
+  if (!button.matches(":hover") && document.activeElement !== button) return;
+  button.dispatchEvent(new Event("pointerover", { bubbles: true }));
+}
+
 export function createStrongReferenceControl(ref, { label = ref?.label || ref?.strong_code || "Strong's", onActivate } = {}) {
   const code = /^[HG]\d+$/u.test(String(ref?.strong_code || "").toUpperCase())
     ? String(ref.strong_code).toUpperCase()
@@ -36,6 +42,7 @@ export function createStrongReferenceControl(ref, { label = ref?.label || ref?.s
       hydration = fetchLexiconEntry(code).catch(() => null).then((entry) => {
         button.dataset.tooltip = strongReferencePreview(entry, item, label);
         button.dataset.previewReady = "true";
+        refreshVisibleTooltip(button);
         return entry;
       });
     }
