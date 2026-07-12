@@ -2,7 +2,7 @@
 
 import assert from "node:assert/strict";
 import { existsSync } from "node:fs";
-import { mkdir, readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { createServer as createHttpServer } from "node:http";
 import { dirname, extname, join, resolve, sep } from "node:path";
 import { createServer } from "node:net";
@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
 
 const screenshotRoot = String(process.env.PANEL_CONTEXT_SCREENSHOT_DIR || "").trim();
+const captureOnly = process.env.PANEL_CONTEXT_CAPTURE_ONLY === "1";
 const VIEWPORTS = Object.freeze({
   desktop: Object.freeze({ width: 1280, height: 720 }),
   narrow: Object.freeze({ width: 820, height: 900 }),
@@ -148,6 +149,7 @@ async function contextState(page) {
 }
 
 function assertPanelPlacement(state, mode, mobile) {
+  if (captureOnly) return;
   if (mobile) {
     assert(state.detailHeaderTop >= 0, `${mode}: detail heading is clipped above the viewport`);
     return;
@@ -235,6 +237,7 @@ async function runScenario(browser, baseUrl, mode) {
       mode,
       viewport: VIEWPORTS[mode],
       panelHeaderGap: wordState.panelHeaderGap,
+      detailHeaderTop: wordState.detailHeaderTop,
       wordOrder: wordState.scopeOrder,
       inheritedOrder: inheritedState.scopeOrder,
       verseOnlyOrder: verseOnlyState.scopeOrder,
@@ -256,7 +259,12 @@ try {
   results.push(await runScenario(browser, url, "desktop"));
   results.push(await runScenario(browser, url, "narrow"));
   results.push(await runScenario(browser, url, "mobile"));
-  console.log(JSON.stringify({ status: "ok", screenshots: Boolean(screenshotRoot), results }, null, 2));
+  const report = { status: "ok", screenshots: Boolean(screenshotRoot), captureOnly, results };
+  if (screenshotRoot) {
+    await mkdir(screenshotRoot, { recursive: true });
+    await writeFile(join(screenshotRoot, "panel-context-metrics.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  }
+  console.log(JSON.stringify(report, null, 2));
 } finally {
   await browser.close();
   await new Promise((resolveClose) => server.close(resolveClose));
