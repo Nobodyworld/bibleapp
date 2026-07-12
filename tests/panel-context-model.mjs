@@ -102,8 +102,14 @@ assert.match(detailViewsSource, /showStrong: createSearchView|createSearchView\(
 assert.match(browserSource, /word verse chapter book/);
 assert.match(browserSource, /verse chapter book/);
 assert.match(browserSource, /mode === "mobile"/);
+assert.match(browserSource, /mode === "narrow"/);
+assert.match(browserSource, /panelHeaderGap/);
 assert.match(contextCss, /\.panel-context-controls\s*{[\s\S]*?flex-wrap:\s*wrap;/);
 assert.match(contextCss, /\.verse-context-tab::after\s*{[\s\S]*?content:\s*attr\(data-visible-label\);/);
+assert.match(
+  contextCss,
+  /@media\s*\(min-width:\s*769px\)\s*and\s*\(max-width:\s*960px\)[\s\S]*?\.detail-pane\s*{[\s\S]*?top:\s*184px;[\s\S]*?height:\s*calc\(100dvh - 196px\);/,
+);
 assert.match(contextCss, /@media\s*\(max-width:\s*640px\)[\s\S]*?grid-template-columns:\s*1fr;/);
 
 console.log(
@@ -112,7 +118,7 @@ console.log(
       status: "ok",
       scopes: PANEL_SCOPE_ORDER.length,
       tools: Object.values(PANEL_CONTEXT_TOOL_MATRIX).flat().length,
-      assertions: 36,
+      assertions: 39,
     },
     null,
     2,
