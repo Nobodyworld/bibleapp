@@ -11,6 +11,7 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%231d4ed8'/%3E%3Ctext x='8' y='12' font-size='10' font-family='sans-serif' fill='white' text-anchor='middle'%3EB%3C/text%3E%3C/svg%3E" />
     <link rel="stylesheet" href="./styles.css?v=pr13-live-qa-20260711e" />
     <link rel="stylesheet" href="./styles-polish.css?v=pr13-live-qa-20260711e" />
+    <link rel="stylesheet" href="./styles-context.css?v=pr13-live-qa-20260711e" />
   </head>
   <body>
     <header class="app-header">
@@ -123,17 +124,27 @@
             <button id="clearDetail" type="button">Clear</button>
           </div>
         </div>
-        <nav class="detail-tool-nav" aria-label="Side panel study tools">
-          <button id="showOutline" class="detail-tool-button" type="button" title="Book outline">
-            <span aria-hidden="true">☷</span>
-            <span>Outline</span>
-          </button>
-          <button id="showInterlinear" class="detail-tool-button" type="button" title="Original language study">
-            <span aria-hidden="true">א</span>
-            <span>Language Study</span>
-          </button>
-        </nav>
         <div id="detailContext" class="detail-context" hidden></div>
+        <nav class="detail-tool-nav" aria-label="Chapter and book study tools">
+          <section class="panel-context-group" data-panel-scope="chapter" aria-label="Chapter scope">
+            <span class="panel-context-scope-label">Chapter</span>
+            <div class="panel-context-controls">
+              <button id="showInterlinear" class="detail-tool-button" type="button" title="Chapter scope: Language Study" aria-label="Chapter scope, Language Study">
+                <span aria-hidden="true">א</span>
+                <span>Language Study</span>
+              </button>
+            </div>
+          </section>
+          <section class="panel-context-group" data-panel-scope="book" aria-label="Book scope">
+            <span class="panel-context-scope-label">Book</span>
+            <div class="panel-context-controls">
+              <button id="showOutline" class="detail-tool-button" type="button" title="Book scope: Outline" aria-label="Book scope, Outline">
+                <span aria-hidden="true">☷</span>
+                <span>Outline</span>
+              </button>
+            </div>
+          </section>
+        </nav>
         <div class="detail-floating-nav" aria-label="Detail panel history">
           <button id="detailBack" class="detail-nav-arrow" type="button" title="Panel history back" aria-label="Panel history back" disabled>
             ↶
