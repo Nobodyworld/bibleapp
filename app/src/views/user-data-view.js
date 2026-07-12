@@ -37,8 +37,8 @@ function renderUserDataSummary(summary) {
       ["Tagged verses", summary.tagged_verses],
       ["Study mark assertions", summary.tag_assertions],
       ["Active assertions", summary.assertions],
-      ["Translation drafts", summary.verse_drafts],
-      ["Token renderings", summary.token_renderings],
+      ["Preserved verse drafts", summary.verse_drafts],
+      ["Personal meanings", summary.token_renderings],
     ]),
   );
   wrap.append(studySection);

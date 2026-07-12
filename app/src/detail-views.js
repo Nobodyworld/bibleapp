@@ -8,6 +8,7 @@ import { createStrongsView } from "./views/strongs-view.js?v=pr13-live-qa-202607
 import { createTagsView } from "./views/tags-view.js?v=pr13-live-qa-20260711e";
 import { createUserDataView } from "./views/user-data-view.js?v=pr13-live-qa-20260711e";
 import { setDetail } from "./dom.js?v=pr13-live-qa-20260711e";
+import { createWordMeaningControl } from "./word-meaning.js?v=pr13-live-qa-20260711e";
 
 export function createDetailViews(ctx) {
   ctx.getActiveWordContext = (verse = null) => getActiveWordContext(ctx, verse);
@@ -38,6 +39,10 @@ export function createDetailViews(ctx) {
   const jobsView = createJobsView(ctx);
   const referenceViews = createReferenceViews(ctx);
   const tagsView = createTagsView(ctx);
+  const renderWordMeaningControl = (options = {}) => createWordMeaningControl({
+    state: ctx.state,
+    ...options,
+  });
 
   return {
     clearStrongPin: strongsView.clearStrongPin,
@@ -46,14 +51,13 @@ export function createDetailViews(ctx) {
     renderTagBadges: tagsView.renderTagBadges,
     renderTargetTagPicker: tagsView.renderTargetTagPicker,
     renderTargetTagBadges: tagsView.renderTargetTagBadges,
+    renderWordMeaningControl,
     showCommentary: commentaryOutlineViews.showCommentary,
     showCrossrefs: referenceViews.showCrossrefs,
     showFootnote: referenceViews.showFootnote,
     showInterlinearChapter: interlinearTranslationViews.showInterlinearChapter,
     showInterlinearVerse: interlinearTranslationViews.showInterlinearVerse,
     showOutline: commentaryOutlineViews.showOutline,
-    showTranslationVerseWorkspace: interlinearTranslationViews.showTranslationVerseWorkspace,
-    showTranslationWorkspaceIndex: interlinearTranslationViews.showTranslationWorkspaceIndex,
     showParallelVerse: referenceViews.showParallelVerse,
     showSearch: createSearchView(ctx, { showStrong }),
     showStudyUnavailable: (title, node, options = {}) => setDetail(title, node, options),

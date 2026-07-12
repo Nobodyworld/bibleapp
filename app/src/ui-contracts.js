@@ -35,12 +35,6 @@ export const STUDY_CONTROL_SCHEMA = Object.freeze({
     action: "showInterlinearChapter",
     lockOnActivate: true,
   },
-  toolbarTranslation: {
-    capabilityId: "interlinear",
-    dataScope: "chapter",
-    action: "showTranslationWorkspaceIndex",
-    lockOnActivate: true,
-  },
   verseParallel: {
     capabilityId: null,
     dataScope: "verse",

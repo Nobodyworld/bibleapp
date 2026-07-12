@@ -98,6 +98,19 @@ async function click(page, selector) {
   }, selector);
 }
 
+async function clickWordMeaningOption(page, label) {
+  const clicked = await page.evaluate((expectedLabel) => {
+    const option = [...document.querySelectorAll(".word-meaning-menu:not([hidden]) .word-meaning-option")].find(
+      (node) => node.textContent.trim() === expectedLabel,
+    );
+    if (!option) return false;
+    option.scrollIntoView({ block: "center", inline: "nearest" });
+    option.click();
+    return true;
+  }, label);
+  assert(clicked, `Meaning choice ${JSON.stringify(label)} was no longer available to save`);
+}
+
 async function capturePanel(page, mode, stateName) {
   if (!screenshotRoot) return null;
   await mkdir(screenshotRoot, { recursive: true });
@@ -148,6 +161,119 @@ async function contextState(page) {
   });
 }
 
+async function wordMeaningPopupState(page) {
+  return page.evaluate(() => {
+    const menu = document.querySelector(".word-meaning-menu:not([hidden])");
+    const control = menu?.closest(".word-meaning-control");
+    const bounds = menu?.getBoundingClientRect();
+    return {
+      visible: Boolean(menu),
+      targetId: control?.dataset.targetId || "",
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+      left: bounds?.left ?? null,
+      top: bounds?.top ?? null,
+      right: bounds?.right ?? null,
+      bottom: bounds?.bottom ?? null,
+      width: bounds?.width ?? null,
+      height: bounds?.height ?? null,
+      menuScrollHeight: menu?.scrollHeight ?? 0,
+      menuClientHeight: menu?.clientHeight ?? 0,
+      documentOverflow: document.documentElement.scrollWidth - window.innerWidth,
+    };
+  });
+}
+
+function assertMeaningPopup(state, mode, surface) {
+  assert(state.visible, `${mode}: ${surface} meaning popup did not open`);
+  assert(state.targetId, `${mode}: ${surface} meaning popup lacks a canonical target id`);
+  assert(
+    state.left >= -1 &&
+      state.top >= -1 &&
+      state.right <= state.innerWidth + 1 &&
+      state.bottom <= state.innerHeight + 1,
+    `${mode}: ${surface} meaning popup is clipped by the viewport: ${JSON.stringify(state)}`,
+  );
+  assert(
+    state.documentOverflow <= 1,
+    `${mode}: ${surface} meaning popup introduced horizontal document overflow: ${JSON.stringify(state)}`,
+  );
+  assert(
+    state.menuScrollHeight >= state.menuClientHeight,
+    `${mode}: ${surface} meaning popup has invalid bounded-scroll metrics: ${JSON.stringify(state)}`,
+  );
+}
+
+async function workspaceMeaningState(page, referenceKey, tokenIndex) {
+  return page.evaluate(
+    ({ targetReferenceKey, targetTokenIndex }) =>
+      new Promise((resolve) => {
+        const localWorkspace = () => {
+          try {
+            const raw = window.localStorage.getItem("bibleapp:translation-workspace:v1");
+            return raw ? JSON.parse(raw) : {};
+          } catch {
+            return {};
+          }
+        };
+        const finish = (workspace) => {
+          const store = workspace || localWorkspace();
+          resolve({
+            localStorageWorkspace: window.localStorage.getItem("bibleapp:translation-workspace:v1"),
+            tokenRendering: store?.token_renderings?.[targetReferenceKey]?.[targetTokenIndex] || null,
+            workspaceJobs: store?.job_events || [],
+          });
+        };
+        if (!window.indexedDB) {
+          finish(localWorkspace());
+          return;
+        }
+        let request;
+        try {
+          request = window.indexedDB.open("bibleapp", 2);
+        } catch {
+          finish(localWorkspace());
+          return;
+        }
+        request.onerror = () => finish(localWorkspace());
+        request.onblocked = () => finish(localWorkspace());
+        request.onsuccess = () => {
+          const db = request.result;
+          try {
+            const transaction = db.transaction("user_stores", "readonly");
+            const get = transaction.objectStore("user_stores").get("workspace");
+            get.onsuccess = () => {
+              const store = get.result?.value || localWorkspace();
+              db.close();
+              finish(store);
+            };
+            get.onerror = () => {
+              db.close();
+              finish(localWorkspace());
+            };
+          } catch {
+            db.close();
+            finish(localWorkspace());
+          }
+        };
+      }),
+    { targetReferenceKey: referenceKey, targetTokenIndex: String(tokenIndex) },
+  );
+}
+
+async function waitForWorkspaceMeaning(page, referenceKey, tokenIndex, rendering) {
+  const deadline = Date.now() + 15000;
+  let current = null;
+  while (Date.now() < deadline) {
+    current = await workspaceMeaningState(page, referenceKey, tokenIndex);
+    if (current.tokenRendering?.rendering === rendering) return current;
+    await delay(150);
+  }
+  throw new Error(
+    `Timed out waiting for workspace meaning ${JSON.stringify({ referenceKey, tokenIndex, rendering, current })}`,
+  );
+}
+
 function assertPanelPlacement(state, mode) {
   if (captureOnly) return;
   if (mode === "narrow") {
@@ -189,11 +315,99 @@ async function runScenario(browser, baseUrl, mode) {
       document.querySelector("#detailTitle")?.textContent === "Interlinear" &&
       document.querySelectorAll("#detailContent .interlinear-token").length > 0,
     );
-    await click(page, "#detailContent .interlinear-token .compact-link");
+    await waitFor(page, () => Boolean(document.querySelector("#detailContent .interlinear-token .word-meaning-control")));
+    const sourceMeaning = await page.evaluate(() => {
+      const control = document.querySelector("#detailContent .interlinear-token .word-meaning-control");
+      const card = control?.closest(".interlinear-token");
+      return {
+        targetId: control?.dataset.targetId || "",
+        tokenIndex: card?.dataset.tokenIndex || "",
+        referenceKey: `proverbs:1:${card?.dataset.verse || ""}`,
+      };
+    });
+    assert(
+      sourceMeaning.targetId && Number(sourceMeaning.tokenIndex) > 0 && /proverbs:1:\d+/.test(sourceMeaning.referenceKey),
+      `${mode}: Language Study meaning control lacks source-token identity: ${JSON.stringify(sourceMeaning)}`,
+    );
+
+    await click(page, "#detailContent .interlinear-token .word-meaning-trigger");
+    await waitFor(page, () => Boolean(document.querySelector(".word-meaning-menu:not([hidden])")));
+    const sourcePopup = await wordMeaningPopupState(page);
+    assertMeaningPopup(sourcePopup, mode, "Language Study");
+    assert.equal(
+      sourcePopup.targetId,
+      sourceMeaning.targetId,
+      `${mode}: Language Study popup target does not match its source-token card`,
+    );
+    const sourceQuickMeaning = await page.evaluate(() =>
+      document
+        .querySelector(".word-meaning-menu:not([hidden]) .word-meaning-option:not(.word-meaning-other)")
+        ?.textContent.trim() || "",
+    );
+    assert(sourceQuickMeaning, `${mode}: Language Study meaning popup lacks a quick-save choice`);
+    await clickWordMeaningOption(page, sourceQuickMeaning);
+    await waitFor(page, () => Boolean(document.querySelector("#detailContent .word-meaning-badge")));
+    const sourceBadge = await page.evaluate(
+      (targetId) =>
+        [...document.querySelectorAll("#detailContent .word-meaning-control")].find(
+          (control) => control.dataset.targetId === targetId,
+        )?.querySelector(".word-meaning-badge")?.textContent.trim() || "",
+      sourceMeaning.targetId,
+    );
+    assert.equal(sourceBadge, sourceQuickMeaning, `${mode}: Language Study quick save did not render its meaning badge`);
+    const savedWorkspaceMeaning = await waitForWorkspaceMeaning(
+      page,
+      sourceMeaning.referenceKey,
+      sourceMeaning.tokenIndex,
+      sourceQuickMeaning,
+    );
+    assert.equal(
+      savedWorkspaceMeaning.tokenRendering?.target_id,
+      sourceMeaning.targetId,
+      `${mode}: saved Language Study meaning lost its exact canonical target id`,
+    );
+
+    const openedPinnedStrong = await page.evaluate(
+      (targetId) => {
+        const control = [...document.querySelectorAll("#detailContent .word-meaning-control")].find(
+          (node) => node.dataset.targetId === targetId,
+        );
+        const strong = control?.closest(".interlinear-token")?.querySelector(".compact-link");
+        strong?.scrollIntoView({ block: "center", inline: "nearest" });
+        strong?.click();
+        return Boolean(strong);
+      },
+      sourceMeaning.targetId,
+    );
+    assert(openedPinnedStrong, `${mode}: could not open pinned Strong's from the saved Language Study token`);
     await waitFor(page, () =>
       document.querySelector("#detailTitle")?.textContent === "Strong's" &&
       document.querySelector("#detailContext [data-panel-scope='word']"),
     );
+    await waitFor(page, () => Boolean(document.querySelector(".strong-sticky-summary .word-meaning-control")));
+    const pinnedMeaning = await page.evaluate(() => {
+      const control = document.querySelector(".strong-sticky-summary .word-meaning-control");
+      return {
+        targetId: control?.dataset.targetId || "",
+        badge: control?.querySelector(".word-meaning-badge")?.textContent.trim() || "",
+      };
+    });
+    assert.deepEqual(
+      pinnedMeaning,
+      { targetId: sourceMeaning.targetId, badge: sourceQuickMeaning },
+      `${mode}: pinned Strong's control did not reuse the exact Language Study target and saved value`,
+    );
+    await click(page, ".strong-sticky-summary .word-meaning-trigger");
+    await waitFor(page, () => Boolean(document.querySelector(".word-meaning-menu:not([hidden])")));
+    const pinnedPopup = await wordMeaningPopupState(page);
+    assertMeaningPopup(pinnedPopup, mode, "pinned Strong's");
+    assert.equal(
+      pinnedPopup.targetId,
+      sourceMeaning.targetId,
+      `${mode}: pinned Strong's popup target diverged from its Language Study source token`,
+    );
+    await page.keyboard.press("Escape");
+    await waitFor(page, () => !document.querySelector(".word-meaning-menu:not([hidden])"));
 
     const wordState = await contextState(page);
     assert.equal(wordState.scopeOrder, "word verse chapter book", `${mode}: Word must lead the scope order`);
@@ -233,6 +447,35 @@ async function runScenario(browser, baseUrl, mode) {
     assert.deepEqual(pageErrors, [], `${mode}: browser errors were reported`);
     await capturePanel(page, mode, "verse-only");
 
+    const beforeTransientHover = JSON.stringify(
+      await workspaceMeaningState(page, sourceMeaning.referenceKey, sourceMeaning.tokenIndex),
+    );
+    await page.evaluate(() => {
+      const EventCtor = window.PointerEvent || MouseEvent;
+      document.querySelector("#chapterContent")?.dispatchEvent(new EventCtor("pointerdown", { bubbles: true }));
+    });
+    await waitFor(page, () => document.querySelector(".detail-pane")?.dataset.hoverLocked === "false");
+    const transientStrongCode = await page.evaluate(() => {
+      const token = [...document.querySelectorAll(".strong-token")].find((node) => node.__bibleAppStrongToken);
+      if (!token) return "";
+      token.scrollIntoView({ block: "center", inline: "nearest" });
+      token.dispatchEvent(new MouseEvent("mouseover", { bubbles: true, view: window }));
+      return token.dataset.strongCode || "";
+    });
+    assert(transientStrongCode, `${mode}: could not trigger a transient reader Strong's hover`);
+    await waitFor(page, () =>
+      document.querySelector("#detailTitle")?.textContent === "Strong's" &&
+      !document.querySelector(".strong-detail .word-meaning-control"),
+    );
+    const afterTransientHover = JSON.stringify(
+      await workspaceMeaningState(page, sourceMeaning.referenceKey, sourceMeaning.tokenIndex),
+    );
+    assert.equal(
+      afterTransientHover,
+      beforeTransientHover,
+      `${mode}: transient reader Strong's hover mutated the saved personal meaning`,
+    );
+
     return {
       mode,
       viewport: VIEWPORTS[mode],
@@ -241,6 +484,8 @@ async function runScenario(browser, baseUrl, mode) {
       wordOrder: wordState.scopeOrder,
       inheritedOrder: inheritedState.scopeOrder,
       verseOnlyOrder: verseOnlyState.scopeOrder,
+      sourcePopup: { width: sourcePopup.width, height: sourcePopup.height },
+      pinnedPopup: { width: pinnedPopup.width, height: pinnedPopup.height },
     };
   } finally {
     await context.close();

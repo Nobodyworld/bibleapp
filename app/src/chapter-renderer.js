@@ -445,14 +445,6 @@ export function createChapterRenderer(ctx) {
       ctx.renderChapter();
     });
 
-    const draft = document.createElement("button");
-    draft.type = "button";
-    draft.textContent = "Draft";
-    draft.addEventListener("click", () => {
-      clearSelection();
-      void ctx.detailViews.showTranslationVerseWorkspace(verse, { selectedRange: range });
-    });
-
     const study = document.createElement("button");
     study.type = "button";
     study.textContent = "Study";
@@ -461,7 +453,7 @@ export function createChapterRenderer(ctx) {
       void ctx.detailViews.showInterlinearVerse(reference, verse, { forceHistory: true });
     });
 
-    menu.append(favorite, tags, study, draft, red);
+    menu.append(favorite, tags, study, red);
     placeSelectionMenu(menu, window.getSelection?.());
   }
 

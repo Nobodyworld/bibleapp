@@ -17,7 +17,6 @@ import {
   resolveInterlinearVerseTokens,
   resolveSourceBearingPresentationSegment,
 } from "../strongs.js?v=pr13-live-qa-20260711e";
-import { getTokenRenderings, getWorkspaceVerse, setTokenRendering, setVerseDraft } from "../stores.js?v=pr13-live-qa-20260711e";
 import { createVerseContextTabs } from "./verse-context-tabs.js?v=pr13-live-qa-20260711e";
 import { createStudyEmptyState } from "../study-empty-state.js";
 import { interlinearTokenIdentity } from "../ui-contracts.js";
@@ -40,19 +39,22 @@ function normalizeWordMapSpan(raw, bsbVerseText) {
 function createWordMapLookup(rawSpans, bsbVerseText) {
   const spans = (rawSpans || []).map((span) => normalizeWordMapSpan(span, bsbVerseText));
   const bySource = new Map();
-  const byStrong = new Map();
   spans.forEach((span) => {
     if (span.source_token_index !== null && span.source_token_index !== undefined) {
       bySource.set(Number(span.source_token_index), span);
     }
-    byStrong.set(`${span.strong_token_index}:${span.strong_code}`, span);
   });
-  return { bySource, byStrong, spans };
+  return { bySource, spans };
 }
 
 function wordMapForToken(token, lookup) {
   if (!lookup) return null;
-  return lookup.bySource.get(Number(token.token_index)) || lookup.byStrong.get(`${token.token_index}:${token.strong_code}`) || null;
+  const tokenIndex = Number(token.token_index);
+  return Number.isInteger(tokenIndex) ? lookup.bySource.get(tokenIndex) || null : null;
+}
+
+function normalizeMeaningSpan(value) {
+  return String(value || "").replace(/\s+/g, " ").trim();
 }
 
 function tokenWordInfo(token) {
@@ -81,90 +83,6 @@ function createOriginalWordInfoLookup(tokens) {
   return lookup;
 }
 
-function appendWorkspaceWordMap(card, token, wordMapSpan) {
-  const panel = document.createElement("div");
-  panel.className = wordMapSpan ? "workspace-word-map" : "workspace-word-map missing";
-
-  const title = document.createElement("div");
-  title.className = "workspace-word-map-title";
-  title.textContent = "BSB word map";
-  panel.append(title);
-
-  if (!wordMapSpan) {
-    const missing = document.createElement("div");
-    missing.className = "workspace-map-row";
-    missing.append(textNode("No BSB span mapped for this source token yet."));
-    panel.append(missing);
-    card.append(panel);
-    return;
-  }
-
-  const rows = [
-    ["BSB span", wordMapSpan.bsb_span || "(empty span)"],
-    ["Offsets", `${wordMapSpan.start_offset}-${wordMapSpan.end_offset}`],
-    ["Source token", `#${wordMapSpan.source_token_index || token.token_index}: ${token.original || ""}`],
-    ["Strong", wordMapSpan.strong_code || token.strong_code || "No Strong's"],
-  ];
-
-  rows.forEach(([label, value]) => {
-    const row = document.createElement("div");
-    row.className = "workspace-map-row";
-    const key = document.createElement("span");
-    key.className = "workspace-map-key";
-    key.textContent = label;
-    const val = document.createElement("span");
-    val.className = label === "BSB span" ? "workspace-map-value bsb-span" : "workspace-map-value";
-    val.textContent = value;
-    row.append(key, val);
-    panel.append(row);
-  });
-
-  card.append(panel);
-}
-
-function rangesOverlap(a, b) {
-  if (!a || !b) return false;
-  return Number(a.start_offset) < Number(b.end) && Number(a.end_offset) > Number(b.start);
-}
-
-function createTranslationAlignmentPanel(tokens, wordMapLookup, selectedRange) {
-  const panel = document.createElement("section");
-  panel.className = "translation-alignment";
-  const heading = document.createElement("h4");
-  heading.textContent = "Word-by-word alignment";
-  const intro = document.createElement("p");
-  intro.textContent = "Hover a source word or BSB span to focus the paired words.";
-  panel.append(heading, intro);
-
-  const grid = document.createElement("div");
-  grid.className = "translation-alignment-grid";
-  tokens.forEach((token) => {
-    const span = wordMapForToken(token, wordMapLookup);
-    const pair = document.createElement("button");
-    pair.type = "button";
-    pair.className = "translation-token-pair";
-    if (rangesOverlap(span, selectedRange)) pair.classList.add("selected-range");
-    pair.dataset.sourceIndex = String(token.token_index ?? "");
-
-    const source = document.createElement("span");
-    source.className = token.language === "hebrew" ? "alignment-source rtl-token" : "alignment-source";
-    setLanguageTextWithTooltips(source, token.original || "", token.language, { wordInfo: tokenWordInfo(token) });
-
-    const english = document.createElement("span");
-    english.className = "alignment-english";
-    english.textContent = span?.bsb_span || token.english || "(unmapped)";
-
-    const meta = document.createElement("span");
-    meta.className = "alignment-meta";
-    meta.textContent = [token.strong_code, token.gloss].filter(Boolean).join(" - ");
-
-    pair.append(source, english, meta);
-    grid.append(pair);
-  });
-  panel.append(grid);
-  return panel;
-}
-
 function createVerseGematriaSummary(total, tokens) {
   const summary = document.createElement("section");
   summary.className = "verse-gematria-total";
@@ -191,6 +109,28 @@ async function calculateHebrewVerseGematria(tokens) {
 
 export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown, showStrong }) {
   let stopInterlinearLazyLoad = () => {};
+  const bsbWordMapByVerse = new Map();
+
+  async function bsbWordMapForVerse(verse) {
+    const key = referenceKey(ctx.state.bookId, ctx.state.chapter, verse);
+    if (!bsbWordMapByVerse.has(key)) {
+      bsbWordMapByVerse.set(
+        key,
+        Promise.all([fetchWordMapBook("bsb", ctx.state.bookId), fetchVerseBook("bsb", ctx.state.bookId)])
+          .then(([wordMapBook, bsbBook]) => {
+            const text = bsbBook?.chapters?.[ctx.state.chapter]?.[verse] || "";
+            return createWordMapLookup(wordMapBook?.chapters?.[ctx.state.chapter]?.[verse] || [], text);
+          })
+          .catch(() => null),
+      );
+    }
+    return bsbWordMapByVerse.get(key);
+  }
+
+  async function exactMappedBsbMeaning(token, verse) {
+    const lookup = await bsbWordMapForVerse(verse);
+    return normalizeMeaningSpan(wordMapForToken(token, lookup)?.bsb_span);
+  }
 
   function superscriptionForVerse(verse) {
     const blocks = ctx.state.presentation?.chapters?.[ctx.state.chapter]?.blocks || [];
@@ -390,7 +330,15 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
         preview: [token.english, token.gloss].filter(Boolean).join(" — "),
         onChange: refreshTargetActions,
       });
+      const meaning = ctx.detailViews.renderWordMeaningControl({
+        target: sourceTarget,
+        token,
+        label: tokenLabel,
+        loadExactMappedEnglish: () => exactMappedBsbMeaning(token, card.dataset.verse),
+        loadLexicon: token.strong_code ? () => fetchLexiconEntry(token.strong_code) : null,
+      });
       controls.append(favorite, tags);
+      if (meaning) controls.append(meaning);
       actions.append(controls);
       refreshTargetActions();
       card.append(actions);
@@ -410,23 +358,6 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     });
     card.addEventListener("pointerenter", () => highlight(false));
     card.addEventListener("focusin", () => highlight(false));
-
-    if (options.workspace && options.referenceKey) {
-      if (options.wordMapLookup) appendWorkspaceWordMap(card, token, wordMapForToken(token, options.wordMapLookup));
-
-      const renderings = getTokenRenderings(ctx.state, options.referenceKey);
-      const label = document.createElement("label");
-      label.className = "token-rendering";
-      const labelText = document.createElement("span");
-      labelText.textContent = "Your rendering";
-      const input = document.createElement("input");
-      input.value = renderings[token.token_index]?.rendering || "";
-      input.addEventListener("change", () => {
-        setTokenRendering(ctx.state, options.referenceKey, token, input.value.trim());
-      });
-      label.append(labelText, input);
-      card.append(label);
-    }
 
     return card;
   }
@@ -518,7 +449,7 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
       heading.textContent = reference;
       const message = document.createElement("p");
       message.textContent = `No interlinear data found for ${reference}.`;
-      empty.append(heading, createVerseContextTabs(ctx, reference, verse, "interlinear", ctx.studyContext?.strong), message);
+      empty.append(heading, createVerseContextTabs(ctx, reference, verse, "interlinear", ctx.getActiveWordContext?.(verse)), message);
       setDetail("Interlinear", empty, options);
       return;
     }
@@ -526,7 +457,7 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     const wrap = document.createElement("div");
     wrap.className = "interlinear-lazy-reader";
     wrap.dataset.detailRestore = "interlinear-lazy-reader";
-    wrap.append(createVerseContextTabs(ctx, reference, verse, "interlinear", ctx.studyContext?.strong));
+    wrap.append(createVerseContextTabs(ctx, reference, verse, "interlinear", ctx.getActiveWordContext?.(verse)));
     const superscriptionSection = await createSuperscriptionSection(verse);
     if (superscriptionSection) wrap.append(superscriptionSection);
     wrap.append(initialSection);
@@ -637,7 +568,7 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     heading.textContent = `${ctx.state.verseBook?.book?.name || ctx.state.bookId} ${ctx.state.chapter} Interlinear`;
     const intro = document.createElement("p");
     intro.textContent =
-      "Choose a verse to inspect source text, Strong's numbers, morphology, glosses, and token renderings.";
+      "Choose a verse to inspect source text, Strong's numbers, morphology, glosses, and personal source-word meanings.";
     wrap.append(heading, intro);
     wrap.append(
       createDetailList(verses, (li, verse) => {
@@ -654,131 +585,8 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
     setDetail("Interlinear", wrap);
   }
 
-  function showTranslationWorkspaceIndex() {
-    stopInterlinearLazyLoad();
-    const verses = Object.keys(ctx.state.verseBook?.chapters?.[ctx.state.chapter] || {}).sort(
-      (a, b) => Number(a) - Number(b),
-    );
-    const wrap = document.createElement("div");
-    const heading = document.createElement("h3");
-    heading.textContent = `${ctx.state.verseBook?.book?.name || ctx.state.bookId} ${ctx.state.chapter} Translation Workspace`;
-    wrap.append(heading);
-    if (!ctx.canUseCapability?.("interlinear")) {
-      wrap.append(
-        createStudyEmptyState(ctx, "translation", {
-          capabilityIds: ["interlinear"],
-        }),
-      );
-    }
-    wrap.append(
-      createDetailList(verses, (li, verse) => {
-        const key = referenceKey(ctx.state.bookId, ctx.state.chapter, verse);
-        const draft = getWorkspaceVerse(ctx.state, key);
-        const label = draft?.draft_text ? `${ctx.currentReference(verse)} - draft saved` : ctx.currentReference(verse);
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "link-button";
-        button.textContent = label;
-        button.addEventListener("click", () => void showTranslationVerseWorkspace(verse));
-        li.append(button);
-      }),
-    );
-    setDetail("Translation", wrap);
-  }
-
-  async function showTranslationVerseWorkspace(verse, options = {}) {
-    stopInterlinearLazyLoad();
-    const key = referenceKey(ctx.state.bookId, ctx.state.chapter, verse);
-    const reference = ctx.currentReference(verse);
-    const interlinearAvailable = ctx.canUseCapability?.("interlinear");
-    const tokens = interlinearAvailable
-      ? resolveInterlinearVerseTokens({
-          rawInterlinearByVerse: ctx.state.interlinear?.chapters?.[ctx.state.chapter],
-          rawStrongByVerse: ctx.state.strongs?.chapters?.[ctx.state.chapter],
-          chapterVerses: ctx.state.verseBook?.chapters?.[ctx.state.chapter],
-          targetVerse: verse,
-          reference: { bookId: ctx.state.bookId, chapter: ctx.state.chapter },
-        })
-      : [];
-    const draft = getWorkspaceVerse(ctx.state, key);
-    const canonical = ctx.state.verseBook?.chapters?.[ctx.state.chapter]?.[verse] || "";
-    const [wordMapBook, bsbBook] = await Promise.all([
-      fetchWordMapBook("bsb", ctx.state.bookId).catch(() => null),
-      fetchVerseBook("bsb", ctx.state.bookId),
-    ]);
-    const bsbVerseText = bsbBook?.chapters?.[ctx.state.chapter]?.[verse] || canonical;
-    const wordMapLookup = createWordMapLookup(wordMapBook?.chapters?.[ctx.state.chapter]?.[verse] || [], bsbVerseText);
-
-    const wrap = document.createElement("div");
-    const heading = document.createElement("h3");
-    heading.textContent = reference;
-
-    const source = document.createElement("p");
-    source.className = "workspace-source";
-    source.textContent = canonical;
-    const bsbSource = document.createElement("p");
-    bsbSource.className = "workspace-source bsb-workspace-source";
-    bsbSource.textContent = `BSB: ${bsbVerseText}`;
-
-    const label = document.createElement("label");
-    label.className = "workspace-draft";
-    const labelText = document.createElement("span");
-    labelText.textContent = "Your translation";
-    const textarea = document.createElement("textarea");
-    textarea.rows = 5;
-    textarea.value = draft?.draft_text || "";
-    textarea.dataset.revision = String(draft?.revision || 0);
-    textarea.placeholder = "Draft your translation here.";
-    const conflictStatus = document.createElement("p");
-    conflictStatus.className = "import-status error";
-    conflictStatus.hidden = true;
-    textarea.addEventListener("change", () => {
-      const result = setVerseDraft(ctx.state, key, textarea.value.trim(), {
-        expected_revision: Number(textarea.dataset.revision || 0),
-      });
-      if (result?.conflict) {
-        conflictStatus.hidden = false;
-        conflictStatus.textContent =
-          "This draft changed in another tab. Reload the verse workspace before applying your edit.";
-        return;
-      }
-      textarea.dataset.revision = String(result?.revision || Number(textarea.dataset.revision || 0) + 1);
-      conflictStatus.hidden = true;
-    });
-    label.append(labelText, textarea);
-
-    wrap.append(heading, source);
-    if (bsbVerseText && bsbVerseText !== canonical) wrap.append(bsbSource);
-    if (tokens.length) {
-      wrap.append(createTranslationAlignmentPanel(tokens, wordMapLookup, options.selectedRange));
-    }
-    wrap.append(label, conflictStatus);
-
-    if (!tokens.length) {
-      wrap.append(
-        createStudyEmptyState(ctx, interlinearAvailable ? "interlinear" : "translation", {
-          reference,
-          capabilityIds: ["interlinear"],
-        }),
-      );
-    } else {
-      const tokenHeading = document.createElement("h4");
-      tokenHeading.textContent = `${tokens[0]?.language === "greek" ? "Greek" : "Hebrew"} word renderings`;
-      const tokenList = document.createElement("div");
-      tokenList.className = "interlinear-token-list";
-      tokens.forEach((token) => {
-        tokenList.append(createInterlinearTokenCard(token, { workspace: true, referenceKey: key, wordMapLookup }));
-      });
-      wrap.append(tokenHeading, tokenList);
-    }
-
-    setDetail("Translation", wrap);
-  }
-
   return {
     showInterlinearChapter,
     showInterlinearVerse,
-    showTranslationVerseWorkspace,
-    showTranslationWorkspaceIndex,
   };
 }

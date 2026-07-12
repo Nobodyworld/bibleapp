@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [index, css, stylesPolish, app, pickerFlow, renderer, tagsView, strongsView] = await Promise.all([
+const [index, css, stylesPolish, app, pickerFlow, renderer, tagsView, strongsView, dom, detailViews] = await Promise.all([
   readFile(new URL("../app/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/styles.css", import.meta.url), "utf8"),
   readFile(new URL("../app/styles-polish.css", import.meta.url), "utf8"),
@@ -12,6 +12,8 @@ const [index, css, stylesPolish, app, pickerFlow, renderer, tagsView, strongsVie
   readFile(new URL("../app/src/chapter-renderer.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/views/tags-view.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/views/strongs-view.js", import.meta.url), "utf8"),
+  readFile(new URL("../app/src/dom.js", import.meta.url), "utf8"),
+  readFile(new URL("../app/src/detail-views.js", import.meta.url), "utf8"),
 ]);
 
 const chapterTools = index.match(/<div class="chapter-actions"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/)?.[0] || "";
@@ -22,6 +24,21 @@ assert(!chapterTools.includes('id="showOutline"'), "Outline must not appear in c
 assert(!chapterTools.includes('id="showInterlinear"'), "Interlinear must not appear in chapter tools.");
 assert(sideTools.includes('id="showOutline"'), "Outline must remain available in the side panel.");
 assert(sideTools.includes('id="showInterlinear"'), "Interlinear must remain available in the side panel.");
+assert(
+  !/id="showProverbs"/.test(index) &&
+    !/<span>Translate<\/span>/.test(index) &&
+    !/\bshowProverbs\b/.test(app) &&
+    !/\bshowProverbs\b/.test(dom) &&
+    !/\["Translate",\s*runWithReaderData\(/.test(app) &&
+    !/\bshowTranslationWorkspaceIndex\b/.test(app) &&
+    !/\bshowTranslationWorkspaceIndex\b/.test(detailViews) &&
+    !/\bshowTranslationVerseWorkspace\b/.test(renderer),
+  "The retired Translate workspace must have no toolbar, home action, event binding, public route, or reader entry.",
+);
+assert(
+  !/\bctx\.studyContext\.strong\b/.test(strongsView),
+  "Pinned Strong's detail must use active-word context instead of an ad hoc mutable Strong's bridge.",
+);
 
 assert(/html\s*{\s*overflow-x:\s*clip;/.test(css), "The document must not create a sticky-breaking horizontal overflow container.");
 assert(/body\s*{[\s\S]*?overflow-x:\s*clip;/.test(css), "The body must not create a sticky-breaking horizontal overflow container.");
@@ -206,4 +223,4 @@ assert(
   "Browser-visible app and stylesheet entry points must use the current cache-buster key.",
 );
 
-console.log(JSON.stringify({ status: "ok", assertions: 51 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 53 }, null, 2));

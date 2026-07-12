@@ -3,8 +3,9 @@
 Bible App Reader is a local-first Bible study workspace that runs as a static
 browser application. It combines multi-translation reading, hover-first
 supplemental context, Hebrew and Greek Language Study, commentary,
-cross-references, Strong's lexicons, structured study marks, and portable
-browser-local data without requiring an account, hosted backend, analytics
+cross-references, Strong's lexicons, structured study marks, personal
+source-word meanings, and portable browser-local data without requiring an
+account, hosted backend, analytics
 service, or remote application API.
 
 The app is deliberately packed with supplemental study data without placing all
@@ -29,6 +30,7 @@ server.
 | Integrated context | Reader text, commentary, outlines, cross-references, Strong's data, and source-language records remain connected in one workspace. |
 | Original-language depth | Hebrew and Greek cards separate source text, transliteration, pronunciation guidance, dictionary form, morphology, glosses, word origin, and related entries. |
 | Structured study marks | Favorites and tags can be attached at book, chapter, verse, text-span, and source-token scope. |
+| Personal word meanings | Exact source-token meanings can be saved, changed, or removed without becoming classification tags. |
 | Portable personal data | Browser-local study state can be exported, imported, and recovered as JSON. |
 | Auditable package | Source manifests, notices, deterministic data tools, package inventory, and verification scripts are included in the repository. |
 
@@ -78,7 +80,7 @@ issue #16.
 - Lazy verse loading so extended chapter study does not render every card at
   once.
 
-### Study Marks and browser-local data
+### Study Marks, personal meanings, and browser-local data
 
 - One Book mark control and one Chapter mark control, each combining Favorite
   and applicable tags in a target-aware menu.
@@ -86,14 +88,21 @@ issue #16.
 - Verse, selected-text, and source-token favorites and tags.
 - Canonical semantic targets for books, chapters, verses, ranges, text spans,
   source tokens, and source-token spans.
+- Compact personal Meaning controls on exact source-token study surfaces. A
+  saved meaning belongs to one canonical verse and source-token index; it is
+  not a Favorite or a classification tag.
 - Study Marks dashboard for reviewing tagged and favorited targets.
 - Browser-local summary counts, JSON export/import, storage recovery, and
   capability controls.
 
-The current Translation workspace, Processing screen, and Study Data screen are
-being reassessed rather than presented as finished information architecture.
-Word-level meaning tagging is tracked in issue #18, and user-data/settings
-simplification is tracked in issue #19.
+The former Translation workspace is no longer a primary navigation surface.
+Its legacy verse drafts remain portable user data: they are still counted,
+imported, exported, merged or replaced, and kept separate from source-token
+meanings, but there is no primary verse-draft editing surface. Existing
+`bibleapp:user-data` exports, including legacy token-rendering records, remain
+compatible and are normalized additively when edited. Personal meaning work is
+tracked in issue #18, and user-data/settings simplification is tracked in issue
+#19.
 
 ### Resilience and accessibility
 
@@ -109,7 +118,9 @@ simplification is tracked in issue #19.
 
 Study information exists at different scopes:
 
-- a **word** owns lexical, source-language, morphology, and saved-meaning data;
+- a **source token** owns lexical, source-language, morphology, and optional
+  personal-meaning data; its saved meaning is identified by its canonical verse
+  and token index, rather than by display text or a shared Strong's code;
 - a **verse** owns parallel text, references, commentary, verse tags, and the
   containing context for a selected word;
 - a **chapter** owns chapter navigation and chapter-level Language Study entry;
@@ -384,8 +395,9 @@ repository-security posture.
   options are tracked in issue #6.
 - The side-panel context hierarchy is functional but not final; redesign is
   tracked in issue #17.
-- Translation/rendering and user-data/processing tools are under focused
-  simplification in issues #18 and #19.
+- The former Translation workspace has no primary entry. Legacy verse drafts
+  remain portable while source-token meanings are edited from Language Study or
+  an exact pinned Word detail.
 - Publication activation, repository settings, and eligible GitHub security
   features remain tracked in issue #5.
 - Bundled data should be redistributed only after reviewing the included source
@@ -400,7 +412,8 @@ future pull-request numbers:
 - issue #15 — documentation and loose-file reconciliation;
 - issue #16 — hover-first supplemental study UX;
 - issue #17 — word-first contextual side-panel hierarchy;
-- issue #18 — word-tag meaning utility replacing the current Translation surface;
+- issue #18 — source-token personal-meaning utility replacing the former
+  Translation surface;
 - issue #19 — Processing and Study Data simplification;
 - public screenshot refresh after the intended UI stabilizes;
 - final public-release audit and issue #5 activation checklist.

@@ -15,6 +15,7 @@ import { setMorphologyHelp } from "../morphology-tooltips.js?v=pr13-live-qa-2026
 import { analyzeOriginalWord, gematriaValueForUnit, languageUnitDisplayGlyph, wordHasLanguageScript } from "../language.js";
 import { createStrongReferenceControl, resolveStrongSeeSegments } from "../strong-reference-control.js?v=pr13-live-qa-20260711e";
 import { createVerseContextTabs } from "./verse-context-tabs.js?v=pr13-live-qa-20260711e";
+import { createSourceTokenTarget } from "../semantic-targets.js?v=pr13-live-qa-20260711e";
 
 function languageTitle(language) {
   return language === "hebrew" ? "Hebrew" : "Greek";
@@ -315,6 +316,15 @@ function findWordMapSpan(wordMapBook, chapter, verse, token, verseText) {
   return candidates[0];
 }
 
+function findExactSourceTokenSpan(wordMapBook, chapter, verse, token, verseText) {
+  const sourceTokenIndex = Number(token?.token_index);
+  if (!Number.isInteger(sourceTokenIndex) || sourceTokenIndex < 1) return null;
+  const rows = wordMapBook?.chapters?.[String(chapter)]?.[String(verse)] || [];
+  return rows
+    .map((row) => mapRowToSpan(row, verseText))
+    .find((span) => Number(span?.sourceTokenIndex) === sourceTokenIndex) || null;
+}
+
 function verseTextFromBook(book, chapter, verse) {
   return cleanRenderedVerseText(book?.chapters?.[String(chapter)]?.[String(verse)] || "");
 }
@@ -509,6 +519,44 @@ function setOptionalLine(node, value) {
   node.textContent = text;
 }
 
+function activeSourceTokenMeaningContext(ctx, token, options = {}) {
+  if (!ctx || options.hover || !options.pin) return null;
+  const verse = options.verseContext?.verse;
+  const active = verse ? ctx.getActiveWordContext?.(verse) : null;
+  const activeToken = active?.token;
+  const activeIndex = Number(activeToken?.token_index);
+  const displayedIndex = Number(token?.token_index);
+  if (
+    !active?.options?.verseContext ||
+    !Number.isInteger(activeIndex) ||
+    activeIndex < 1 ||
+    !Number.isInteger(displayedIndex) ||
+    displayedIndex !== activeIndex
+  ) {
+    return null;
+  }
+  const target = createSourceTokenTarget(
+    {
+      translation_id: ctx.state.translationId,
+      book_id: ctx.state.bookId,
+      chapter: ctx.state.chapter,
+      verse_start: verse,
+    },
+    activeToken,
+    ctx.state.translationId,
+  );
+  return target ? { target, token: activeToken, verse } : null;
+}
+
+async function exactMappedBsbMeaning(ctx, token, verse) {
+  const [wordMapBook, bsbBook] = await Promise.all([
+    fetchWordMapBook("bsb", ctx.state.bookId),
+    fetchVerseBook("bsb", ctx.state.bookId),
+  ]);
+  const verseText = verseTextFromBook(bsbBook, ctx.state.chapter, verse);
+  return findExactSourceTokenSpan(wordMapBook, ctx.state.chapter, verse, token, verseText)?.text || "";
+}
+
 export function createStrongsView(ctx = null) {
   let strongPinned = false;
 
@@ -653,14 +701,28 @@ export function createStrongsView(ctx = null) {
     stickySummary.append(heading, overview);
     wrap.append(stickySummary);
     if (options.verseContext && !options.hover && ctx) {
-      // Store Strong's context for tab switching
-      if (ctx.studyContext) {
-        ctx.studyContext.strong = {
-          token,
-          options: { ...options, forceHistory: false },
-        };
-      }
-      wrap.append(createVerseContextTabs(ctx, options.verseContext.reference, options.verseContext.verse, "strongs", null));
+      wrap.append(
+        createVerseContextTabs(
+          ctx,
+          options.verseContext.reference,
+          options.verseContext.verse,
+          "strongs",
+          ctx.getActiveWordContext?.(options.verseContext.verse),
+        ),
+      );
+      const meaningContext = activeSourceTokenMeaningContext(ctx, token, options);
+      const meaning = meaningContext
+        ? ctx.detailViews?.renderWordMeaningControl?.({
+            target: meaningContext.target,
+            token: meaningContext.token,
+            label: `${options.verseContext.reference} ${meaningContext.token.original || "source token"}`,
+            loadExactMappedEnglish: () => exactMappedBsbMeaning(ctx, meaningContext.token, meaningContext.verse),
+            loadLexicon: meaningContext.token.strong_code
+              ? () => fetchLexiconEntry(meaningContext.token.strong_code)
+              : null,
+          })
+        : null;
+      if (meaning) stickySummary.append(meaning);
     }
     const renderedTokenBreakdown = appendLanguageBreakdown(wrap, token);
     setDetail("Strong's", wrap, {

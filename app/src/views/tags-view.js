@@ -729,7 +729,7 @@ export function createTagsView(ctx) {
     heading.textContent = reference;
     const body = document.createElement("p");
     body.textContent = verseText;
-    wrap.append(heading, createVerseContextTabs(ctx, reference, verse, "tags", ctx.studyContext?.strong), body);
+    wrap.append(heading, createVerseContextTabs(ctx, reference, verse, "tags", ctx.getActiveWordContext?.(verse)), body);
 
     const group = document.createElement("div");
     group.className = "tag-editor";

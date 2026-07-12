@@ -396,20 +396,11 @@ function syncToolButtons() {
         (tokens) => Array.isArray(tokens) && tokens.length > 0,
       ),
     ],
-    [
-      els.showProverbs,
-      "translation",
-      "Translation workspace",
-      Object.values(state.interlinear?.chapters?.[state.chapter] || {}).some(
-        (tokens) => Array.isArray(tokens) && tokens.length > 0,
-      ),
-    ],
   ];
   tools.forEach(([button, key, fallbackTitle, dataAvailable]) => {
     if (!button) return;
-    const capabilityId = key === "translation" ? "interlinear" : key;
     const control = resolveControlState({
-      capabilityAvailable: canUseCapability(capabilityId),
+      capabilityAvailable: canUseCapability(key),
       dataAvailable,
     });
     button.disabled = control.disabled;
@@ -453,7 +444,7 @@ function showHomePage(options = {}) {
   const heading = document.createElement("h3");
   heading.textContent = "Study workspace";
   const text = document.createElement("p");
-  text.textContent = "Open the reader, search, tags, translation work, jobs, and data tools from one place.";
+  text.textContent = "Open the reader, search, study marks, language study, jobs, and data tools from one place.";
   intro.append(heading, text);
 
   const grid = document.createElement("div");
@@ -466,7 +457,6 @@ function showHomePage(options = {}) {
     ["Continue reading", () => void navigateToRoute(currentRoute(), { replace: true })],
     ["Search", runWithReaderData(detailViews.showSearch)],
     ["Tags", runWithReaderData(detailViews.showTagIndex)],
-    ["Translate", runWithReaderData(detailViews.showTranslationWorkspaceIndex)],
     ["Jobs", runWithReaderData(detailViews.showJobs)],
     ["Data", runWithReaderData(detailViews.showUserData)],
   ];
@@ -710,7 +700,6 @@ function bindEvents() {
   els.showTags.addEventListener("click", clearStudyContextAndCall(detailViews.showTagIndex));
   els.showJobs.addEventListener("click", clearStudyContextAndCall(detailViews.showJobs));
   els.showUserData.addEventListener("click", clearStudyContextAndCall(detailViews.showUserData));
-  els.showProverbs.addEventListener("click", clearStudyContextAndCall(detailViews.showTranslationWorkspaceIndex));
   els.detailBack.addEventListener("click", () => {
     detailViews.clearStrongPin();
     const restoredLocation = goBackDetail();

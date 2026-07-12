@@ -12,8 +12,9 @@ const cliArgs = process.argv.slice(2);
 let baseUrl = cliArgs.find((argument) => !argument.startsWith("--")) || "";
 const qaDevice =
   cliArgs.includes("--mobile") || process.env.OPENBIBLE_QA_DEVICE === "mobile" ? "mobile" : "desktop";
-const qaDraft = `QA draft ${Date.now()}`;
-const tokenRendering = `QA token ${Date.now()}`;
+const customMeaning = `QA custom meaning ${Date.now()}`;
+const cancelledMeaning = `QA cancelled meaning ${Date.now()}`;
+const escapedMeaning = `QA escaped meaning ${Date.now()}`;
 const customTagLabel = `QA Custom ${Date.now()}`;
 const customTagEditedLabel = `${customTagLabel} Edited`;
 
@@ -175,28 +176,35 @@ async function waitFor(page, expression, timeoutMs = 10000) {
   throw new Error(`Timed out waiting for: ${expression}`);
 }
 
-function workspacePersistenceExpression(referenceKey, expectedDraft, expectedRendering) {
+function workspaceStoreExpression() {
   return `new Promise((resolve) => {
     const readLocalWorkspace = () => {
       try {
         const raw = window.localStorage.getItem('bibleapp:translation-workspace:v1');
-        return raw ? JSON.parse(raw) : null;
+        return raw ? JSON.parse(raw) : {};
       } catch {
-        return null;
+        return {};
       }
     };
-    const matches = (store) => {
-      const renderings = store?.token_renderings?.[${JSON.stringify(referenceKey)}] || {};
-      return store?.verse_drafts?.[${JSON.stringify(referenceKey)}]?.draft_text === ${JSON.stringify(expectedDraft)} &&
-        Object.values(renderings).some((item) => item?.rendering === ${JSON.stringify(expectedRendering)});
+    let settled = false;
+    const finish = (value) => {
+      if (settled) return;
+      settled = true;
+      resolve(value || readLocalWorkspace());
     };
     if (!window.indexedDB) {
-      resolve(matches(readLocalWorkspace()));
+      finish(readLocalWorkspace());
       return;
     }
-    const request = window.indexedDB.open('bibleapp', 2);
-    request.onerror = () => resolve(matches(readLocalWorkspace()));
-    request.onblocked = () => resolve(matches(readLocalWorkspace()));
+    let request;
+    try {
+      request = window.indexedDB.open('bibleapp', 2);
+    } catch {
+      finish(readLocalWorkspace());
+      return;
+    }
+    request.onerror = () => finish(readLocalWorkspace());
+    request.onblocked = () => finish(readLocalWorkspace());
     request.onsuccess = () => {
       const db = request.result;
       try {
@@ -205,18 +213,32 @@ function workspacePersistenceExpression(referenceKey, expectedDraft, expectedRen
         get.onsuccess = () => {
           const store = get.result?.value || readLocalWorkspace();
           db.close();
-          resolve(matches(store));
+          finish(store);
         };
         get.onerror = () => {
           db.close();
-          resolve(matches(readLocalWorkspace()));
+          finish(readLocalWorkspace());
         };
       } catch {
         db.close();
-        resolve(matches(readLocalWorkspace()));
+        finish(readLocalWorkspace());
       }
     };
   })`;
+}
+
+function workspaceTokenRenderingExpression(referenceKey, tokenIndex) {
+  return `(${workspaceStoreExpression()}).then((store) =>
+    store?.token_renderings?.[${JSON.stringify(referenceKey)}]?.[${JSON.stringify(String(tokenIndex))}] || null
+  )`;
+}
+
+function workspaceMeaningSnapshotExpression(referenceKey, tokenIndex) {
+  return `(${workspaceStoreExpression()}).then((store) => JSON.stringify({
+    localStorageWorkspace: window.localStorage.getItem('bibleapp:translation-workspace:v1'),
+    tokenRendering: store?.token_renderings?.[${JSON.stringify(referenceKey)}]?.[${JSON.stringify(String(tokenIndex))}] || null,
+    workspaceJobs: store?.job_events || []
+  }))`;
 }
 
 async function click(page, selector, timeoutMs = 10000) {
@@ -1404,48 +1426,323 @@ async function runQa(page) {
   );
   pass("custom tag edit and delete");
 
-  await click(page, "#showProverbs");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Translation'");
-  await click(page, "#detailContent .detail-list button");
-  await waitFor(page, "document.querySelector('.workspace-word-map')?.textContent.includes('These are the proverbs')", 15000);
-  const proverbsDraftReference = "proverbs:1:1";
-  const wordMapState = await evaluate(
+  await click(page, ".verse-study-button");
+  await clickButtonByText(page, "Int", { index: 0 });
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Interlinear'");
+  await waitFor(
+    page,
+    "Boolean(document.querySelector('#detailContent .interlinear-verse-section[data-verse=\"1\"] .word-meaning-control'))",
+    15000,
+  );
+  const proverbsMeaningReference = "proverbs:1:1";
+  const meaningSeed = await evaluate(
     page,
     `(() => {
-      const first = document.querySelector('.interlinear-token .workspace-word-map');
+      const control = document.querySelector('#detailContent .interlinear-verse-section[data-verse="1"] .word-meaning-control');
+      const card = control?.closest('.interlinear-token');
       return {
-        text: first?.textContent || '',
-        rowCount: first?.querySelectorAll('.workspace-map-row').length || 0
+        targetId: control?.dataset.targetId || '',
+        tokenIndex: card?.dataset.tokenIndex || '',
+        verse: card?.dataset.verse || '',
+        strongCode: card?.dataset.strongCode || ''
       };
     })()`,
   );
-  assert(wordMapState.text.includes("BSB span") && wordMapState.text.includes("These are the proverbs"), "workspace word map missing BSB span");
-  assert(wordMapState.text.includes("Source token") && wordMapState.text.includes("#1"), "workspace word map missing source token");
-  assert(wordMapState.text.includes("Strong") && wordMapState.text.includes("H4912"), "workspace word map missing Strong's link");
-  assert(wordMapState.rowCount >= 4, "workspace word map rows incomplete");
-  pass("Proverbs workspace word map");
+  assert(
+    meaningSeed.targetId && Number(meaningSeed.tokenIndex) > 0 && meaningSeed.verse === "1" && meaningSeed.strongCode,
+    `Language Study meaning control lacks canonical source-token identity: ${JSON.stringify(meaningSeed)}`,
+  );
+
+  await click(page, '#detailContent .interlinear-verse-section[data-verse="1"] .word-meaning-trigger');
+  await waitFor(
+    page,
+    `document.querySelector('.word-meaning-menu:not([hidden])')?.parentElement?.dataset.targetId === ${JSON.stringify(meaningSeed.targetId)}`,
+  );
+  const quickMeaningState = await evaluate(
+    page,
+    `(() => {
+      const menu = document.querySelector('.word-meaning-menu:not([hidden])');
+      const options = [...(menu?.querySelectorAll('.word-meaning-option') || [])];
+      return {
+        quickChoices: options.filter((option) => !option.classList.contains('word-meaning-other')).map((option) => option.textContent.trim()),
+        otherLast: options.at(-1)?.classList.contains('word-meaning-other') || false
+      };
+    })()`,
+  );
+  assert(
+    quickMeaningState.quickChoices.length > 0 && quickMeaningState.otherLast,
+    `Language Study meaning menu does not expose quick choices followed by Other: ${JSON.stringify(quickMeaningState)}`,
+  );
+  const quickMeaning = quickMeaningState.quickChoices[0];
+  await clickButtonByText(page, quickMeaning, { scope: '.word-meaning-menu:not([hidden])' });
+  await waitFor(
+    page,
+    `(${workspaceTokenRenderingExpression(proverbsMeaningReference, meaningSeed.tokenIndex)}).then((record) =>
+      record?.rendering === ${JSON.stringify(quickMeaning)} &&
+      record?.target_id === ${JSON.stringify(meaningSeed.targetId)} &&
+      record?.target?.target_type === 'source_token' &&
+      Number(record?.token_index) === ${Number(meaningSeed.tokenIndex)}
+    )`,
+    15000,
+  );
+  await waitFor(
+    page,
+    `[...document.querySelectorAll('.word-meaning-control')].some((control) =>
+      control.dataset.targetId === ${JSON.stringify(meaningSeed.targetId)} &&
+      control.querySelector('.word-meaning-badge')?.textContent.trim() === ${JSON.stringify(quickMeaning)}
+    )`,
+  );
+  pass("Language Study quick meaning save");
+
+  await navigate(page, `${routeBase}#/read/bsb/proverbs/1/1`);
+  await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('Proverbs 1')");
+  await click(page, ".verse-study-button");
+  await clickButtonByText(page, "Int", { index: 0 });
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Interlinear'");
+  await waitFor(
+    page,
+    `[...document.querySelectorAll('#detailContent .word-meaning-control')].some((control) =>
+      control.dataset.targetId === ${JSON.stringify(meaningSeed.targetId)} &&
+      control.querySelector('.word-meaning-badge')?.textContent.trim() === ${JSON.stringify(quickMeaning)}
+    )`,
+    15000,
+  );
+  const reopenedSavedBadge = await evaluate(
+    page,
+    `(() => {
+      const control = [...document.querySelectorAll('#detailContent .word-meaning-control')].find(
+        (node) => node.dataset.targetId === ${JSON.stringify(meaningSeed.targetId)},
+      );
+      const badge = control?.querySelector('.word-meaning-badge');
+      badge?.scrollIntoView({ block: 'center' });
+      badge?.click();
+      return Boolean(badge);
+    })()`,
+  );
+  assert(reopenedSavedBadge, "Saved Language Study meaning badge could not be reopened for editing");
+  await waitFor(
+    page,
+    `document.querySelector('.word-meaning-menu:not([hidden])')?.parentElement?.dataset.targetId === ${JSON.stringify(meaningSeed.targetId)}`,
+  );
+  const editedQuickMeaning = await evaluate(
+    page,
+    `(() => document.querySelector('.word-meaning-menu:not([hidden]) .word-meaning-option:not(.word-meaning-other)')?.textContent.trim() || '')()`,
+  );
+  assert(
+    editedQuickMeaning && editedQuickMeaning !== quickMeaning,
+    `Reopened meaning menu did not provide a distinct editable quick choice: ${JSON.stringify({ quickMeaning, editedQuickMeaning })}`,
+  );
+  await clickButtonByText(page, editedQuickMeaning, { scope: '.word-meaning-menu:not([hidden])' });
+  await waitFor(
+    page,
+    `(${workspaceTokenRenderingExpression(proverbsMeaningReference, meaningSeed.tokenIndex)}).then((record) =>
+      record?.rendering === ${JSON.stringify(editedQuickMeaning)} &&
+      record?.target_id === ${JSON.stringify(meaningSeed.targetId)}
+    )`,
+    15000,
+  );
+  pass("Language Study meaning persistence and quick edit");
+
+  await click(page, '.word-meaning-trigger');
+  await waitFor(
+    page,
+    `document.querySelector('.word-meaning-menu:not([hidden])')?.parentElement?.dataset.targetId === ${JSON.stringify(meaningSeed.targetId)}`,
+  );
+  await click(page, '.word-meaning-menu:not([hidden]) .word-meaning-other');
+  await waitFor(page, "Boolean(document.querySelector('.word-meaning-menu:not([hidden]) .word-meaning-custom-input'))");
+  const beforeCancelSnapshot = await evaluate(
+    page,
+    workspaceMeaningSnapshotExpression(proverbsMeaningReference, meaningSeed.tokenIndex),
+  );
   await evaluate(
     page,
     `(() => {
-      const textarea = document.querySelector('.workspace-draft textarea');
-      textarea.value = ${JSON.stringify(qaDraft)};
-      textarea.dispatchEvent(new Event('change', { bubbles: true }));
-      const input = document.querySelector('.token-rendering input');
-      input.value = ${JSON.stringify(tokenRendering)};
-      input.dispatchEvent(new Event('change', { bubbles: true }));
+      const input = document.querySelector('.word-meaning-menu:not([hidden]) .word-meaning-custom-input');
+      input.value = ${JSON.stringify(cancelledMeaning)};
+      input.dispatchEvent(new Event('input', { bubbles: true }));
       return true;
     })()`,
   );
-  await waitFor(page, workspacePersistenceExpression(proverbsDraftReference, qaDraft, tokenRendering), 15000);
-  await navigate(page, baseUrl);
-  await selectValue(page, "#bookSelect", "proverbs");
+  await click(page, '.word-meaning-menu:not([hidden]) .word-meaning-cancel');
+  await waitFor(page, "!document.querySelector('.word-meaning-menu:not([hidden])')");
+  await waitFor(
+    page,
+    `[...document.querySelectorAll('.word-meaning-control')].find((control) =>
+      control.dataset.targetId === ${JSON.stringify(meaningSeed.targetId)}
+    )?.querySelector('.word-meaning-trigger') === document.activeElement`,
+  );
+  const afterCancelSnapshot = await evaluate(
+    page,
+    workspaceMeaningSnapshotExpression(proverbsMeaningReference, meaningSeed.tokenIndex),
+  );
+  assert(beforeCancelSnapshot === afterCancelSnapshot, "Other Cancel mutated the workspace or localStorage mirror");
+
+  await click(page, '.word-meaning-trigger');
+  await waitFor(page, "Boolean(document.querySelector('.word-meaning-menu:not([hidden])'))");
+  await click(page, '.word-meaning-menu:not([hidden]) .word-meaning-other');
+  await waitFor(page, "Boolean(document.querySelector('.word-meaning-menu:not([hidden]) .word-meaning-custom-input'))");
+  await evaluate(
+    page,
+    `(() => {
+      const input = document.querySelector('.word-meaning-menu:not([hidden]) .word-meaning-custom-input');
+      input.value = ${JSON.stringify(escapedMeaning)};
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`,
+  );
+  await page.press('.word-meaning-menu:not([hidden]) .word-meaning-custom-input', "Escape");
+  await waitFor(page, "!document.querySelector('.word-meaning-menu:not([hidden])')");
+  await waitFor(
+    page,
+    `[...document.querySelectorAll('.word-meaning-control')].find((control) =>
+      control.dataset.targetId === ${JSON.stringify(meaningSeed.targetId)}
+    )?.querySelector('.word-meaning-trigger') === document.activeElement`,
+  );
+  const afterEscapeSnapshot = await evaluate(
+    page,
+    workspaceMeaningSnapshotExpression(proverbsMeaningReference, meaningSeed.tokenIndex),
+  );
+  assert(beforeCancelSnapshot === afterEscapeSnapshot, "Other Escape mutated the workspace or did not restore the unchanged record");
+  pass("Language Study Other cancel and Escape focus restoration");
+
+  await click(page, '.word-meaning-trigger');
+  await waitFor(page, "Boolean(document.querySelector('.word-meaning-menu:not([hidden])'))");
+  await click(page, '.word-meaning-menu:not([hidden]) .word-meaning-other');
+  await waitFor(page, "Boolean(document.querySelector('.word-meaning-menu:not([hidden]) .word-meaning-custom-input'))");
+  await evaluate(
+    page,
+    `(() => {
+      const input = document.querySelector('.word-meaning-menu:not([hidden]) .word-meaning-custom-input');
+      input.value = ${JSON.stringify(customMeaning)};
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`,
+  );
+  await click(page, '.word-meaning-menu:not([hidden]) .word-meaning-save');
+  await waitFor(
+    page,
+    `(${workspaceTokenRenderingExpression(proverbsMeaningReference, meaningSeed.tokenIndex)}).then((record) =>
+      record?.rendering === ${JSON.stringify(customMeaning)} &&
+      record?.target_id === ${JSON.stringify(meaningSeed.targetId)}
+    )`,
+    15000,
+  );
+  await waitFor(
+    page,
+    `[...document.querySelectorAll('#detailContent .word-meaning-control')].some((control) =>
+      control.dataset.targetId === ${JSON.stringify(meaningSeed.targetId)} &&
+      control.querySelector('.word-meaning-badge')?.textContent.trim() === ${JSON.stringify(customMeaning)}
+    )`,
+  );
+
+  const openedPinnedStrong = await evaluate(
+    page,
+    `(() => {
+      const control = [...document.querySelectorAll('#detailContent .word-meaning-control')].find(
+        (node) => node.dataset.targetId === ${JSON.stringify(meaningSeed.targetId)},
+      );
+      const strong = control?.closest('.interlinear-token')?.querySelector('.compact-link');
+      strong?.scrollIntoView({ block: 'center' });
+      strong?.click();
+      return Boolean(strong);
+    })()`,
+  );
+  assert(openedPinnedStrong, "Could not open the pinned Strong's view for the saved source-token meaning");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === \"Strong's\"");
+  await waitFor(
+    page,
+    `[...document.querySelectorAll('.strong-sticky-summary .word-meaning-control')].some((control) =>
+      control.dataset.targetId === ${JSON.stringify(meaningSeed.targetId)} &&
+      control.querySelector('.word-meaning-badge')?.textContent.trim() === ${JSON.stringify(customMeaning)}
+    )`,
+    15000,
+  );
+  const pinnedMeaningState = await evaluate(
+    page,
+    `(() => {
+      const control = document.querySelector('.strong-sticky-summary .word-meaning-control');
+      return {
+        targetId: control?.dataset.targetId || '',
+        badge: control?.querySelector('.word-meaning-badge')?.textContent.trim() || ''
+      };
+    })()`,
+  );
+  assert(
+    pinnedMeaningState.targetId === meaningSeed.targetId && pinnedMeaningState.badge === customMeaning,
+    `Pinned Strong's view did not retain the exact Language Study meaning target/value: ${JSON.stringify({ meaningSeed, pinnedMeaningState })}`,
+  );
+  const openedPinnedMeaningEditor = await evaluate(
+    page,
+    `(() => {
+      const control = [...document.querySelectorAll('.strong-sticky-summary .word-meaning-control')].find(
+        (node) => node.dataset.targetId === ${JSON.stringify(meaningSeed.targetId)},
+      );
+      const badge = control?.querySelector('.word-meaning-badge');
+      badge?.click();
+      return Boolean(badge);
+    })()`,
+  );
+  assert(openedPinnedMeaningEditor, "Pinned Strong's saved meaning badge could not be opened for removal");
+  await waitFor(page, "Boolean(document.querySelector('.word-meaning-menu:not([hidden]) .word-meaning-remove'))");
+  await click(page, '.word-meaning-menu:not([hidden]) .word-meaning-remove');
+  await waitFor(
+    page,
+    `(${workspaceTokenRenderingExpression(proverbsMeaningReference, meaningSeed.tokenIndex)}).then((record) => record === null)`,
+    15000,
+  );
+  await waitFor(
+    page,
+    `![...document.querySelectorAll('.strong-sticky-summary .word-meaning-control')].some((control) =>
+      control.dataset.targetId === ${JSON.stringify(meaningSeed.targetId)} && control.querySelector('.word-meaning-badge')
+    )`,
+  );
+  await click(page, "#detailBack");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Interlinear'");
+  await waitFor(
+    page,
+    `![...document.querySelectorAll('#detailContent .word-meaning-control')].some((control) =>
+      control.dataset.targetId === ${JSON.stringify(meaningSeed.targetId)} && control.querySelector('.word-meaning-badge')
+    )`,
+  );
+  pass("Language Study custom meaning, pinned Strong's target, and removal");
+
+  await navigate(page, `${routeBase}#/read/bsb/proverbs/1/1`);
   await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('Proverbs 1')");
-  await click(page, "#showProverbs");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Translation'");
-  await click(page, "#detailContent .detail-list button");
-  await waitFor(page, `document.querySelector('.workspace-draft textarea')?.value === ${JSON.stringify(qaDraft)}`);
-  await waitFor(page, `document.querySelector('.token-rendering input')?.value === ${JSON.stringify(tokenRendering)}`);
-  pass("Proverbs draft persistence");
+  await waitFor(page, "document.querySelectorAll('.strong-token').length > 0");
+  await evaluate(
+    page,
+    `(() => {
+      const EventCtor = window.PointerEvent || MouseEvent;
+      document.querySelector('#chapterContent')?.dispatchEvent(new EventCtor('pointerdown', { bubbles: true }));
+      return true;
+    })()`,
+  );
+  await waitFor(page, "document.querySelector('.detail-pane')?.dataset.hoverLocked === 'false'");
+  const beforeTransientHover = await evaluate(
+    page,
+    workspaceMeaningSnapshotExpression(proverbsMeaningReference, meaningSeed.tokenIndex),
+  );
+  const transientHoverStrong = await evaluate(
+    page,
+    `(() => {
+      const token = [...document.querySelectorAll('.strong-token')].find((node) => node.__bibleAppStrongToken);
+      if (!token) return '';
+      token.scrollIntoView({ block: 'center' });
+      token.dispatchEvent(new MouseEvent('mouseover', { bubbles: true, view: window }));
+      return token.dataset.strongCode || '';
+    })()`,
+  );
+  assert(transientHoverStrong, "Could not trigger a transient reader Strong's hover");
+  await waitFor(
+    page,
+    `document.querySelector('#detailTitle')?.textContent === \"Strong's\" && !document.querySelector('.strong-detail .word-meaning-control')`,
+  );
+  const afterTransientHover = await evaluate(
+    page,
+    workspaceMeaningSnapshotExpression(proverbsMeaningReference, meaningSeed.tokenIndex),
+  );
+  assert(beforeTransientHover === afterTransientHover, "Transient reader Strong's hover mutated the source-token meaning record");
+  pass("transient reader Strong's hover has no personal meaning editor or mutation");
 
   await click(page, "#showJobs");
   await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Local Processing'");
@@ -1453,10 +1750,9 @@ async function runQa(page) {
   assert(
     state.detailText.includes("tag-index-refresh") &&
       state.detailText.includes('"action": "retired"') &&
-      state.detailText.includes("translation-edit-analysis") &&
       state.detailText.includes("word-map-refresh") &&
       state.detailText.includes("personal-glossary-build"),
-    "Local Processing panel did not show queued local job types",
+    "Local Processing panel did not show the meaning-save glossary and word-map jobs",
   );
   pass("local jobs panel");
 
@@ -1502,10 +1798,9 @@ async function runQa(page) {
   );
   assert(userDataExport.tagJobTypes.includes("tag-index-refresh"), "tag change did not queue tag-index-refresh job");
   assert(
-    userDataExport.workspaceJobTypes.includes("translation-edit-analysis") &&
-      userDataExport.workspaceJobTypes.includes("word-map-refresh") &&
+    userDataExport.workspaceJobTypes.includes("word-map-refresh") &&
       userDataExport.workspaceJobTypes.includes("personal-glossary-build"),
-    "workspace changes did not queue semantic jobs",
+    "meaning saves did not queue glossary and word-map jobs",
   );
   await evaluate(
     page,

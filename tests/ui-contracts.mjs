@@ -61,13 +61,23 @@ assert.equal(STUDY_CONTROL_SCHEMA.sidePanelOutline.dataScope, "book");
 assert.equal(STUDY_CONTROL_SCHEMA.sidePanelInterlinear.dataScope, "chapter");
 assert.equal(STUDY_CONTROL_SCHEMA.verseCommentary.dataScope, "verse");
 assert.equal(STUDY_CONTROL_SCHEMA.verseInterlinear.dataScope, "verse");
+assert.equal(
+  Object.hasOwn(STUDY_CONTROL_SCHEMA, "toolbarTranslation"),
+  false,
+  "The retired Translate workspace must not remain in the primary control schema.",
+);
+assert.equal(
+  Object.values(STUDY_CONTROL_SCHEMA).some((control) => /showTranslation/.test(control.action)),
+  false,
+  "No public study control may route to the retired Translation workspace.",
+);
 
 console.log(
   JSON.stringify(
     {
       status: "ok",
       controls_checked: Object.keys(STUDY_CONTROL_SCHEMA).length,
-      assertions: 20,
+      assertions: 22,
     },
     null,
     2,
