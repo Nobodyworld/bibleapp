@@ -56,7 +56,10 @@ for (const [controlId, control] of Object.entries(STUDY_CONTROL_SCHEMA)) {
   }
 }
 
+assert.equal(STUDY_CONTROL_SCHEMA.toolbarSearch.dataScope, "book");
+assert.equal(STUDY_CONTROL_SCHEMA.sidePanelOutline.dataScope, "book");
 assert.equal(STUDY_CONTROL_SCHEMA.sidePanelInterlinear.dataScope, "chapter");
+assert.equal(STUDY_CONTROL_SCHEMA.verseCommentary.dataScope, "verse");
 assert.equal(STUDY_CONTROL_SCHEMA.verseInterlinear.dataScope, "verse");
 
 console.log(
@@ -64,7 +67,7 @@ console.log(
     {
       status: "ok",
       controls_checked: Object.keys(STUDY_CONTROL_SCHEMA).length,
-      assertions: 17,
+      assertions: 20,
     },
     null,
     2,
