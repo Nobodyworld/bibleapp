@@ -148,16 +148,16 @@ async function contextState(page) {
   });
 }
 
-function assertPanelPlacement(state, mode, mobile) {
+function assertPanelPlacement(state, mode) {
   if (captureOnly) return;
-  if (mobile) {
-    assert(state.detailHeaderTop >= 0, `${mode}: detail heading is clipped above the viewport`);
+  if (mode === "narrow") {
+    assert(
+      state.panelHeaderGap >= 0,
+      `${mode}: sticky detail panel overlaps the app header: ${JSON.stringify({ panelHeaderGap: state.panelHeaderGap })}`,
+    );
     return;
   }
-  assert(
-    state.panelHeaderGap >= 0,
-    `${mode}: sticky detail panel overlaps the app header: ${JSON.stringify({ panelHeaderGap: state.panelHeaderGap })}`,
-  );
+  assert(state.detailHeaderTop >= 0, `${mode}: detail heading is clipped above the viewport`);
 }
 
 async function runScenario(browser, baseUrl, mode) {
@@ -203,7 +203,7 @@ async function runScenario(browser, baseUrl, mode) {
     assert.match(wordState.summary, /H\d+.*Proverbs 1:1|Proverbs 1:1.*H\d+/, `${mode}: summary must identify word and verse`);
     assert(wordState.navOverflow <= 1, `${mode}: Word-first navigation has horizontal overflow`);
     assert(wordState.documentOverflow <= 1, `${mode}: document has horizontal overflow`);
-    assertPanelPlacement(wordState, mode, mobile);
+    assertPanelPlacement(wordState, mode);
     await capturePanel(page, mode, "word");
 
     await click(
@@ -216,7 +216,7 @@ async function runScenario(browser, baseUrl, mode) {
     assert.deepEqual(inheritedState.groupScopes, ["word", "verse"], `${mode}: inherited Word and Verse groups are out of order`);
     assert.deepEqual(inheritedState.active, ["verse:Parallel"], `${mode}: Parallel must be the current Verse view`);
     assert.equal(inheritedState.wordDisabled, false, `${mode}: inherited Word control must remain available`);
-    assertPanelPlacement(inheritedState, mode, mobile);
+    assertPanelPlacement(inheritedState, mode);
     await capturePanel(page, mode, "inherited-verse");
 
     await click(page, "#showOutline");
@@ -229,7 +229,7 @@ async function runScenario(browser, baseUrl, mode) {
     assert.deepEqual(verseOnlyState.active, ["verse:Parallel"], `${mode}: Verse-only Parallel state is incorrect`);
     assert(verseOnlyState.navOverflow <= 1, `${mode}: Verse-only navigation has horizontal overflow`);
     assert(verseOnlyState.documentOverflow <= 1, `${mode}: cleared layout has horizontal overflow`);
-    assertPanelPlacement(verseOnlyState, mode, mobile);
+    assertPanelPlacement(verseOnlyState, mode);
     assert.deepEqual(pageErrors, [], `${mode}: browser errors were reported`);
     await capturePanel(page, mode, "verse-only");
 
