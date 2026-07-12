@@ -1,14 +1,19 @@
 # UI Functionality Contract
 
-Reviewed: 2026-07-11
+Reviewed: 2026-07-12
 
 ## Control placement
 
-- The chapter tool group contains Search, Tags, Translate, Jobs, and Data.
-- Outline and Language Study are side-panel tools only.
+- The chapter tool group contains Search, Study Marks, Translate, Processing, and Study Data.
+- Contextual side-panel navigation follows one visible scope order: `Word → Verse → Chapter → Book`.
+- Word and Verse controls render in `#detailContext` when a verse detail is active. Chapter and Book controls remain immediately after that contextual surface so the hierarchy stays stable.
+- Word is present only when canonical word/source-token context exists, and it is always the first scope when present.
+- Verse owns Parallel, References, Commentary, verse Language Study, Tags, and the verse Favorite control.
+- Chapter owns the chapter-level Language Study entry. Book owns Outline.
+- A compact context summary identifies the selected word and containing verse without repeating explanatory prose inside each detail view.
+- Visible contextual labels use the full product terms Parallel, References, Commentary, Language, and Tags. Stable short DOM labels (`Par`, `Refs`, `Cmt`, `Int`) remain only for existing browser automation compatibility; full labels are rendered and exposed through `title` and `aria-label`.
 - `Language Study` is the user-facing name. Existing `Interlinear` identifiers, capability names, data contracts, and test names remain intentionally internal.
 - Mobile exposes a Study panel launcher so side-panel-only tools remain reachable.
-- Verse context tabs expose Parallel, Refs, Cmt, Int, and Tags when their scoped actions apply.
 - There is exactly one Book mark control and one Chapter mark control. Each trigger displays `☆` or `★` from its Favorite state, reports that state through `aria-pressed`, and opens one target-aware menu containing Favorite and the other tags applicable to that target.
 - Book and Chapter mark triggers expose menu state through `aria-haspopup="menu"` and `aria-expanded`. Active non-favorite tags remain visible outside the closed menu as persistent editable badges.
 - Book and Chapter mark controls rerender after tag changes and after navigation so their stars, badges, targets, and menu contents remain current.
@@ -16,7 +21,21 @@ Reviewed: 2026-07-11
 - Interlinear source-token tag actions open the target-aware tag editor. The editor only presents active tags whose `allowed_target_types` include `source_token`.
 - Selecting reader text exposes Favorite, Tags, Study, Draft, and Red letters actions. Favorite and Tags use one canonical `text_span` target.
 
-The executable control map is `src/ui-contracts.js`.
+The executable control map is `src/ui-contracts.js`. The scoped navigation order and tool matrix are `src/panel-context-model.js`.
+
+## Scoped panel context
+
+The panel distinguishes direct data ownership from inherited containing context:
+
+| Scope | Direct tools/data | Availability |
+|---|---|---|
+| Word | Strong's/lexical detail, source word, morphology, word-level actions | Only when canonical word context exists |
+| Verse | Parallel text, references, commentary, verse Language Study, verse tags/favorite | When a verse is active |
+| Chapter | Chapter Language Study entry | When a chapter is active |
+| Book | Outline | When a book is active |
+| Global/user | Settings, personal data, maintenance, diagnostics | Reserved for the later Settings/My Data redesign |
+
+A word can inherit navigation to its containing Verse, Chapter, and Book tools, but those tools remain visibly attached to their true scope. Word detail must never imply that cross-references or commentary belong to the lexical entry itself.
 
 ## Control availability
 
@@ -28,7 +47,7 @@ Every study control resolves to exactly one state:
 | `capability_unavailable` | no | A required package or capability is disabled, missing, or invalid. |
 | `data_unavailable` | no | The capability exists, but the current book, chapter, or verse has no applicable data. |
 
-The side-panel Language Study control and Translation workspace require the internal interlinear capability plus at least one tokenized verse in the current chapter. The verse `Int` tab requires tokens for that exact verse. Disabled controls use native `disabled`, `aria-disabled`, a reason in `title`, and unavailable styling.
+The chapter Language Study control and Translation workspace require the internal interlinear capability plus at least one tokenized verse in the current chapter. The verse `Int` automation label represents the visibly rendered Language control and requires tokens for that exact verse. Disabled controls use native `disabled`, `aria-disabled`, a reason in `title`, and unavailable styling. The current scoped view uses `aria-current="page"` and remains visually distinct.
 
 ## Panel interaction modes
 
@@ -39,11 +58,12 @@ The side-panel Language Study control and Translation workspace require the inte
 
 Transitions:
 
-- Activating a chapter tool, side-panel tool, verse action, context tab, Strong's token, or detail action enters `locked`.
+- Activating a chapter tool, side-panel tool, verse action, context control, Strong's token, or detail action enters `locked`.
 - Hover alone never enters `locked`.
 - Clicking a disengage/background target, clearing the panel, or resetting it returns to `follow`.
 - Changing translation, book, or chapter returns to `follow`, clears the Strong's pin and stale detail content, and preserves reader-location Back/Forward history.
 - Panel Back/Forward restores the saved panel and mode. Restoring an Interlinear verse view must re-arm its lazy loader.
+- Scope navigation reuses the existing detail-history and lock authority in `src/dom.js`; it must not create another history stack or independent lock state.
 
 ## Runtime module identity
 
@@ -107,7 +127,8 @@ IndexedDB initialization and migration have a three-second boundary. If the brow
 
 ## Executable validation
 
-- `tests/ui-contracts.mjs`: availability, panel transitions, control schema, token identity.
+- `tests/ui-contracts.mjs`: availability, panel transitions, control schema, corrected data scopes, and token identity.
+- `tests/panel-context-model.mjs`: Word-first scope order, tool ownership, summary labels, shell ordering, full visible labels, and responsive wrapping contracts.
 - `tests/reference-context.mjs`: hierarchy normalization and stable keys.
 - `tests/interlinear.mjs`: packaged interlinear data contracts, Greek marked-glyph reconstruction, and shared Hebrew gematria behavior.
 - `tests/module-singletons.mjs`: one release key and singleton URLs for stateful runtime modules.
