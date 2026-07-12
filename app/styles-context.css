@@ -80,6 +80,11 @@
   color: var(--accent-dark);
 }
 
+.verse-context-tab.active:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
 .verse-context-favorite-button {
   min-height: 30px;
 }
