@@ -1,13 +1,20 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
+import { mkdir, readFile } from "node:fs/promises";
 import { createServer as createHttpServer } from "node:http";
-import { dirname, extname, resolve, sep } from "node:path";
+import { dirname, extname, join, resolve, sep } from "node:path";
 import { createServer } from "node:net";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright-core";
+
+const screenshotRoot = String(process.env.PANEL_CONTEXT_SCREENSHOT_DIR || "").trim();
+const VIEWPORTS = Object.freeze({
+  desktop: Object.freeze({ width: 1280, height: 720 }),
+  narrow: Object.freeze({ width: 820, height: 900 }),
+  mobile: Object.freeze({ width: 390, height: 844 }),
+});
 
 function delay(ms) {
   return new Promise((resolveDelay) => setTimeout(resolveDelay, ms));
@@ -90,6 +97,14 @@ async function click(page, selector) {
   }, selector);
 }
 
+async function capturePanel(page, mode, stateName) {
+  if (!screenshotRoot) return null;
+  await mkdir(screenshotRoot, { recursive: true });
+  const path = join(screenshotRoot, `panel-context-${mode}-${stateName}.png`);
+  await page.locator("#detailPane").screenshot({ path });
+  return path;
+}
+
 async function contextState(page) {
   return page.evaluate(() => {
     const nav = document.querySelector("#detailContext .panel-context-navigation");
@@ -126,7 +141,7 @@ async function contextState(page) {
 async function runScenario(browser, baseUrl, mode) {
   const mobile = mode === "mobile";
   const context = await browser.newContext({
-    viewport: mobile ? { width: 390, height: 844 } : { width: 1280, height: 720 },
+    viewport: VIEWPORTS[mode],
     deviceScaleFactor: mobile ? 3 : 1,
     isMobile: mobile,
     hasTouch: mobile,
@@ -166,6 +181,7 @@ async function runScenario(browser, baseUrl, mode) {
     assert.match(wordState.summary, /H\d+.*Proverbs 1:1|Proverbs 1:1.*H\d+/, `${mode}: summary must identify word and verse`);
     assert(wordState.navOverflow <= 1, `${mode}: Word-first navigation has horizontal overflow`);
     assert(wordState.documentOverflow <= 1, `${mode}: document has horizontal overflow`);
+    await capturePanel(page, mode, "word");
 
     await click(
       page,
@@ -177,6 +193,7 @@ async function runScenario(browser, baseUrl, mode) {
     assert.deepEqual(inheritedState.groupScopes, ["word", "verse"], `${mode}: inherited Word and Verse groups are out of order`);
     assert.deepEqual(inheritedState.active, ["verse:Parallel"], `${mode}: Parallel must be the current Verse view`);
     assert.equal(inheritedState.wordDisabled, false, `${mode}: inherited Word control must remain available`);
+    await capturePanel(page, mode, "inherited-verse");
 
     await click(page, "#showOutline");
     await waitFor(page, () => document.querySelector("#detailTitle")?.textContent === "Outline");
@@ -189,9 +206,11 @@ async function runScenario(browser, baseUrl, mode) {
     assert(verseOnlyState.navOverflow <= 1, `${mode}: Verse-only navigation has horizontal overflow`);
     assert(verseOnlyState.documentOverflow <= 1, `${mode}: cleared layout has horizontal overflow`);
     assert.deepEqual(pageErrors, [], `${mode}: browser errors were reported`);
+    await capturePanel(page, mode, "verse-only");
 
     return {
       mode,
+      viewport: VIEWPORTS[mode],
       wordOrder: wordState.scopeOrder,
       inheritedOrder: inheritedState.scopeOrder,
       verseOnlyOrder: verseOnlyState.scopeOrder,
@@ -211,8 +230,9 @@ const browser = await chromium.launch({
 try {
   const results = [];
   results.push(await runScenario(browser, url, "desktop"));
+  results.push(await runScenario(browser, url, "narrow"));
   results.push(await runScenario(browser, url, "mobile"));
-  console.log(JSON.stringify({ status: "ok", results }, null, 2));
+  console.log(JSON.stringify({ status: "ok", screenshots: Boolean(screenshotRoot), results }, null, 2));
 } finally {
   await browser.close();
   await new Promise((resolveClose) => server.close(resolveClose));
