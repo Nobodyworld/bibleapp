@@ -74,7 +74,7 @@ assert.match(index, /styles-context\.css\?v=pr13-live-qa-20260711e/);
 
 assert.match(tabsSource, /panelToolsForScope\("word"\)/);
 assert.match(tabsSource, /panelToolsForScope\("verse"\)/);
-assert.match(tabsSource, /data-visible-label/);
+assert.match(tabsSource, /dataset\.visibleLabel/);
 assert.match(tabsSource, /dataPanelScope|panelScope/);
 assert.match(contextCss, /\.panel-context-controls\s*{[\s\S]*?flex-wrap:\s*wrap;/);
 assert.match(contextCss, /\.verse-context-tab::after\s*{[\s\S]*?content:\s*attr\(data-visible-label\);/);
