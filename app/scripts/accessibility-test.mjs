@@ -117,7 +117,10 @@ function checkLanguageTooltips(source) {
 
 function checkPressedStates(tagsView, tabsView) {
   assert(/button\.setAttribute\("aria-pressed", active \? "true" : "false"\)/.test(tagsView), "Tag toggle buttons must expose aria-pressed.");
-  assert(/button\.setAttribute\("aria-pressed", action\.id === active \? "true" : "false"\)/.test(tabsView), "Verse context tabs must expose aria-pressed.");
+  assert(
+    /button\.setAttribute\("aria-pressed", (?:action\.current|action\.id === active) \? "true" : "false"\)/.test(tabsView),
+    "Contextual panel controls must expose aria-pressed.",
+  );
   return {
     tagTogglePressedState: true,
     contextTabPressedState: true,
