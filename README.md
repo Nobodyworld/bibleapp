@@ -1,30 +1,130 @@
 # Bible App Reader
 
-Bible App Reader is a local-first, static Bible study reader with
-multi-translation reading, commentary, interlinear analysis, semantic tagging, resilient
-browser-local persistence, and desktop/mobile verification.
+Bible App Reader is a local-first Bible study workspace that runs as a static
+browser application. It combines multi-translation reading, hover-first
+supplemental context, Hebrew and Greek Language Study, commentary,
+cross-references, Strong's lexicons, structured study marks, and portable
+browser-local data without requiring an account, hosted backend, analytics
+service, or remote application API.
 
-The app runs entirely as a browser client. Bible texts, commentary, lexicons,
-cross-references, interlinear records, search indexes, and generated analysis
-packs are shipped as local JSON data, so ordinary study sessions do not require
-an account, analytics service, hosted backend, or remote application API.
+The app is deliberately packed with supplemental study data without placing all
+of it on the reading surface at once. Reader words, references,
+original-language forms, morphology, transliteration marks, and related lexical
+entries reveal context on demand through hover, keyboard focus, touch, and
+explicit activation. The reader stays primary while deeper material remains
+close at hand.
 
-This repository is intended as a public showcase and source distribution, not
-a production SaaS service. Browser-local data does not sync between devices by
-itself, and the repository includes large bundled datasets.
+The repository is designed as both a public product showcase and an auditable
+source distribution. Bible text, original-language records, commentary,
+lexicons, search indexes, and generated analysis packs are shipped as local
+JSON data so the core study experience remains usable from a plain static
+server.
 
-## Why This Exists
+## What Makes It Different
 
-Bible App Reader is built for structured study without an account or cloud
-dependency. It keeps canonical study data local, keeps personal study state in
-the browser, and exposes reader, search, interlinear, commentary, tagging, and
-data-export tools from one static app.
+| Capability | Practical value |
+|---|---|
+| Hover-first study | Supplemental word, reference, language, and lexical context appears on demand without permanently crowding the reader. |
+| Local-first reading | Reading and research do not depend on a hosted service or account. |
+| Integrated context | Reader text, commentary, outlines, cross-references, Strong's data, and source-language records remain connected in one workspace. |
+| Original-language depth | Hebrew and Greek cards separate source text, transliteration, pronunciation guidance, dictionary form, morphology, glosses, word origin, and related entries. |
+| Structured study marks | Favorites and tags can be attached at book, chapter, verse, text-span, and source-token scope. |
+| Portable personal data | Browser-local study state can be exported, imported, and recovered as JSON. |
+| Auditable package | Source manifests, notices, deterministic data tools, package inventory, and verification scripts are included in the repository. |
+
+## Study Experience
+
+### Hover-first supplemental context
+
+- Hovering or focusing a reader word can show transient Strong's and language
+  detail without changing the reading location.
+- Reference controls can preview the referenced passage before navigation.
+- Language and transliteration elements explain letters, marks, and scholarly
+  notation on demand.
+- Clicking or activating a transient item can pin or open persistent detail when
+  deeper study is wanted.
+- Transient previews do not intentionally mutate panel history or replace a
+  locked study panel.
+- Tooltips and previews are bounded to the visible panel and viewport.
+- Pointer interactions have keyboard and practical touch equivalents.
+- Extended Language Study content is loaded incrementally rather than rendering
+  every word card into the reader at once.
+
+The interaction model is functional today and is being unified further under
+issue #16.
+
+### Reader and navigation
+
+- Ten bundled English Bible translations.
+- Book and chapter navigation designed for desktop, narrow, and mobile layouts.
+- Sticky verse context while study sections load and expand.
+- Footnotes, outlines, commentary, parallel passages, cross-references, and
+  verse-scoped actions.
+- Reader-to-panel word highlighting and panel history restoration.
+- Ordinary prose, headings, superscriptions, poetry, and indentation retain
+  their intended presentation.
+
+### Hebrew and Greek Language Study
+
+- Bundled Westminster Leningrad Codex and consonants-only Hebrew records.
+- Bundled Nestle 1904 and Scrivener Textus Receptus 1894 Greek records.
+- Source text, scholarly transliteration, phonetic spelling, lemma, gloss,
+  morphology, Strong's entry, word origin, and related lexical references.
+- Hebrew marks and gematria where applicable.
+- Greek letter analysis that preserves breathing marks, accents, diaeresis,
+  iota subscript, and other attached marks on the displayed glyph.
+- Structured Strong's references with contained previews, keyboard and pointer
+  access, destination navigation, and Back restoration.
+- Lazy verse loading so extended chapter study does not render every card at
+  once.
+
+### Study Marks and browser-local data
+
+- One Book mark control and one Chapter mark control, each combining Favorite
+  and applicable tags in a target-aware menu.
+- Persistent non-favorite badges that remain visible outside closed menus.
+- Verse, selected-text, and source-token favorites and tags.
+- Canonical semantic targets for books, chapters, verses, ranges, text spans,
+  source tokens, and source-token spans.
+- Study Marks dashboard for reviewing tagged and favorited targets.
+- Browser-local summary counts, JSON export/import, storage recovery, and
+  capability controls.
+
+The current Translation workspace, Processing screen, and Study Data screen are
+being reassessed rather than presented as finished information architecture.
+Word-level meaning tagging is tracked in issue #18, and user-data/settings
+simplification is tracked in issue #19.
+
+### Resilience and accessibility
+
+- IndexedDB startup falls back to localStorage when browser storage is blocked
+  or stalls beyond the startup boundary.
+- Keyboard-operable study controls and visible focus treatment.
+- Pointer, focus, keyboard, and touch support for app-controlled previews.
+- Reduced-motion, forced-colors, right-to-left source text, and mobile touch
+  coverage where static or browser verification is practical.
+- Tooltips and previews are constrained to the visible panel and viewport.
+
+## Context and Side-Panel Direction
+
+Study information exists at different scopes:
+
+- a **word** owns lexical, source-language, morphology, and saved-meaning data;
+- a **verse** owns parallel text, references, commentary, verse tags, and the
+  containing context for a selected word;
+- a **chapter** owns chapter navigation and chapter-level Language Study entry;
+- a **book** owns outline and book-level study context;
+- global/user tools own settings, backup, restore, package, and diagnostic data.
+
+The current interface exposes these capabilities, but their grouping and tab
+order are not yet final. The intended direction is a stable contextual hierarchy
+with **Word first whenever word context exists**, followed by broader verse,
+chapter, and book context. That work is tracked in issue #17.
 
 ## Screenshots
 
-The public gallery uses large, expandable images so the app can be reviewed from
-GitHub without opening tiny table thumbnails. Click any section to expand the
-full screenshot.
+The gallery uses expandable images so the application can be reviewed directly
+from GitHub. The captures will be refreshed after the intended UI work is stable.
 
 ### Reader and Navigation
 
@@ -56,17 +156,17 @@ full screenshot.
 
 </details>
 
-### Interlinear and Source-Language Study
+### Language Study and Strong's
 
 <details open>
-<summary>Interlinear — source text, Strong's, morphology, and glosses</summary>
+<summary>Language Study — source text, Strong's, morphology, and glosses</summary>
 
-![Interlinear study view](docs/images/interlinear.png)
+![Language Study view](docs/images/interlinear.png)
 
 </details>
 
 <details>
-<summary>Hebrew / Strong's side panel</summary>
+<summary>Hebrew and Strong's detail panel</summary>
 
 ![Hebrew Strong's side panel](docs/images/hebrew-side-panel.png)
 
@@ -89,14 +189,14 @@ full screenshot.
 </details>
 
 <details>
-<summary>Study Data</summary>
+<summary>Current Study Data screen — redesign tracked in issue #19</summary>
 
 ![Study Data panel](docs/images/study-data.png)
 
 </details>
 
 <details>
-<summary>Local Processing</summary>
+<summary>Current Local Processing screen — redesign tracked in issue #19</summary>
 
 ![Local Processing panel](docs/images/local-processing.png)
 
@@ -119,14 +219,14 @@ full screenshot.
 </details>
 
 <details>
-<summary>Dark interlinear</summary>
+<summary>Dark Language Study</summary>
 
-![Dark mode interlinear study view](docs/images/interlinear-dark.png)
+![Dark mode Language Study view](docs/images/interlinear-dark.png)
 
 </details>
 
 <details>
-<summary>Dark Hebrew / Strong's side panel</summary>
+<summary>Dark Hebrew and Strong's detail panel</summary>
 
 ![Dark mode Hebrew Strong's side panel](docs/images/hebrew-side-panel-dark.png)
 
@@ -155,32 +255,28 @@ full screenshot.
 
 </details>
 
-## Features
+## Run Locally
 
-- Ten English Bible translations with chapter and verse navigation.
-- Commentary, outlines, footnotes, cross-references, and Strong's lexicons.
-- Hebrew and Greek interlinear views with morphology and language tooltips.
-- Local search indexes, semantic tags, favorites, assertions, and study jobs.
-- Browser-local persistence with import, export, and recovery coverage.
-- Generated word maps and cross-reference graph analysis.
-- Static, domain, accessibility, desktop-browser, and mobile-browser tests.
+### Prerequisites
 
-## Public Demo
-
-Prerequisites:
-
-- Node.js 20 or newer
-- Python 3 for the local static server
-- Microsoft Edge for the browser verification suite
+- Node.js 20 or newer.
+- A modern browser.
+- Microsoft Edge on Windows only when running the full automated browser suite.
 
 ```powershell
 npm ci
 npm run serve
-start http://127.0.0.1:8000/#/read/bsb/psalms/23
 ```
 
-Routes are hash-based; the default public demo route above opens Psalm 23 in
-BSB. The app can also be opened at `http://127.0.0.1:8000/`.
+Open:
+
+```text
+http://127.0.0.1:8000/#/read/bsb/psalms/23
+```
+
+Routes are hash-based, so the app can run from the included Node static server
+without a framework-specific deployment runtime. Opening
+`http://127.0.0.1:8000/` loads the default application route.
 
 ## Verification
 
@@ -192,84 +288,128 @@ npm run test:browser:mobile
 npm run verify
 ```
 
-`npm run verify` runs the full static, domain, accessibility, desktop,
-mobile, inventory, and package audit suite. The browser tests currently use
-Microsoft Edge on Windows. The app should run in modern browsers, but this
-repository's automated browser QA is Edge-focused.
+`npm run verify` runs the static, domain, accessibility-source, desktop-browser,
+mobile-browser, inventory, and publish-audit suites. The browser automation
+currently uses Microsoft Edge on Windows; manual cross-browser work remains
+tracked in issue #7.
 
 Before a public release or tag, also run:
 
 ```powershell
 npm audit --audit-level=low
 gitleaks detect --source . --no-git=false
+git diff --check
 ```
 
-## Testing Strategy
-
-Static tests validate JavaScript/JSON integrity, manifests, capabilities,
-analysis packs, interlinear data, UI contracts, reader regressions, morphology,
-module singleton boundaries, reference context, tags, accessibility source
-coverage, docs consistency, inventory, and publish audit rules. Domain tests
-exercise local jobs, package planning/state, poll responses, recovery
-scenarios, semantic seeds, and user-data semantics. Browser tests run desktop
-and mobile reader flows with Microsoft Edge.
+See [the test inventory](tests/TEST_INVENTORY.md) for the executable coverage
+map.
 
 ## Architecture
 
-`app/index.html`, `app/app.js`, and `app/styles.css` provide the static shell.
-Focused ES modules under `app/src/` implement routing, rendering, study views,
-persistence, semantic data, and package state. Runtime datasets live under
-`app/data/`; schemas and deterministic data tools live under `app/schemas/`
-and `app/tools/`. Repository-level integration and integrity tests are under
-`tests/`.
+The application is intentionally deployable as static files:
 
-See:
+- `app/index.html`, `app/app.js`, and `app/styles.css` provide the shell.
+- Focused ES modules under `app/src/` implement routing, rendering, panel state,
+  study tools, semantic targets, persistence, and package state.
+- Deterministic runtime datasets live under `app/data/`.
+- Schemas and data-generation tools live under `app/schemas/` and `app/tools/`.
+- Repository-level integrity and regression tests live under `tests/`.
+
+Hash routing and local JSON shards avoid a required backend while preserving
+repeatable routes and deterministic package contents.
+
+Further documentation:
 
 - [Architecture](docs/ARCHITECTURE.md)
 - [Data model](docs/DATA_MODEL.md)
 - [Security posture](docs/SECURITY_POSTURE.md)
+- [UI functionality contract](app/docs/UI_FUNCTIONALITY_SCHEMA.md)
 - [Test inventory](tests/TEST_INVENTORY.md)
+
+Repository-wide documentation and loose-file reconciliation is tracked in issue
+#15.
+
+## Package Inventory and Repository Size
+
+The current full-study package contains:
+
+- 10 reader translations;
+- 29 feature packs;
+- 2,804 packaged files;
+- 954,311,610 aggregate bytes;
+- 180,460,807 aggregate gzip bytes.
+
+The repository is therefore much larger than a typical static web project.
+Initial clones and checkouts can be slow, but keeping the data together allows
+the showcase to run without a hosted data service. Post-public measurement and
+data-pack planning remain tracked in issue #6.
 
 ## Data Rights
 
 Application code, tests, scripts, schemas, and tooling are available under the
 MIT License. Bundled Bible and study data retains its source rights and notices
-and is not described as MIT-licensed. See [NOTICE.md](NOTICE.md) and
-[`app/data/source-manifest.json`](app/data/source-manifest.json).
+and is not described as MIT-licensed.
 
-Some retained notices include both permission/copyright language from the
-source package and later public-domain wording for the Berean Study Bible.
-Those notices are preserved so downstream users can inspect the provenance
-rather than relying on a simplified license summary.
+Review:
 
-## Accessibility
+- [NOTICE.md](NOTICE.md)
+- [`app/data/source-manifest.json`](app/data/source-manifest.json)
 
-Static accessibility coverage checks landmarks, labels, button types,
-focus-visible styles, reduced-motion support, forced-colors support, RTL
-source-text rules, keyboard activation for Strong's/interlinear controls, and
-mobile touch equivalents where static inspection is reliable. Browser QA still
-matters for visual focus order, zoom behavior, and assistive-technology review.
+Some retained source notices contain both permission or copyright language and
+later public-domain wording. The repository preserves those notices and the
+recorded transformations so downstream users can inspect provenance rather
+than rely on an oversimplified license summary.
 
-## Repository Size
+## Security and Privacy Model
 
-The repository includes local runtime datasets for the reader package. The
-current package inventory is about 898 MB uncompressed and 169 MB gzipped, so
-initial clones and checkouts can be slower than a typical static web project.
-A future release could split large data packs into separate release assets.
+Bible App Reader has no server-side account system, analytics service, payment
+flow, remote write API, or application backend. Personal study state remains in
+the current browser profile unless the user exports it.
 
-## Performance Notes
+The static application includes a Content Security Policy and sanitizes
+commentary HTML, but changes involving HTML rendering, imported data, browser
+persistence, or bundled third-party content still require review.
 
-The current showcase keeps large runtime shards in Git so the static app can
-run locally without a separate data service. Package inventory and browser
-tests are tracked as release gates, but route-level performance budgets remain
-future work.
+See [SECURITY.md](SECURITY.md) for vulnerability reporting and the current
+repository-security posture.
 
-## Known Limitations
+## Current Boundaries
 
-- Browser-local data does not automatically synchronize between devices or
+- Browser-local study data does not automatically synchronize across devices or
   browser profiles.
-- The app has no hosted backend, collaborative accounts, or cloud backup.
-- Browser verification currently expects Microsoft Edge on Windows.
-- Some generated source text contains legacy character-encoding artifacts.
-- The bundled data is retained for local-first study use and should be reviewed
-  with the included notices before redistribution.
+- There is no collaborative account system or cloud backup.
+- Automated browser QA is currently Edge-focused; broader manual QA is tracked
+  in issue #7.
+- The bundled package increases clone and checkout size; future distribution
+  options are tracked in issue #6.
+- The side-panel context hierarchy is functional but not final; redesign is
+  tracked in issue #17.
+- Translation/rendering and user-data/processing tools are under focused
+  simplification in issues #18 and #19.
+- Publication activation, repository settings, and eligible GitHub security
+  features remain tracked in issue #5.
+- Bundled data should be redistributed only after reviewing the included source
+  notices and manifest.
+
+## Project Status
+
+Active and planned public-showcase work is tracked by scope rather than assumed
+future pull-request numbers:
+
+- PR #14 — README feature/value rewrite;
+- issue #15 — documentation and loose-file reconciliation;
+- issue #16 — hover-first supplemental study UX;
+- issue #17 — word-first contextual side-panel hierarchy;
+- issue #18 — word-tag meaning utility replacing the current Translation surface;
+- issue #19 — Processing and Study Data simplification;
+- public screenshot refresh after the intended UI stabilizes;
+- final public-release audit and issue #5 activation checklist.
+
+Issues #6 and #7 remain post-public performance and broader manual browser-QA
+work unless they reveal a severe blocker.
+
+## Contributing
+
+Focused bug reports, documentation corrections, accessibility findings,
+data-rights questions, and reproducible browser issues are welcome. See
+[CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request.
