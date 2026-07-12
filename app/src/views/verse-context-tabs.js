@@ -31,12 +31,8 @@ function hasInterlinear(ctx, verse) {
   );
 }
 
-function resolveWordContext(ctx, explicitContext, active, verse) {
-  const candidate = explicitContext?.token ? explicitContext : ctx.studyContext?.strong;
-  if (!candidate?.token) return null;
-  if (active === "strongs") return candidate;
-  const contextVerse = candidate.options?.verseContext?.verse;
-  return contextVerse != null && String(contextVerse) === String(verse) ? candidate : null;
+function resolveWordContext(ctx, explicitContext, verse) {
+  return explicitContext?.token ? explicitContext : ctx.getActiveWordContext?.(verse) || null;
 }
 
 function createScopeGroup(scope) {
@@ -205,7 +201,7 @@ function appendActionButton(ctx, controls, action, reference, verse, wordContext
 }
 
 export function createVerseContextTabs(ctx, reference, verse, active, strongsContext = null) {
-  const wordContext = resolveWordContext(ctx, strongsContext, active, verse);
+  const wordContext = resolveWordContext(ctx, strongsContext, verse);
   const hasWord = Boolean(wordContext?.token);
   const scopeOrder = panelScopeSequence({ word: hasWord, verse: true, chapter: true, book: true });
 
