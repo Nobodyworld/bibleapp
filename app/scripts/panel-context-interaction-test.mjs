@@ -101,7 +101,7 @@ async function capturePanel(page, mode, stateName) {
   if (!screenshotRoot) return null;
   await mkdir(screenshotRoot, { recursive: true });
   const path = join(screenshotRoot, `panel-context-${mode}-${stateName}.png`);
-  await page.locator("#detailPane").screenshot({ path });
+  await page.locator(".detail-pane").screenshot({ path });
   return path;
 }
 
