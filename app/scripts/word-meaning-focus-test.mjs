@@ -126,7 +126,11 @@ async function runProfile(browser, url, profile) {
     await waitFor(page, () => Boolean(document.querySelector("#chapterTitle")?.textContent.includes("Proverbs 1")));
 
     stage = "open verse context";
-    await page.locator(".verse-study-button").first().click();
+    await page.evaluate(() => {
+      const button = document.querySelector(".verse-study-button");
+      if (!button) throw new Error("Verse study button not found");
+      button.click();
+    });
     await waitFor(page, () =>
       [...document.querySelectorAll("#detailContext .verse-context-tab")].some(
         (button) => button.textContent.trim() === "Int" && !button.disabled,
