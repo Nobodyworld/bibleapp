@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 
 import { existsSync } from "node:fs";
-import { writeFile } from "node:fs/promises";
 import { chromium } from "playwright-core";
 import { startStaticAppServer } from "../tools/serve-app.mjs";
 
@@ -223,25 +222,11 @@ async function main() {
     ];
     const completed = [];
     for (const profile of profiles) completed.push(await runProfile(browser, url, profile));
-    return { status: "ok", profiles: completed, assertions: completed.length * 2 };
+    console.log(JSON.stringify({ status: "ok", profiles: completed, assertions: completed.length * 2 }, null, 2));
   } finally {
     await browser.close();
     await new Promise((resolveClose) => server.close(resolveClose));
   }
 }
 
-let report;
-try {
-  report = await main();
-  console.log(JSON.stringify(report, null, 2));
-} catch (error) {
-  report = {
-    status: "error",
-    message: error?.message || String(error),
-    stack: error?.stack || "",
-  };
-  console.error(JSON.stringify(report, null, 2));
-  process.exitCode = 1;
-} finally {
-  await writeFile("word-meaning-focus-result.json", JSON.stringify(report, null, 2));
-}
+await main();
