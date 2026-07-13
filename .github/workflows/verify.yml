@@ -38,3 +38,11 @@ jobs:
 
       - name: Run release verification
         run: npm run verify
+
+      - name: Upload focused diagnostic
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: word-meaning-focus-${{ matrix.node-version }}
+          path: word-meaning-focus-result.json
+          if-no-files-found: warn
