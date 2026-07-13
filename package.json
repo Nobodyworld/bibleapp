@@ -26,7 +26,7 @@
     "test:word-meaning": "node ./tests/word-meaning.mjs",
     "test:word-meaning-focus": "node ./app/scripts/word-meaning-focus-test.mjs",
     "test:ui": "node ./tests/ui-contracts.mjs && node ./tests/panel-context-model.mjs",
-    "verify": "npm run test:word-meaning-focus",
+    "verify": "npm test && npm run audit",
     "serve": "node ./app/tools/serve-app.mjs",
     "serve:publish": "node ./app/tools/serve-app.mjs",
     "screenshots:public": "node ./tools/capture-public-screenshots.mjs"
