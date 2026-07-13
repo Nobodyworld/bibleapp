@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { existsSync } from "node:fs";
+import { writeFile } from "node:fs/promises";
 import { chromium } from "playwright-core";
 import { startStaticAppServer } from "../tools/serve-app.mjs";
 
@@ -118,34 +119,37 @@ async function runProfile(browser, url, profile) {
       : undefined,
   });
   const page = await context.newPage();
+  let stage = "navigate";
 
   try {
     await page.goto(`${url}/#/read/bsb/proverbs/1/1`, { waitUntil: "load" });
     await waitFor(page, () => Boolean(document.querySelector("#chapterTitle")?.textContent.includes("Proverbs 1")));
 
+    stage = "open verse context";
     await page.locator(".verse-study-button").first().click();
     await waitFor(page, () =>
       [...document.querySelectorAll("#detailContext .verse-context-tab")].some(
         (button) => button.textContent.trim() === "Int" && !button.disabled,
       ),
     );
+
+    stage = "open Language Study";
     await page
       .locator("#detailContext .verse-context-tab")
       .filter({ hasText: /^Int$/ })
       .first()
       .click();
-
     await waitFor(page, () => Boolean(document.querySelector("#detailTitle")?.textContent === "Interlinear"));
     await waitFor(page, () =>
       Boolean(document.querySelector('.interlinear-verse-section[data-verse="1"] .word-meaning-control')),
     );
 
+    stage = "prepare focus target";
     const card = page
       .locator('.interlinear-verse-section[data-verse="1"] .interlinear-token')
       .filter({ has: page.locator(".word-meaning-control") })
       .first();
     const trigger = card.locator(".word-meaning-trigger");
-
     await card.evaluate((node) => {
       const existing = node.querySelector("#qa-word-meaning-outside-focus");
       if (existing) existing.remove();
@@ -157,15 +161,18 @@ async function runProfile(browser, url, profile) {
     });
     const outsideControl = card.locator("#qa-word-meaning-outside-focus");
 
+    stage = "open Meaning picker";
     await trigger.scrollIntoViewIfNeeded();
     const before = await workspaceSnapshot(page);
     await trigger.click();
     await waitFor(page, () => Boolean(document.querySelector(".word-meaning-menu:not([hidden])")));
 
+    stage = "dismiss through outside focus target";
     await outsideControl.click();
     await waitFor(page, () => !document.querySelector(".word-meaning-menu:not([hidden])"));
     await delay(100);
 
+    stage = "verify focus and persistence";
     const focusState = await page.evaluate(() => ({
       outsideFocused: document.activeElement?.id === "qa-word-meaning-outside-focus",
       meaningFocused: document.activeElement?.classList?.contains("word-meaning-trigger") || false,
@@ -182,6 +189,9 @@ async function runProfile(browser, url, profile) {
     );
 
     return profile.name;
+  } catch (error) {
+    error.message = `${profile.name} at ${stage}: ${error.message}`;
+    throw error;
   } finally {
     await context.close();
   }
@@ -209,11 +219,25 @@ async function main() {
     ];
     const completed = [];
     for (const profile of profiles) completed.push(await runProfile(browser, url, profile));
-    console.log(JSON.stringify({ status: "ok", profiles: completed, assertions: completed.length * 2 }, null, 2));
+    return { status: "ok", profiles: completed, assertions: completed.length * 2 };
   } finally {
     await browser.close();
     await new Promise((resolveClose) => server.close(resolveClose));
   }
 }
 
-await main();
+let report;
+try {
+  report = await main();
+  console.log(JSON.stringify(report, null, 2));
+} catch (error) {
+  report = {
+    status: "error",
+    message: error?.message || String(error),
+    stack: error?.stack || "",
+  };
+  console.error(JSON.stringify(report, null, 2));
+  process.exitCode = 1;
+} finally {
+  await writeFile("word-meaning-focus-result.json", JSON.stringify(report, null, 2));
+}
