@@ -145,7 +145,17 @@ async function runProfile(browser, url, profile) {
       .filter({ has: page.locator(".word-meaning-control") })
       .first();
     const trigger = card.locator(".word-meaning-trigger");
-    const outsideControl = card.locator(".token-tag-button");
+
+    await card.evaluate((node) => {
+      const existing = node.querySelector("#qa-word-meaning-outside-focus");
+      if (existing) existing.remove();
+      const outside = document.createElement("button");
+      outside.id = "qa-word-meaning-outside-focus";
+      outside.type = "button";
+      outside.textContent = "Outside focus target";
+      node.append(outside);
+    });
+    const outsideControl = card.locator("#qa-word-meaning-outside-focus");
 
     await trigger.scrollIntoViewIfNeeded();
     const before = await workspaceSnapshot(page);
@@ -156,15 +166,10 @@ async function runProfile(browser, url, profile) {
     await waitFor(page, () => !document.querySelector(".word-meaning-menu:not([hidden])"));
     await delay(100);
 
-    const focusState = await page.evaluate(() => {
-      const openTagButton = [...document.querySelectorAll(".token-tag-button")].find(
-        (button) => button === document.activeElement,
-      );
-      return {
-        outsideFocused: Boolean(openTagButton),
-        meaningFocused: document.activeElement?.classList?.contains("word-meaning-trigger") || false,
-      };
-    });
+    const focusState = await page.evaluate(() => ({
+      outsideFocused: document.activeElement?.id === "qa-word-meaning-outside-focus",
+      meaningFocused: document.activeElement?.classList?.contains("word-meaning-trigger") || false,
+    }));
     const after = await workspaceSnapshot(page);
 
     assert(
