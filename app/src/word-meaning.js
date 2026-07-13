@@ -282,7 +282,7 @@ export function createWordMeaningControl({
   };
 
   function onOutsidePointerDown(event) {
-    if (!root.contains(event.target)) close({ restoreFocus: true });
+    if (!root.contains(event.target)) close();
   }
 
   function onKeyDown(event) {

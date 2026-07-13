@@ -121,6 +121,23 @@ async function launchBrowser() {
     async press(selector, key) {
       await playwrightPage.locator(selector).press(key);
     },
+    async pointerClick(selector) {
+      const locator = playwrightPage.locator(selector);
+      try {
+        await locator.click({ timeout: 1000 });
+      } catch {
+        await locator.evaluate((element) => {
+          element.dispatchEvent(
+            new PointerEvent("pointerdown", { bubbles: true, cancelable: true, pointerType: "mouse" }),
+          );
+          element.focus();
+          element.dispatchEvent(
+            new PointerEvent("pointerup", { bubbles: true, cancelable: true, pointerType: "mouse" }),
+          );
+          element.click();
+        });
+      }
+    },
     async send(method, params = {}) {
       if (method === "Page.enable" || method === "Runtime.enable") return {};
       if (method === "Page.navigate") {
@@ -1576,6 +1593,41 @@ async function runQa(page) {
     workspaceMeaningSnapshotExpression(proverbsMeaningReference, meaningSeed.tokenIndex),
   );
   assert(beforeCancelSnapshot === afterCancelSnapshot, "Other Cancel mutated the workspace or localStorage mirror");
+
+  await click(page, '.word-meaning-trigger');
+  await waitFor(page, "Boolean(document.querySelector('.word-meaning-menu:not([hidden])'))");
+  const outsidePointerSnapshot = await evaluate(
+    page,
+    workspaceMeaningSnapshotExpression(proverbsMeaningReference, meaningSeed.tokenIndex),
+  );
+  await page.pointerClick('#translationSelect');
+  await waitFor(page, "!document.querySelector('.word-meaning-menu:not([hidden])')");
+  await delay(50);
+  const outsidePointerState = await evaluate(
+    page,
+    `(() => {
+      const trigger = [...document.querySelectorAll('.word-meaning-control')].find(
+        (control) => control.dataset.targetId === ${JSON.stringify(meaningSeed.targetId)},
+      )?.querySelector('.word-meaning-trigger');
+      return {
+        outsideControlFocused: document.activeElement === document.querySelector('#translationSelect'),
+        oldTriggerFocused: document.activeElement === trigger,
+      };
+    })()`,
+  );
+  const afterOutsidePointerSnapshot = await evaluate(
+    page,
+    workspaceMeaningSnapshotExpression(proverbsMeaningReference, meaningSeed.tokenIndex),
+  );
+  assert(
+    outsidePointerState.outsideControlFocused && !outsidePointerState.oldTriggerFocused,
+    `Outside Meaning dismissal did not retain focus on the clicked control: ${JSON.stringify(outsidePointerState)}`,
+  );
+  assert(
+    outsidePointerSnapshot === afterOutsidePointerSnapshot,
+    "Outside Meaning dismissal mutated the workspace, localStorage mirror, or workspace jobs",
+  );
+  pass("Language Study outside Meaning dismissal preserves clicked focus without mutation");
 
   await click(page, '.word-meaning-trigger');
   await waitFor(page, "Boolean(document.querySelector('.word-meaning-menu:not([hidden])'))");
