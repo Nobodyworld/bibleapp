@@ -14,25 +14,32 @@ service, remote write API, server-side secret, or payment flow.
 
 ## Repository Controls
 
+- The repository is public.
 - GitHub Actions are pinned to full-length commit SHAs.
-- Dependabot monitors npm and GitHub Actions updates.
+- Dependabot monitors npm and GitHub Actions updates on a weekly schedule.
+- Branch protection should require `verify (20)` and `verify (24)`.
 - Public-preview preparation requires local static, browser, inventory, audit,
   complete-history Gitleaks, and diff validation.
 - Final release or tag readiness remains a separate, stricter gate.
 
-## Post-Public Activation
+## Public Security Baseline
 
-While the repository is private, CodeQL and GitHub Secret Protection are
-deferred unless private Code Security licensing is available. Immediately after
-public visibility is enabled:
+The public repository security baseline requires:
 
-- manually dispatch the `Verify` workflow;
-- confirm Node 20 and Node 24 jobs execute and pass;
-- rerun the current draft PR #24 head without changing its review status;
-- enable or verify CodeQL Default Setup;
-- enable or verify secret scanning and push protection;
-- enable or verify Dependabot alerts and security updates;
-- enable or verify private vulnerability reporting.
+- private vulnerability reporting;
+- Secret Protection and push protection;
+- Dependabot alerts and security updates;
+- CodeQL Default Setup;
+- the Windows Node 20 and Node 24 `Verify` workflow matrix;
+- branch or ruleset review after public CI is proven healthy.
+
+Issue #5 is the system of record for which controls are owner-confirmed, which
+are connector-verified, and which remain pending. Availability alone is not
+verification.
+
+Draft PR #24 has completed a successful post-public rerun of both Verify matrix
+jobs, but it remains draft and product-review blocked. It must be reconciled with
+current `main` before any future merge decision.
 
 Public visibility does not create a production release, stable API promise, or
 release tag. It also does not relicense bundled third-party Bible and study data;
