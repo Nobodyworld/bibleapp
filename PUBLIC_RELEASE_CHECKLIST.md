@@ -10,10 +10,10 @@ Status language:
 
 > **PUBLIC PREVIEW — ACTIVE DEVELOPMENT**
 
-The repository may become public as a functional preview while planned interface
-work remains open.
+The repository is public as a functional preview while planned interface work
+remains open.
 
-### Required preview gates
+### Completed preview gates
 
 - [x] `main` baseline identified and tested.
 - [x] README states that the reader is functional and actively developed.
@@ -32,9 +32,9 @@ work remains open.
   preview baseline.
 - [x] No tracked local absolute paths, personal notes, agent artifacts, scan
   reports, browser profiles, or databases were found by the public-file review.
-- [ ] Owner visually reviews the generated public screenshots or elects to retain
-  the already tracked screenshot set without replacement.
-- [ ] Owner changes repository visibility to public.
+- [x] Existing tracked screenshots were retained without replacement for the
+  initial public preview; generated differences remain uncommitted.
+- [x] Repository visibility changed to public.
 
 Public-preview visibility does not require completion of every open UX issue.
 PR #24 remains draft and must not merge merely to publish the repository.
@@ -64,21 +64,28 @@ visibility.
 
 ## Phase C — Post-Public GitHub Security Activation
 
-Perform immediately after public visibility becomes active:
+### Confirmed
 
-- [ ] Manually dispatch `Verify` on `main`.
-- [ ] Confirm Node 20 and Node 24 jobs execute and pass.
-- [ ] Rerun draft PR #24 without changing its draft or product-review status.
+- [x] Draft PR #24 was rerun after publication without changing its draft or
+  product-review status.
+- [x] PR #24 passed `verify (20)` and `verify (24)` on its exact public head.
+- [x] Secret Protection and push protection are owner-confirmed enabled.
+- [x] Private vulnerability reporting is owner-confirmed enabled.
+- [x] Branch protection is owner-confirmed configured with `verify (20)` and
+  `verify (24)` as required checks.
+- [x] GitHub Actions remain pinned to full-length commit SHAs.
+
+### Still to verify
+
+- [ ] Manually dispatch `Verify` on current `main`.
+- [ ] Confirm `verify (20)` and `verify (24)` pass on current `main`.
 - [ ] Enable or verify Dependabot alerts.
 - [ ] Enable or verify Dependabot security updates.
-- [ ] Enable CodeQL Default Setup when eligible.
-- [ ] Enable GitHub Secret Protection and push protection when eligible.
-- [ ] Enable or verify private vulnerability reporting.
-- [ ] Preserve full-length commit SHA pinning for GitHub Actions.
+- [ ] Enable or verify CodeQL Default Setup.
 - [ ] Confirm public rendering of README, notices, screenshots, issue templates,
   and the security policy.
-- [ ] Review branch/ruleset requirements after the first successful public CI
-  result.
+- [ ] Recheck branch/ruleset behavior after the first successful public `main`
+  Verify run.
 
 ## Latest Public-Preview Baseline Verification
 
@@ -101,15 +108,13 @@ Results:
   approximately 990.24 MB scanned with no leaks.
 - `git diff --check`: passed.
 - `npm run screenshots:public`: passed; generated 17 current captures for visual
-  review, but generated image differences are not automatically approved or
-  committed.
+  review, but generated image differences were not committed.
 - Original checkout and isolated worktree had no untracked files before
   screenshot generation.
 - Tracked path and suspicious-filename searches found no matches.
 
 ## Do Not Do Automatically
 
-- Do not change repository visibility without owner action.
 - Do not create tags or releases as part of the public-preview change.
 - Do not merge PR #24 without product approval.
 - Do not delete or simplify source notices.
