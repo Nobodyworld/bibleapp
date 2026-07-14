@@ -1,5 +1,17 @@
 # Bible App Reader
 
+> **PUBLIC PREVIEW — ACTIVE DEVELOPMENT**
+>
+> The static reader is functional and actively developed. The side-panel,
+> personal Meaning, Study Marks, Processing, and Study Data interfaces are still
+> evolving. This repository does not promise a production release or stable API.
+>
+> Application code, tests, scripts, schemas, and tooling are MIT-licensed.
+> Bundled Bible and study data retains its own source rights and notices.
+> Downstream users must review [NOTICE.md](NOTICE.md) and
+> [`app/data/source-manifest.json`](app/data/source-manifest.json) before
+> redistribution.
+
 Bible App Reader is a local-first Bible study workspace that runs as a static
 browser application. It combines multi-translation reading, hover-first
 supplemental context, Hebrew and Greek Language Study, commentary,
@@ -7,18 +19,10 @@ cross-references, Strong's lexicons, structured study marks, and portable
 browser-local data without requiring an account, hosted backend, analytics
 service, or remote application API.
 
-The app is deliberately packed with supplemental study data without placing all
-of it on the reading surface at once. Reader words, references,
-original-language forms, morphology, transliteration marks, and related lexical
-entries reveal context on demand through hover, keyboard focus, touch, and
-explicit activation. The reader stays primary while deeper material remains
-close at hand.
-
-The repository is designed as both a public product showcase and an auditable
-source distribution. Bible text, original-language records, commentary,
-lexicons, search indexes, and generated analysis packs are shipped as local
-JSON data so the core study experience remains usable from a plain static
-server.
+The app keeps the reader primary while deeper material remains close at hand.
+Reader words, references, source-language forms, morphology, transliteration
+marks, and related lexical entries reveal context through hover, keyboard focus,
+touch, and explicit activation.
 
 ## What Makes It Different
 
@@ -28,72 +32,60 @@ server.
 | Local-first reading | Reading and research do not depend on a hosted service or account. |
 | Integrated context | Reader text, commentary, outlines, cross-references, Strong's data, and source-language records remain connected in one workspace. |
 | Original-language depth | Hebrew and Greek cards separate source text, transliteration, pronunciation guidance, dictionary form, morphology, glosses, word origin, and related entries. |
-| Structured study marks | Favorites and tags can be attached at book, chapter, verse, text-span, and source-token scope. |
+| Structured Study Marks | Favorites and tags can be attached at book, chapter, verse, text-span, and source-token scope. |
 | Portable personal data | Browser-local study state can be exported, imported, and recovered as JSON. |
-| Auditable package | Source manifests, notices, deterministic data tools, package inventory, and verification scripts are included in the repository. |
+| Auditable package | Source manifests, notices, deterministic data tools, package inventory, and verification scripts are included. |
 
 ## Study Experience
-
-### Hover-first supplemental context
-
-- Hovering or focusing a reader word can show transient Strong's and language
-  detail without changing the reading location.
-- Reference controls can preview the referenced passage before navigation.
-- Language and transliteration elements explain letters, marks, and scholarly
-  notation on demand.
-- Clicking or activating a transient item can pin or open persistent detail when
-  deeper study is wanted.
-- Transient previews do not intentionally mutate panel history or replace a
-  locked study panel.
-- Tooltips and previews are bounded to the visible panel and viewport.
-- Pointer interactions have keyboard and practical touch equivalents.
-- Extended Language Study content is loaded incrementally rather than rendering
-  every word card into the reader at once.
-
-The interaction model is functional today and is being unified further under
-issue #16.
 
 ### Reader and navigation
 
 - Ten bundled English Bible translations.
-- Book and chapter navigation designed for desktop, narrow, and mobile layouts.
-- Sticky verse context while study sections load and expand.
+- Book and chapter navigation for desktop, narrow, and mobile layouts.
 - Footnotes, outlines, commentary, parallel passages, cross-references, and
   verse-scoped actions.
 - Reader-to-panel word highlighting and panel history restoration.
-- Ordinary prose, headings, superscriptions, poetry, and indentation retain
-  their intended presentation.
+- Prose, headings, superscriptions, poetry, and indentation retain their intended
+  presentation.
+
+### Hover-first supplemental context
+
+- Reader words can show transient Strong's and language detail without changing
+  the reading location.
+- Reference controls can preview a passage before navigation.
+- Language and transliteration elements explain letters, marks, and scholarly
+  notation on demand.
+- Transient previews do not intentionally replace a locked panel or mutate panel
+  history.
+- Pointer interactions have keyboard and practical touch equivalents.
+
+The interaction model is functional today. Additional unification remains
+tracked in issue #16.
 
 ### Hebrew and Greek Language Study
 
-- Bundled Westminster Leningrad Codex and consonants-only Hebrew records.
-- Bundled Nestle 1904 and Scrivener Textus Receptus 1894 Greek records.
-- Source text, scholarly transliteration, phonetic spelling, lemma, gloss,
-  morphology, Strong's entry, word origin, and related lexical references.
+- Westminster Leningrad Codex and consonants-only Hebrew records.
+- Nestle Greek New Testament 1904 and Scrivener's Textus Receptus 1894 records.
+- Source text, transliteration, phonetic spelling, lemma, gloss, morphology,
+  Strong's entries, word origin, and related lexical references.
 - Hebrew marks and gematria where applicable.
-- Greek letter analysis that preserves breathing marks, accents, diaeresis,
-  iota subscript, and other attached marks on the displayed glyph.
-- Structured Strong's references with contained previews, keyboard and pointer
-  access, destination navigation, and Back restoration.
+- Greek letter analysis preserving breathing marks, accents, diaeresis, iota
+  subscript, and other attached marks.
 - Lazy verse loading so extended chapter study does not render every card at
   once.
 
 ### Study Marks and browser-local data
 
-- One Book mark control and one Chapter mark control, each combining Favorite
-  and applicable tags in a target-aware menu.
-- Persistent non-favorite badges that remain visible outside closed menus.
-- Verse, selected-text, and source-token favorites and tags.
 - Canonical semantic targets for books, chapters, verses, ranges, text spans,
   source tokens, and source-token spans.
-- Study Marks dashboard for reviewing tagged and favorited targets.
+- Favorites and applicable tags at supported scopes.
+- A Study Marks dashboard for reviewing tagged and favorited targets.
 - Browser-local summary counts, JSON export/import, storage recovery, and
   capability controls.
 
-The current Translation workspace, Processing screen, and Study Data screen are
-being reassessed rather than presented as finished information architecture.
-Word-level meaning tagging is tracked in issue #18, and user-data/settings
-simplification is tracked in issue #19.
+The current Study Marks interaction is being unified under issue #25. The draft
+personal Meaning implementation is tracked by issue #18 and PR #24. Processing
+and Study Data simplification is tracked by issue #19.
 
 ### Resilience and accessibility
 
@@ -110,150 +102,42 @@ simplification is tracked in issue #19.
 Study information exists at different scopes:
 
 - a **word** owns lexical, source-language, morphology, and saved-meaning data;
-- a **verse** owns parallel text, references, commentary, verse tags, and the
-  containing context for a selected word;
+- a **verse** owns parallel text, references, commentary, and verse Study Marks;
 - a **chapter** owns chapter navigation and chapter-level Language Study entry;
 - a **book** owns outline and book-level study context;
-- global/user tools own settings, backup, restore, package, and diagnostic data.
+- global/user tools own personal data, package, and diagnostic functions.
 
-The current interface exposes these capabilities, but their grouping and tab
-order are not yet final. The intended direction is a stable contextual hierarchy
-with **Word first whenever word context exists**, followed by broader verse,
-chapter, and book context. That work is tracked in issue #17.
+The current hierarchy is functional but is undergoing a compact corrective
+redesign under issue #17. The intended panel must make the active occupant
+obvious, preserve lock and history behavior, and reserve more space for study
+material than navigation chrome.
 
 ## Screenshots
 
-The gallery uses expandable images so the application can be reviewed directly
-from GitHub. The captures will be refreshed after the intended UI work is stable.
+These captures document the current preview baseline. They are not a promise
+that evolving UI surfaces are final.
 
-### Reader and Navigation
+### Reader and navigation
 
-<details open>
-<summary>Reader — Psalm 23</summary>
+| View | Light | Dark |
+|---|---|---|
+| Reader | ![Psalm 23 reader](docs/images/reader.png) | ![Dark Psalm 23 reader](docs/images/reader-dark.png) |
+| Detail panel | ![Reader detail panel](docs/images/detail-panel.png) | ![Dark reader detail panel](docs/images/detail-panel-dark.png) |
+| Mobile | ![Mobile reader](docs/images/mobile.png) | ![Dark mobile reader](docs/images/mobile-dark.png) |
 
-![Psalm 23 reader view](docs/images/reader.png)
+Additional current captures:
 
-</details>
-
-<details>
-<summary>Book picker — Old and New Testament columns</summary>
-
-![Old and New Testament book picker](docs/images/book-picker.png)
-
-</details>
-
-<details>
-<summary>Detail panel — outline and study context</summary>
-
-![Reader detail panel](docs/images/detail-panel.png)
-
-</details>
-
-<details>
-<summary>Verse tools — context tabs and verse actions</summary>
-
-![Verse context tabs](docs/images/verse-context-tabs.png)
-
-</details>
-
-### Language Study and Strong's
-
-<details open>
-<summary>Language Study — source text, Strong's, morphology, and glosses</summary>
-
-![Language Study view](docs/images/interlinear.png)
-
-</details>
-
-<details>
-<summary>Hebrew and Strong's detail panel</summary>
-
-![Hebrew Strong's side panel](docs/images/hebrew-side-panel.png)
-
-</details>
-
-### Study Workspace
-
-<details>
-<summary>Search</summary>
-
-![Search results](docs/images/search.png)
-
-</details>
-
-<details>
-<summary>Study Marks</summary>
-
-![Study Marks dashboard](docs/images/study-marks.png)
-
-</details>
-
-<details>
-<summary>Current Study Data screen — redesign tracked in issue #19</summary>
-
-![Study Data panel](docs/images/study-data.png)
-
-</details>
-
-<details>
-<summary>Current Local Processing screen — redesign tracked in issue #19</summary>
-
-![Local Processing panel](docs/images/local-processing.png)
-
-</details>
-
-### Dark Mode
-
-<details open>
-<summary>Dark reader — Psalm 23</summary>
-
-![Dark mode Psalm 23 reader view](docs/images/reader-dark.png)
-
-</details>
-
-<details>
-<summary>Dark detail panel</summary>
-
-![Dark mode reader detail panel](docs/images/detail-panel-dark.png)
-
-</details>
-
-<details>
-<summary>Dark Language Study</summary>
-
-![Dark mode Language Study view](docs/images/interlinear-dark.png)
-
-</details>
-
-<details>
-<summary>Dark Hebrew and Strong's detail panel</summary>
-
-![Dark mode Hebrew Strong's side panel](docs/images/hebrew-side-panel-dark.png)
-
-</details>
-
-<details>
-<summary>Dark Study Marks</summary>
-
-![Dark mode Study Marks dashboard](docs/images/study-marks-dark.png)
-
-</details>
-
-### Mobile
-
-<details open>
-<summary>Mobile reader</summary>
-
-![Mobile reader view](docs/images/mobile.png)
-
-</details>
-
-<details>
-<summary>Mobile reader — dark mode</summary>
-
-![Dark mode mobile reader view](docs/images/mobile-dark.png)
-
-</details>
+- [Book picker](docs/images/book-picker.png)
+- [Verse context controls](docs/images/verse-context-tabs.png)
+- [Language Study](docs/images/interlinear.png)
+- [Dark Language Study](docs/images/interlinear-dark.png)
+- [Hebrew and Strong's panel](docs/images/hebrew-side-panel.png)
+- [Dark Hebrew and Strong's panel](docs/images/hebrew-side-panel-dark.png)
+- [Search](docs/images/search.png)
+- [Study Marks](docs/images/study-marks.png)
+- [Dark Study Marks](docs/images/study-marks-dark.png)
+- [Study Data](docs/images/study-data.png)
+- [Local Processing](docs/images/local-processing.png)
 
 ## Run Locally
 
@@ -261,7 +145,7 @@ from GitHub. The captures will be refreshed after the intended UI work is stable
 
 - Node.js 20 or newer.
 - A modern browser.
-- Microsoft Edge on Windows only when running the full automated browser suite.
+- Microsoft Edge on Windows when running the complete automated browser suite.
 
 ```powershell
 npm ci
@@ -275,8 +159,7 @@ http://127.0.0.1:8000/#/read/bsb/psalms/23
 ```
 
 Routes are hash-based, so the app can run from the included Node static server
-without a framework-specific deployment runtime. Opening
-`http://127.0.0.1:8000/` loads the default application route.
+without a framework-specific deployment runtime.
 
 ## Verification
 
@@ -286,20 +169,15 @@ npm run test:static
 npm run test:browser
 npm run test:browser:mobile
 npm run verify
-```
-
-`npm run verify` runs the static, domain, accessibility-source, desktop-browser,
-mobile-browser, inventory, and publish-audit suites. The browser automation
-currently uses Microsoft Edge on Windows; manual cross-browser work remains
-tracked in issue #7.
-
-Before a public release or tag, also run:
-
-```powershell
 npm audit --audit-level=low
 gitleaks detect --source . --no-git=false
 git diff --check
 ```
+
+`npm run verify` runs the static, domain, accessibility-source, desktop-browser,
+mobile-browser, inventory, and publish-audit suites. Browser automation currently
+uses Microsoft Edge on Windows; broader manual browser QA remains tracked in
+issue #7.
 
 See [the test inventory](tests/TEST_INVENTORY.md) for the executable coverage
 map.
@@ -308,15 +186,12 @@ map.
 
 The application is intentionally deployable as static files:
 
-- `app/index.html`, `app/app.js`, and `app/styles.css` provide the shell.
+- `app/index.html`, `app/app.js`, and the app stylesheets provide the shell.
 - Focused ES modules under `app/src/` implement routing, rendering, panel state,
   study tools, semantic targets, persistence, and package state.
 - Deterministic runtime datasets live under `app/data/`.
 - Schemas and data-generation tools live under `app/schemas/` and `app/tools/`.
 - Repository-level integrity and regression tests live under `tests/`.
-
-Hash routing and local JSON shards avoid a required backend while preserving
-repeatable routes and deterministic package contents.
 
 Further documentation:
 
@@ -339,10 +214,9 @@ The current full-study package contains:
 - 954,311,610 aggregate bytes;
 - 180,460,807 aggregate gzip bytes.
 
-The repository is therefore much larger than a typical static web project.
-Initial clones and checkouts can be slow, but keeping the data together allows
-the showcase to run without a hosted data service. Post-public measurement and
-data-pack planning remain tracked in issue #6.
+The repository is much larger than a typical static web project. Keeping the data
+together allows the preview to run without a hosted data service. Post-public
+measurement and data-pack planning remain tracked in issue #6.
 
 ## Data Rights
 
@@ -350,15 +224,16 @@ Application code, tests, scripts, schemas, and tooling are available under the
 MIT License. Bundled Bible and study data retains its source rights and notices
 and is not described as MIT-licensed.
 
-Review:
+Before redistributing bundled content, review:
 
 - [NOTICE.md](NOTICE.md)
 - [`app/data/source-manifest.json`](app/data/source-manifest.json)
 
 Some retained source notices contain both permission or copyright language and
 later public-domain wording. The repository preserves those notices and the
-recorded transformations so downstream users can inspect provenance rather
-than rely on an oversimplified license summary.
+recorded transformations so downstream users can inspect provenance rather than
+rely on an oversimplified license summary. Publication of this repository does
+not create a blanket relicensing conclusion for bundled data.
 
 ## Security and Privacy Model
 
@@ -378,32 +253,31 @@ repository-security posture.
 - Browser-local study data does not automatically synchronize across devices or
   browser profiles.
 - There is no collaborative account system or cloud backup.
-- Automated browser QA is currently Edge-focused; broader manual QA is tracked
-  in issue #7.
-- The bundled package increases clone and checkout size; future distribution
-  options are tracked in issue #6.
-- The side-panel context hierarchy is functional but not final; redesign is
-  tracked in issue #17.
-- Translation/rendering and user-data/processing tools are under focused
-  simplification in issues #18 and #19.
-- Publication activation, repository settings, and eligible GitHub security
-  features remain tracked in issue #5.
+- Automated browser QA is currently Edge-focused.
+- The bundled package increases clone and checkout size.
+- The side-panel, Meaning, Study Marks, Processing, and Study Data interfaces are
+  active-development surfaces rather than stable APIs.
 - Bundled data should be redistributed only after reviewing the included source
   notices and manifest.
 
 ## Project Status
 
-Active and planned public-showcase work is tracked by scope rather than assumed
-future pull-request numbers:
+The repository is being prepared for **PUBLIC PREVIEW — ACTIVE DEVELOPMENT**.
+Public visibility is separate from final release or tag readiness.
 
-- PR #14 — README feature/value rewrite;
+Current work:
+
 - issue #15 — documentation and loose-file reconciliation;
 - issue #16 — hover-first supplemental study UX;
-- issue #17 — word-first contextual side-panel hierarchy;
-- issue #18 — word-tag meaning utility replacing the current Translation surface;
+- issue #17 — compact side-panel corrective redesign;
+- issue #18 and draft PR #24 — source-word personal Meaning utility;
 - issue #19 — Processing and Study Data simplification;
-- public screenshot refresh after the intended UI stabilizes;
-- final public-release audit and issue #5 activation checklist.
+- issue #25 — unified Study Marks icon and popdown controls;
+- issue #5 — public-preview activation, post-public security activation, and
+  later final release/tag gates.
+
+PR #24 remains draft and unmerged. Its product-review hold under issues #17 and
+#25 is not waived by public-preview visibility.
 
 Issues #6 and #7 remain post-public performance and broader manual browser-QA
 work unless they reveal a severe blocker.
