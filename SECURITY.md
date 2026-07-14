@@ -10,10 +10,10 @@ created later, will identify their own support status.
 ## Reporting a Vulnerability
 
 Please do not open a public issue containing secrets, private user data, exploit
-details, or sensitive screenshots. Use GitHub private vulnerability reporting
-when available. Otherwise, open a minimal issue requesting a private contact path
-or contact the maintainer through the GitHub profile associated with this
-repository.
+details, or sensitive screenshots. Use GitHub private vulnerability reporting.
+If that mechanism is unavailable, open a minimal issue requesting a private
+contact path or contact the maintainer through the GitHub profile associated
+with this repository.
 
 Include:
 
@@ -37,18 +37,20 @@ third-party bundled content.
 
 ## Repository Security Controls
 
-GitHub Actions are pinned to full-length commit SHAs. Dependabot is configured
-for npm and GitHub Actions updates.
+The repository is public. GitHub Actions are pinned to full-length commit SHAs,
+and Dependabot is configured for weekly npm and GitHub Actions updates.
 
-While the repository is private, CodeQL and GitHub Secret Protection remain
-deferred unless private Code Security licensing is available. Immediately after
-public visibility is enabled, verify or enable:
+The required public-repository security baseline is:
 
-- CodeQL Default Setup;
-- secret scanning and push protection;
-- Dependabot alerts and security updates;
 - private vulnerability reporting;
-- the Node 20 and Node 24 `Verify` workflow matrix.
+- Secret Protection and push protection;
+- branch protection requiring `verify (20)` and `verify (24)`;
+- Dependabot alerts and security updates;
+- CodeQL Default Setup;
+- the Windows Node 20 and Node 24 `Verify` workflow matrix.
+
+Activation and verification evidence is tracked in issue #5. A control must not
+be described as verified merely because it is available for public repositories.
 
 Public visibility is not a release tag and does not waive the product-review hold
 on draft PR #24.
