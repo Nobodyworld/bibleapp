@@ -76,13 +76,12 @@ function actionForTool(ctx, tool, reference, verse, active, wordContext) {
   }
 
   if (tool.id === "hebrew" || tool.id === "greek") {
-    const language = String(wordContext?.token?.language || "").toLowerCase();
     const section = tool.id;
     return {
       ...tool,
       current: false,
       capabilityAvailable: ctx.canUseCapability?.("strongs-overlay") === true,
-      dataAvailable: Boolean(wordContext?.token && language === section),
+      dataAvailable: wordContext?.sectionAvailability?.[section] === "present",
       unavailableKey: "strongs",
       dataUnavailableMessage: `${tool.label} is not available for this selected word.`,
       run: () => ctx.detailViews.scrollStrongSection?.(section),
@@ -171,7 +170,8 @@ function appendActionButton(ctx, controls, action, reference, verse, wordContext
   button.dataset.panelScope = action.scope;
   button.dataset.controlState = control.state;
   button.dataset.unavailable = control.disabled ? "true" : "false";
-  button.disabled = control.disabled || action.current;
+  const reactivatableCurrentWord = action.id === "strongs" && action.current;
+  button.disabled = control.disabled || (action.current && !reactivatableCurrentWord);
   button.setAttribute("aria-pressed", action.current ? "true" : "false");
   if (action.current) button.setAttribute("aria-current", "page");
 
@@ -193,7 +193,7 @@ function appendActionButton(ctx, controls, action, reference, verse, wordContext
     button.setAttribute("aria-label", `${scopeLabel} scope, ${action.label} for ${reference}`);
   }
 
-  if (action.run && !action.current) {
+  if (action.run && (!action.current || reactivatableCurrentWord)) {
     button.addEventListener("click", () => {
       ctx.highlightReaderContext?.(
         action.scope === "word" ? wordHighlightOptions(wordContext, verse) : { verse, commit: true },
@@ -213,6 +213,22 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
   tabs.className = "verse-context-tabs panel-context-navigation";
   tabs.dataset.scopeOrder = scopeOrder.join(" ");
   tabs.setAttribute("aria-label", `Contextual study tools for ${reference}`);
+  const wordKey = [wordContext?.token?.token_index, wordContext?.token?.strong_code, wordContext?.token?.language].join(":");
+  const onSectionAvailability = (event) => {
+    const detail = event.detail || {};
+    const eventKey = [detail.token?.token_index, detail.token?.strong_code, detail.token?.language].join(":");
+    if (!hasWord || eventKey !== wordKey) return;
+    ["hebrew", "greek"].forEach((section) => {
+      const button = tabs.querySelector(`[data-strong-section-control="${section}"]`);
+      if (!button) return;
+      const present = detail.availability?.[section] === "present";
+      button.disabled = !present;
+      button.dataset.controlState = present ? CONTROL_STATES.enabled : CONTROL_STATES.dataUnavailable;
+      button.dataset.unavailable = present ? "false" : "true";
+      button.setAttribute("aria-disabled", String(!present));
+    });
+  };
+  window.addEventListener("strong:sections", onSectionAvailability);
 
   const summary = document.createElement("div");
   summary.className = "panel-context-summary";
@@ -228,6 +244,9 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
       const { group, controls } = createScopeGroup(scope);
       panelToolsForScope(scope).forEach((tool) => {
         appendActionButton(ctx, controls, actionForTool(ctx, tool, reference, verse, active, wordContext), reference, verse, wordContext);
+      });
+      controls.querySelectorAll("[data-visible-label='Hebrew concordance'], [data-visible-label='Greek concordance']").forEach((button) => {
+        button.dataset.strongSectionControl = button.dataset.visibleLabel.startsWith("Hebrew") ? "hebrew" : "greek";
       });
 
       if (scope === "word" && hasWord) {

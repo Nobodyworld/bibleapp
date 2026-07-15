@@ -210,6 +210,29 @@ async function runScenario(browser, baseUrl, mode) {
     assertPanelPlacement(wordState, mode);
     await capturePanel(page, mode, "word");
 
+    const wordReactivation = await page.evaluate(() => {
+      const button = document.querySelector("#detailContext [data-panel-scope='word'] .verse-context-tab[data-visible-label='Word']");
+      const detail = document.querySelector("#detailContent .strong-detail");
+      const overview = detail?.querySelector("[data-strong-section='word']");
+      const before = {
+        disabled: button?.disabled,
+        lock: document.querySelector(".detail-pane")?.dataset.panelMode,
+        token: document.querySelector(".reader-context-word")?.dataset.strongCode,
+        detail,
+        backDisabled: document.querySelector("#detailBack")?.disabled,
+      };
+      button?.click();
+      return {
+        ...before,
+        sameDetail: detail === document.querySelector("#detailContent .strong-detail"),
+        sameToken: before.token === document.querySelector(".reader-context-word")?.dataset.strongCode,
+        sameLock: before.lock === document.querySelector(".detail-pane")?.dataset.panelMode,
+        sameHistoryState: before.backDisabled === document.querySelector("#detailBack")?.disabled,
+        scrolled: overview?.dataset.strongSectionActive === "true",
+      };
+    });
+    assert(!wordReactivation.disabled && wordReactivation.sameDetail && wordReactivation.sameToken && wordReactivation.sameLock && wordReactivation.sameHistoryState && wordReactivation.scrolled, `${mode}: active Word must scroll without replacing detail, changing context, lock, or history`);
+
     await click(
       page,
       "#detailContext [data-panel-scope='verse'] .verse-context-tab[data-visible-label='Parallel']",

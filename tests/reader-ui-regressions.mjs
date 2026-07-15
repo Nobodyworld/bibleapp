@@ -3,9 +3,10 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [index, css, stylesPolish, app, pickerFlow, renderer, tagsView, strongsView] = await Promise.all([
+const [index, css, contextCss, stylesPolish, app, pickerFlow, renderer, tagsView, strongsView] = await Promise.all([
   readFile(new URL("../app/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/styles.css", import.meta.url), "utf8"),
+  readFile(new URL("../app/styles-context.css", import.meta.url), "utf8"),
   readFile(new URL("../app/styles-polish.css", import.meta.url), "utf8"),
   readFile(new URL("../app/app.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/reader-picker-flow.js", import.meta.url), "utf8"),
@@ -13,6 +14,10 @@ const [index, css, stylesPolish, app, pickerFlow, renderer, tagsView, strongsVie
   readFile(new URL("../app/src/views/tags-view.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/views/strongs-view.js", import.meta.url), "utf8"),
 ]);
+
+assert.equal((index.match(/id="study-marks-icon"/g) || []).length, 1, "Study Marks must have one official icon definition.");
+assert.equal((tagsView.match(/#study-marks-icon/g) || []).length, 1, "Study Marks triggers must reference the shared icon.");
+assert(!`${css}\n${contextCss}\n${stylesPolish}`.includes("color-mix("), "App stylesheets must not use color-mix().");
 
 const chapterTools = index.match(/<div class="chapter-actions"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/)?.[0] || "";
 const sideTools = index.match(/<nav class="detail-tool-nav"[\s\S]*?<\/nav>/)?.[0] || "";

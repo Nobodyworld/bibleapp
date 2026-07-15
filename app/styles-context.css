@@ -60,7 +60,7 @@
   border-color: var(--accent);
   background: var(--accent);
   color: #fff;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 24%, transparent);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.28);
 }
 
 .verse-context-tab.active:disabled {
@@ -80,6 +80,7 @@
 }
 
 .study-marks-icon { width: 16px; height: 16px; fill: currentColor; }
+.icon-definitions { display: none; }
 .study-marks-count { position: absolute; right: -5px; top: -5px; min-width: 13px; padding: 0 2px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 9px; font-weight: 800; line-height: 13px; }
 .strong-detail [data-strong-section-active="true"] { outline: 2px solid var(--accent); outline-offset: 4px; }
 

@@ -357,6 +357,7 @@ function appendStudyMarksByScripture(ctx, wrap, assertions, options = {}) {
 
 export function createTagsView(ctx) {
   let activeTargetTagMenu = null;
+  let lastTargetTagTrigger = null;
   let targetTagMenuCloseTimer = null;
   let targetTagMenuDismissalBound = false;
 
@@ -387,13 +388,14 @@ export function createTagsView(ctx) {
     targetTagMenuCloseTimer = null;
   }
 
-  function closeTargetTagMenu(menu = activeTargetTagMenu) {
+  function closeTargetTagMenu(menu = activeTargetTagMenu, { restoreFocus = false } = {}) {
     if (!menu) return;
     cancelTargetTagMenuClose();
     menu.dataset.menuClosed = "true";
     delete menu.dataset.menuOpen;
     setTargetTagMenuExpanded(menu, false);
     if (activeTargetTagMenu === menu) activeTargetTagMenu = null;
+    if (restoreFocus) (menu.__targetTagTrigger || menu.querySelector(".target-tag-picker-trigger, .tag-picker-trigger"))?.focus({ preventScroll: true });
   }
 
   function openTargetTagMenu(menu) {
@@ -423,10 +425,10 @@ export function createTagsView(ctx) {
       closeTargetTagMenu(activeTargetTagMenu);
     });
     document.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape" || !activeTargetTagMenu) return;
+      if (event.key !== "Escape" || (!activeTargetTagMenu && !lastTargetTagTrigger)) return;
       event.stopPropagation();
-      closeTargetTagMenu(activeTargetTagMenu);
-      document.activeElement?.blur?.();
+      if (activeTargetTagMenu) closeTargetTagMenu(activeTargetTagMenu, { restoreFocus: true });
+      lastTargetTagTrigger?.focus({ preventScroll: true });
     });
   }
 
@@ -607,9 +609,18 @@ export function createTagsView(ctx) {
     }
     trigger.addEventListener("click", (event) => {
       event.stopPropagation();
+      lastTargetTagTrigger = trigger;
       if (menu.dataset.menuOpen === "true") closeTargetTagMenu(menu);
       else openTargetTagMenu(menu);
     });
+    trigger.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || menu.dataset.menuOpen !== "true") return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeTargetTagMenu(menu, { restoreFocus: true });
+    });
+
+    menu.__targetTagTrigger = trigger;
 
     menu.append(trigger, createTargetTagPickerPopover(target, options));
     wireTargetTagMenu(menu);
@@ -624,9 +635,9 @@ export function createTagsView(ctx) {
     icon.setAttribute("aria-hidden", "true");
     icon.setAttribute("focusable", "false");
     icon.classList.add("study-marks-icon");
-    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    path.setAttribute("d", "M6 3.75h12A2.25 2.25 0 0 1 20.25 6v14.25L16.5 18l-4.5 2.25L7.5 18l-3.75 2.25V6A2.25 2.25 0 0 1 6 3.75Zm0 2.5a.25.25 0 0 0-.25.25v9.34l1.75-1.05 4.5 2.25 4.5-2.25 1.75 1.05V6.5a.25.25 0 0 0-.25-.25H6Z");
-    icon.append(path);
+    const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttribute("href", "#study-marks-icon");
+    icon.append(use);
     return icon;
   }
 

@@ -433,11 +433,11 @@ function appendLexiconConcordance(container, entry, openStrongCode, token = {}) 
     seen.add(label);
   });
 
-  if (!sections.length) return;
+  const language = String(token.language || entry.language || "").toLowerCase();
+  if (!sections.length) return { hebrew: "absent", greek: "absent" };
 
   const wrap = document.createElement("section");
   wrap.className = "lexicon-sections";
-  const language = String(token.language || entry.language || "").toLowerCase();
   if (language === "hebrew" || language === "greek") wrap.dataset.strongSection = language;
   const heading = document.createElement("h4");
   heading.textContent = "Concordance and lexicon notes";
@@ -456,6 +456,7 @@ function appendLexiconConcordance(container, entry, openStrongCode, token = {}) 
   });
 
   container.append(wrap);
+  return { hebrew: language === "hebrew" ? "present" : "absent", greek: language === "greek" ? "present" : "absent" };
 }
 
 function formatLexiconText(text, refs = [], openStrongCode = null) {
@@ -569,6 +570,7 @@ export function createStrongsView(ctx = null) {
     const wrap = document.createElement("div");
     wrap.className = "strong-detail";
     currentStrongDetail = wrap;
+    window.dispatchEvent(new CustomEvent("strong:sections", { detail: { token, availability: { hebrew: "loading", greek: "loading" } } }));
     const heading = document.createElement("h3");
     heading.textContent = token.english || token.original || token.strong_code || "Strong's entry";
 
@@ -712,10 +714,12 @@ export function createStrongsView(ctx = null) {
         if (!renderedTokenBreakdown && entry.original_word) {
           appendLanguageBreakdown(extra, { ...token, language: entry.language || token.language }, entry.original_word);
         }
-        appendLexiconConcordance(extra, entry, openStrongCode, token);
+        const availability = appendLexiconConcordance(extra, entry, openStrongCode, token);
+        window.dispatchEvent(new CustomEvent("strong:sections", { detail: { token, availability } }));
       })
       .catch(() => {
         if (wrap.isConnected) extra.textContent = "Lexicon entry could not be loaded.";
+        window.dispatchEvent(new CustomEvent("strong:sections", { detail: { token, availability: { hebrew: "absent", greek: "absent" } } }));
       });
   }
 

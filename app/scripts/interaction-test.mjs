@@ -726,7 +726,8 @@ async function runQa(page) {
       option.focus();
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
       const escapeClosed = state();
-      return { opened, duringDelay, afterDelay, focused, outsideClosed, escapeClosed };
+      const escapeFocusRestored = document.activeElement === menu.querySelector('.target-tag-picker-trigger, .tag-picker-trigger');
+      return { opened, duringDelay, afterDelay, focused, outsideClosed, escapeClosed, escapeFocusRestored };
     })()`,
   );
   assert(
@@ -749,6 +750,15 @@ async function runQa(page) {
     "parallel verse panel missing expected translation text",
   );
   assert(await evaluate(page, `Boolean(document.querySelector("#detailContext [data-panel-scope='verse'] .study-marks-trigger"))`), "verse context Study Marks trigger is missing");
+  const studyTrigger = "#detailContext [data-panel-scope='verse'] .study-marks-trigger";
+  const marksBeforeDismissal = await evaluate(page, "document.querySelectorAll('.tag-picker-option[aria-pressed=\"true\"]').length");
+  await click(page, studyTrigger);
+  await page.press(studyTrigger, "Escape");
+  const studyMarksDismissal = await evaluate(page, `({
+    restored: document.activeElement === document.querySelector(${JSON.stringify(studyTrigger)}),
+    unchanged: document.querySelectorAll('.tag-picker-option[aria-pressed="true"]').length === ${JSON.stringify(marksBeforeDismissal)}
+  })`);
+  assert(studyMarksDismissal.restored && studyMarksDismissal.unchanged, `Study Marks Escape must restore trigger focus without mutation: ${JSON.stringify(studyMarksDismissal)}`);
   pass("verse context Study Marks trigger");
   pass("parallel translations by verse number");
 

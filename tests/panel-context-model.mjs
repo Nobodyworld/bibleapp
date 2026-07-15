@@ -92,6 +92,8 @@ assert.match(detailViewsSource, /Object\.defineProperty\(strongsCtx, "studyConte
 assert.match(detailViewsSource, /showStrong: createSearchView|createSearchView\(ctx, \{ showStrong \}\)/);
 assert.match(tabsSource, /renderStudyMarksTrigger/);
 assert.match(tabsSource, /scrollStrongSection/);
+assert.match(tabsSource, /reactivatableCurrentWord/);
+assert.match(tabsSource, /strong:sections/);
 assert.match(detailViewsSource, /scrollStrongSection/);
 assert.match(browserSource, /mode === "mobile"/);
 assert.match(browserSource, /mode === "narrow"/);
