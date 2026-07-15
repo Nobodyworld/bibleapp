@@ -46,8 +46,13 @@ The required public-repository security baseline is:
 - Secret Protection and push protection;
 - branch protection requiring `verify (20)` and `verify (24)`;
 - Dependabot alerts and security updates;
-- CodeQL Default Setup;
 - the Windows Node 20 and Node 24 `Verify` workflow matrix.
+
+CodeQL Default Setup is intentionally disabled for the current public preview by
+owner decision. Local and hosted static verification, dependency auditing,
+complete-history secret scanning, pinned Actions, and manual security review
+remain active controls. Reassess CodeQL if the architecture, threat model, or
+release posture materially changes; do not describe CodeQL as enabled.
 
 Activation and verification evidence is tracked in issue #5. A control must not
 be described as verified merely because it is available for public repositories.

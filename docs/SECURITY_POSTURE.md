@@ -29,9 +29,14 @@ The public repository security baseline requires:
 - private vulnerability reporting;
 - Secret Protection and push protection;
 - Dependabot alerts and security updates;
-- CodeQL Default Setup;
 - the Windows Node 20 and Node 24 `Verify` workflow matrix;
 - branch or ruleset review after public CI is proven healthy.
+
+CodeQL Default Setup is intentionally disabled for the current public preview by
+owner decision. The project continues to rely on its local and hosted static
+verification, dependency auditing, complete-history Gitleaks scans, pinned
+Actions, and manual security review. Reassess CodeQL if the architecture, threat
+model, or release posture materially changes.
 
 Issue #5 is the system of record for which controls are owner-confirmed, which
 are connector-verified, and which remain pending. Availability alone is not

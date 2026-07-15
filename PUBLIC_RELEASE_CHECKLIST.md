@@ -74,6 +74,9 @@ visibility.
 - [x] Branch protection is owner-confirmed configured with `verify (20)` and
   `verify (24)` as required checks.
 - [x] GitHub Actions remain pinned to full-length commit SHAs.
+- [x] CodeQL Default Setup intentionally remains disabled by owner decision for
+  the current public preview; local and hosted static verification, dependency
+  auditing, complete-history secret scanning, and manual review remain active.
 
 ### Still to verify
 
@@ -81,7 +84,6 @@ visibility.
 - [ ] Confirm `verify (20)` and `verify (24)` pass on current `main`.
 - [ ] Enable or verify Dependabot alerts.
 - [ ] Enable or verify Dependabot security updates.
-- [ ] Enable or verify CodeQL Default Setup.
 - [ ] Confirm public rendering of README, notices, screenshots, issue templates,
   and the security policy.
 - [ ] Recheck branch/ruleset behavior after the first successful public `main`
