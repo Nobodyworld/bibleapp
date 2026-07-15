@@ -357,7 +357,6 @@ function appendStudyMarksByScripture(ctx, wrap, assertions, options = {}) {
 
 export function createTagsView(ctx) {
   let activeTargetTagMenu = null;
-  let lastTargetTagTrigger = null;
   let targetTagMenuCloseTimer = null;
   let targetTagMenuDismissalBound = false;
 
@@ -424,12 +423,6 @@ export function createTagsView(ctx) {
       if (!activeTargetTagMenu || activeTargetTagMenu.contains(event.target)) return;
       closeTargetTagMenu(activeTargetTagMenu);
     });
-    document.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape" || (!activeTargetTagMenu && !lastTargetTagTrigger)) return;
-      event.stopPropagation();
-      if (activeTargetTagMenu) closeTargetTagMenu(activeTargetTagMenu, { restoreFocus: true });
-      lastTargetTagTrigger?.focus({ preventScroll: true });
-    });
   }
 
   function wireTargetTagMenu(menu) {
@@ -440,6 +433,12 @@ export function createTagsView(ctx) {
     menu.addEventListener("focusout", (event) => {
       if (menu.contains(event.relatedTarget)) return;
       scheduleTargetTagMenuClose(menu);
+    });
+    menu.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || activeTargetTagMenu !== menu) return;
+      event.preventDefault();
+      event.stopPropagation();
+      closeTargetTagMenu(menu, { restoreFocus: true });
     });
   }
 
@@ -609,15 +608,8 @@ export function createTagsView(ctx) {
     }
     trigger.addEventListener("click", (event) => {
       event.stopPropagation();
-      lastTargetTagTrigger = trigger;
       if (menu.dataset.menuOpen === "true") closeTargetTagMenu(menu);
       else openTargetTagMenu(menu);
-    });
-    trigger.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape" || menu.dataset.menuOpen !== "true") return;
-      event.preventDefault();
-      event.stopPropagation();
-      closeTargetTagMenu(menu, { restoreFocus: true });
     });
 
     menu.__targetTagTrigger = trigger;

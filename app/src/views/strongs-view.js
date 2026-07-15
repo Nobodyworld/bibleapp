@@ -570,7 +570,11 @@ export function createStrongsView(ctx = null) {
     const wrap = document.createElement("div");
     wrap.className = "strong-detail";
     currentStrongDetail = wrap;
-    window.dispatchEvent(new CustomEvent("strong:sections", { detail: { token, availability: { hebrew: "loading", greek: "loading" } } }));
+    let updateStrongSections = () => {};
+    const publishStrongSections = (availability) => {
+      if (currentStrongDetail !== wrap || !wrap.isConnected) return;
+      updateStrongSections(availability);
+    };
     const heading = document.createElement("h3");
     heading.textContent = token.english || token.original || token.strong_code || "Strong's entry";
 
@@ -676,7 +680,9 @@ export function createStrongsView(ctx = null) {
           options: { ...options, forceHistory: false },
         };
       }
-      wrap.append(createVerseContextTabs(ctx, options.verseContext.reference, options.verseContext.verse, "strongs", null));
+      const tabs = createVerseContextTabs(ctx, options.verseContext.reference, options.verseContext.verse, "strongs", null);
+      updateStrongSections = tabs.updateStrongSectionAvailability || updateStrongSections;
+      wrap.append(tabs);
     }
     const renderedTokenBreakdown = appendLanguageBreakdown(wrap, token);
     setDetail("Strong's", wrap, {
@@ -686,8 +692,11 @@ export function createStrongsView(ctx = null) {
       readerContext: readerContextForStrong(token, options),
     });
 
+    publishStrongSections({ hebrew: "loading", greek: "loading" });
+
     if (!token.strong_code) {
       appendTranslationRenderings(wrap, token, options, ctx);
+      publishStrongSections({ hebrew: "absent", greek: "absent" });
       return;
     }
 
@@ -699,10 +708,11 @@ export function createStrongsView(ctx = null) {
 
     fetchLexiconEntry(token.strong_code)
       .then((entry) => {
-        if (!wrap.isConnected) return;
+        if (!wrap.isConnected || currentStrongDetail !== wrap) return;
         extra.replaceChildren();
         if (!entry) {
           extra.textContent = "No lexicon entry found.";
+          publishStrongSections({ hebrew: "absent", greek: "absent" });
           return;
         }
         const title = document.createElement("h4");
@@ -715,11 +725,11 @@ export function createStrongsView(ctx = null) {
           appendLanguageBreakdown(extra, { ...token, language: entry.language || token.language }, entry.original_word);
         }
         const availability = appendLexiconConcordance(extra, entry, openStrongCode, token);
-        window.dispatchEvent(new CustomEvent("strong:sections", { detail: { token, availability } }));
+        publishStrongSections(availability);
       })
       .catch(() => {
         if (wrap.isConnected) extra.textContent = "Lexicon entry could not be loaded.";
-        window.dispatchEvent(new CustomEvent("strong:sections", { detail: { token, availability: { hebrew: "absent", greek: "absent" } } }));
+        publishStrongSections({ hebrew: "absent", greek: "absent" });
       });
   }
 

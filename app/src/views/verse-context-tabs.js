@@ -202,6 +202,32 @@ function appendActionButton(ctx, controls, action, reference, verse, wordContext
     });
   }
   controls.append(button);
+  return button;
+}
+
+function syncStrongSectionControl(button, section, availability, reference) {
+  if (!button) return;
+  const label = section === "hebrew" ? "Hebrew concordance" : "Greek concordance";
+  const state = availability?.[section] || "absent";
+  const loading = state === "loading";
+  const present = state === "present";
+  button.disabled = !present;
+  button.setAttribute("aria-disabled", String(!present));
+  button.dataset.controlState = loading ? "loading" : present ? CONTROL_STATES.enabled : CONTROL_STATES.dataUnavailable;
+  button.dataset.unavailable = present || loading ? "false" : "true";
+  if (loading) {
+    const message = `${label} is loading for ${reference}`;
+    button.title = message;
+    button.setAttribute("aria-label", message);
+  } else if (present) {
+    const message = `Word scope: scroll to ${label.toLowerCase()} for ${reference}`;
+    button.title = message;
+    button.setAttribute("aria-label", message);
+  } else {
+    const message = `No ${label.toLowerCase()} section is available for the selected word in ${reference}`;
+    button.title = message;
+    button.setAttribute("aria-label", message);
+  }
 }
 
 export function createVerseContextTabs(ctx, reference, verse, active, strongsContext = null) {
@@ -213,22 +239,6 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
   tabs.className = "verse-context-tabs panel-context-navigation";
   tabs.dataset.scopeOrder = scopeOrder.join(" ");
   tabs.setAttribute("aria-label", `Contextual study tools for ${reference}`);
-  const wordKey = [wordContext?.token?.token_index, wordContext?.token?.strong_code, wordContext?.token?.language].join(":");
-  const onSectionAvailability = (event) => {
-    const detail = event.detail || {};
-    const eventKey = [detail.token?.token_index, detail.token?.strong_code, detail.token?.language].join(":");
-    if (!hasWord || eventKey !== wordKey) return;
-    ["hebrew", "greek"].forEach((section) => {
-      const button = tabs.querySelector(`[data-strong-section-control="${section}"]`);
-      if (!button) return;
-      const present = detail.availability?.[section] === "present";
-      button.disabled = !present;
-      button.dataset.controlState = present ? CONTROL_STATES.enabled : CONTROL_STATES.dataUnavailable;
-      button.dataset.unavailable = present ? "false" : "true";
-      button.setAttribute("aria-disabled", String(!present));
-    });
-  };
-  window.addEventListener("strong:sections", onSectionAvailability);
 
   const summary = document.createElement("div");
   summary.className = "panel-context-summary";
@@ -243,10 +253,8 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
     .forEach((scope) => {
       const { group, controls } = createScopeGroup(scope);
       panelToolsForScope(scope).forEach((tool) => {
-        appendActionButton(ctx, controls, actionForTool(ctx, tool, reference, verse, active, wordContext), reference, verse, wordContext);
-      });
-      controls.querySelectorAll("[data-visible-label='Hebrew concordance'], [data-visible-label='Greek concordance']").forEach((button) => {
-        button.dataset.strongSectionControl = button.dataset.visibleLabel.startsWith("Hebrew") ? "hebrew" : "greek";
+        const button = appendActionButton(ctx, controls, actionForTool(ctx, tool, reference, verse, active, wordContext), reference, verse, wordContext);
+        if (tool.id === "hebrew" || tool.id === "greek") button.dataset.strongSectionControl = tool.id;
       });
 
       if (scope === "word" && hasWord) {
@@ -266,5 +274,11 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
     });
 
   tabs.append(groups);
+  tabs.updateStrongSectionAvailability = (availability) => {
+    if (!hasWord) return;
+    ["hebrew", "greek"].forEach((section) => {
+      syncStrongSectionControl(tabs.querySelector(`[data-strong-section-control="${section}"]`), section, availability, reference);
+    });
+  };
   return tabs;
 }

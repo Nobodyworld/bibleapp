@@ -93,7 +93,8 @@ assert.match(detailViewsSource, /showStrong: createSearchView|createSearchView\(
 assert.match(tabsSource, /renderStudyMarksTrigger/);
 assert.match(tabsSource, /scrollStrongSection/);
 assert.match(tabsSource, /reactivatableCurrentWord/);
-assert.match(tabsSource, /strong:sections/);
+assert.match(tabsSource, /updateStrongSectionAvailability/);
+assert.doesNotMatch(tabsSource, /window\.addEventListener\("strong:sections"/);
 assert.match(detailViewsSource, /scrollStrongSection/);
 assert.match(browserSource, /mode === "mobile"/);
 assert.match(browserSource, /mode === "narrow"/);
