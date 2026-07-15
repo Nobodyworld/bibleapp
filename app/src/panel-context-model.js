@@ -11,20 +11,17 @@ export const PANEL_SCOPE_LABELS = Object.freeze({
 export const PANEL_CONTEXT_TOOL_MATRIX = Object.freeze({
   word: Object.freeze([
     Object.freeze({ id: "strongs", shortLabel: "Word", label: "Word", scope: "word" }),
+    Object.freeze({ id: "hebrew", shortLabel: "Hebrew", label: "Hebrew concordance", scope: "word" }),
+    Object.freeze({ id: "greek", shortLabel: "Greek", label: "Greek concordance", scope: "word" }),
   ]),
   verse: Object.freeze([
     Object.freeze({ id: "par", shortLabel: "Par", label: "Parallel", scope: "verse" }),
     Object.freeze({ id: "refs", shortLabel: "Refs", label: "References", scope: "verse" }),
     Object.freeze({ id: "commentary", shortLabel: "Cmt", label: "Commentary", scope: "verse" }),
     Object.freeze({ id: "interlinear", shortLabel: "Int", label: "Language", scope: "verse" }),
-    Object.freeze({ id: "tags", shortLabel: "Tags", label: "Tags", scope: "verse" }),
   ]),
-  chapter: Object.freeze([
-    Object.freeze({ id: "interlinearChapter", shortLabel: "Language Study", label: "Language Study", scope: "chapter" }),
-  ]),
-  book: Object.freeze([
-    Object.freeze({ id: "outline", shortLabel: "Outline", label: "Outline", scope: "book" }),
-  ]),
+  chapter: Object.freeze([]),
+  book: Object.freeze([]),
   global: Object.freeze([]),
 });
 

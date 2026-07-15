@@ -148,3 +148,6 @@ IndexedDB initialization and migration have a three-second boundary. If the brow
 - `app/scripts/panel-context-interaction-test.mjs`: desktop, narrow, and mobile Word-first ordering, inherited Verse navigation, Verse-only clearing, horizontal-overflow checks, sticky-header placement, visible headings, and browser-error coverage.
 - `app/scripts/original-language-study-interaction-test.mjs`: rendered source/transliteration rows, lazy study enhancement, related-reference preview/navigation/history, and tooltip-containment behavior when the browser runner is available.
 - `app/scripts/interaction-test.mjs`: rendered interaction behavior, including reader text-span selection, favorite controls, editable target badges, source-token tagging, Favorites grouping, panel history, and cleanup, when the browser runner is available.
+# Compact side-panel Study Marks contract
+
+The reader side panel is limited to the current exact Word (when present) and Verse context.  Its selected-word summary is visually separated from a compact control row. Chapter Language Study and Book Outline remain reader-header actions. Study Marks is one reusable icon trigger backed by the canonical target-aware picker; Book, Chapter, Verse, selected English text, and exact source tokens preserve their existing separate semantic targets and Favorite remains the `favorite` tag assertion.

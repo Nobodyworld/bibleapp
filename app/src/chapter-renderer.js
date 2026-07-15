@@ -411,22 +411,8 @@ export function createChapterRenderer(ctx) {
       window.getSelection?.()?.removeAllRanges();
     };
 
-    const favorite = ctx.detailViews.createFavoriteButton(target, {
-      className: "selection-favorite-button",
-      label: `“${range.text}”`,
-      showLabel: true,
-      onChange: () => {
-        clearSelection();
-        ctx.renderChapter();
-      },
-    });
-
-    const tagsButton = document.createElement("button");
-    tagsButton.type = "button";
-    tagsButton.textContent = "Tags";
-    tagsButton.setAttribute("aria-label", `Tag selected text: ${range.text}`);
-    const tags = ctx.detailViews.renderTargetTagPicker(target, {
-      trigger: tagsButton,
+    const marks = ctx.detailViews.renderStudyMarksTrigger(target, {
+      className: "selection-study-marks-button",
       label: `${reference} — “${range.text}”`,
       preview: range.text,
       onChange: () => {
@@ -434,7 +420,7 @@ export function createChapterRenderer(ctx) {
         ctx.renderChapter();
       },
     });
-    tags.querySelector(".tag-picker-manage")?.addEventListener("click", clearSelection);
+    marks.querySelector(".tag-picker-manage")?.addEventListener("click", clearSelection);
 
     const red = document.createElement("button");
     red.type = "button";
@@ -461,7 +447,7 @@ export function createChapterRenderer(ctx) {
       void ctx.detailViews.showInterlinearVerse(reference, verse, { forceHistory: true });
     });
 
-    menu.append(favorite, tags, study, draft, red);
+    menu.append(marks, study, draft, red);
     placeSelectionMenu(menu, window.getSelection?.());
   }
 
@@ -889,20 +875,14 @@ export function createChapterRenderer(ctx) {
       }
     });
 
-    const favoriteButton = ctx.detailViews.createFavoriteButton(
-      createVerseTarget(key, ctx.state.translationId),
-      {
-        className: "verse-favorite-button",
-        label: reference,
-        onChange: () => {
-          ctx.renderChapter();
-          ctx.syncFavoriteButtons?.();
-        },
-      },
-    );
+    const marksButton = ctx.detailViews.renderStudyMarksTrigger(createVerseTarget(key, ctx.state.translationId), {
+      className: "verse-study-marks-button",
+      label: `verse ${reference}`,
+      onChange: () => { ctx.renderChapter(); ctx.syncFavoriteButtons?.(); },
+    });
     const verseActions = document.createElement("div");
     verseActions.className = "verse-row-actions";
-    verseActions.append(favoriteButton, studyButton);
+    verseActions.append(marksButton, studyButton);
 
     body.addEventListener("mouseup", () => showSelectionMenuForVerse(reference, verse, verseText, body, key));
     body.addEventListener("touchend", () => window.setTimeout(() => showSelectionMenuForVerse(reference, verse, verseText, body, key), 0));

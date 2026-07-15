@@ -34,6 +34,7 @@ export function createDetailViews(ctx) {
   const interlinearTranslationViews = createInterlinearTranslationViews(ctx, {
     appendLanguageBreakdown: strongsView.appendLanguageBreakdown,
     showStrong,
+    scrollStrongSection: strongsView.scrollStrongSection,
   });
   const jobsView = createJobsView(ctx);
   const referenceViews = createReferenceViews(ctx);
@@ -42,9 +43,11 @@ export function createDetailViews(ctx) {
   return {
     clearStrongPin: strongsView.clearStrongPin,
     createFavoriteButton: tagsView.createFavoriteButton,
+    createStudyMarksIcon: tagsView.createStudyMarksIcon,
     renderInlineTagPicker: tagsView.renderInlineTagPicker,
     renderTagBadges: tagsView.renderTagBadges,
     renderTargetTagPicker: tagsView.renderTargetTagPicker,
+    renderStudyMarksTrigger: tagsView.renderStudyMarksTrigger,
     renderTargetTagBadges: tagsView.renderTargetTagBadges,
     showCommentary: commentaryOutlineViews.showCommentary,
     showCrossrefs: referenceViews.showCrossrefs,
@@ -58,6 +61,7 @@ export function createDetailViews(ctx) {
     showSearch: createSearchView(ctx, { showStrong }),
     showStudyUnavailable: (title, node, options = {}) => setDetail(title, node, options),
     showStrong,
+    scrollStrongSection: strongsView.scrollStrongSection,
     showJobs: jobsView,
     showFavorites: tagsView.showFavorites,
     showTargetTagEditor: tagsView.showTargetTagEditor,

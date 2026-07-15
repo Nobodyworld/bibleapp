@@ -418,7 +418,7 @@ function appendTranslationRenderings(container, token, options = {}, viewCtx = n
     });
 }
 
-function appendLexiconConcordance(container, entry, openStrongCode) {
+function appendLexiconConcordance(container, entry, openStrongCode, token = {}) {
   const sections = [];
   const seen = new Set();
 
@@ -437,6 +437,8 @@ function appendLexiconConcordance(container, entry, openStrongCode) {
 
   const wrap = document.createElement("section");
   wrap.className = "lexicon-sections";
+  const language = String(token.language || entry.language || "").toLowerCase();
+  if (language === "hebrew" || language === "greek") wrap.dataset.strongSection = language;
   const heading = document.createElement("h4");
   heading.textContent = "Concordance and lexicon notes";
   wrap.append(heading);
@@ -511,9 +513,19 @@ function setOptionalLine(node, value) {
 
 export function createStrongsView(ctx = null) {
   let strongPinned = false;
+  let currentStrongDetail = null;
 
   function clearStrongPin() {
     strongPinned = false;
+  }
+
+  function scrollStrongSection(section) {
+    const target = currentStrongDetail?.querySelector(`[data-strong-section="${section}"]`);
+    if (!target) return false;
+    target.scrollIntoView({ block: "start", behavior: "smooth" });
+    target.dataset.strongSectionActive = "true";
+    window.setTimeout(() => delete target.dataset.strongSectionActive, 700);
+    return true;
   }
 
   function openStrongCode(strongCode, language) {
@@ -556,6 +568,7 @@ export function createStrongsView(ctx = null) {
 
     const wrap = document.createElement("div");
     wrap.className = "strong-detail";
+    currentStrongDetail = wrap;
     const heading = document.createElement("h3");
     heading.textContent = token.english || token.original || token.strong_code || "Strong's entry";
 
@@ -564,6 +577,7 @@ export function createStrongsView(ctx = null) {
 
     const overview = document.createElement("section");
     overview.className = "strong-overview";
+    overview.dataset.strongSection = "word";
 
     const primary = document.createElement("div");
     primary.className = "strong-overview-primary";
@@ -698,12 +712,12 @@ export function createStrongsView(ctx = null) {
         if (!renderedTokenBreakdown && entry.original_word) {
           appendLanguageBreakdown(extra, { ...token, language: entry.language || token.language }, entry.original_word);
         }
-        appendLexiconConcordance(extra, entry, openStrongCode);
+        appendLexiconConcordance(extra, entry, openStrongCode, token);
       })
       .catch(() => {
         if (wrap.isConnected) extra.textContent = "Lexicon entry could not be loaded.";
       });
   }
 
-  return { appendLanguageBreakdown, clearStrongPin, showStrong };
+  return { appendLanguageBreakdown, clearStrongPin, showStrong, scrollStrongSection };
 }

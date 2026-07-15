@@ -361,12 +361,7 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
       const controls = document.createElement("div");
       controls.className = "token-tag-controls";
       const tokenLabel = `${ctx.currentReference(card.dataset.verse)} ${token.original || token.transliteration || "source token"}`;
-      const favorite = ctx.detailViews.createFavoriteButton(sourceTarget, {
-        className: "token-favorite-button",
-        label: tokenLabel,
-      });
       const refreshTargetActions = () => {
-        favorite.refreshFavoriteState?.();
         actions.querySelector(".token-target-badges")?.remove();
         const badges = ctx.detailViews.renderTargetTagBadges(sourceTarget, {
           className: "token-target-badges",
@@ -377,20 +372,14 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
         });
         if (badges) actions.insertBefore(badges, controls);
       };
-      const tagsButton = document.createElement("button");
-      tagsButton.type = "button";
-      tagsButton.className = "token-tag-button";
-      tagsButton.textContent = "Tags";
-      tagsButton.setAttribute("aria-label", `Tag ${tokenLabel}`);
-      const tags = ctx.detailViews.renderTargetTagPicker(sourceTarget, {
-        trigger: tagsButton,
-        className: "token-tag-picker",
+      const marks = ctx.detailViews.renderStudyMarksTrigger(sourceTarget, {
+        className: "token-study-marks-button",
         align: "right",
         label: tokenLabel,
         preview: [token.english, token.gloss].filter(Boolean).join(" — "),
         onChange: refreshTargetActions,
       });
-      controls.append(favorite, tags);
+      controls.append(marks);
       actions.append(controls);
       refreshTargetActions();
       card.append(actions);

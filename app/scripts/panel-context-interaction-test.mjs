@@ -140,6 +140,8 @@ async function contextState(page) {
       wordDisabled: wordButton?.disabled ?? null,
       parallelDisabled: parallelButton?.disabled ?? null,
       navOverflow: nav ? nav.scrollWidth - nav.clientWidth : 0,
+      navHeight: nav ? nav.getBoundingClientRect().height : 0,
+      hasSummaryBoundary: Boolean(document.querySelector("#detailContext .panel-context-summary")),
       documentOverflow: document.documentElement.scrollWidth - window.innerWidth,
       panelHeaderGap:
         paneRect && appHeaderRect ? Math.round((paneRect.top - appHeaderRect.bottom) * 100) / 100 : null,
@@ -196,12 +198,14 @@ async function runScenario(browser, baseUrl, mode) {
     );
 
     const wordState = await contextState(page);
-    assert.equal(wordState.scopeOrder, "word verse chapter book", `${mode}: Word must lead the scope order`);
+    assert.equal(wordState.scopeOrder, "word verse", `${mode}: Word must lead the compact scope order`);
     assert.deepEqual(wordState.groupScopes, ["word", "verse"], `${mode}: contextual groups must be Word then Verse`);
-    assert.deepEqual(wordState.staticScopes, ["chapter", "book"], `${mode}: persistent groups must be Chapter then Book`);
+    assert.deepEqual(wordState.staticScopes, [], `${mode}: Chapter and Book groups must be absent from the side panel`);
     assert.deepEqual(wordState.active, ["word:Word"], `${mode}: Strong's must mark Word as current`);
     assert.match(wordState.summary, /H\d+.*Proverbs 1:1|Proverbs 1:1.*H\d+/, `${mode}: summary must identify word and verse`);
     assert(wordState.navOverflow <= 1, `${mode}: Word-first navigation has horizontal overflow`);
+    assert(wordState.hasSummaryBoundary, `${mode}: selected-word summary boundary is missing`);
+    assert(wordState.navHeight < 180, `${mode}: compact navigation is unexpectedly tall`);
     assert(wordState.documentOverflow <= 1, `${mode}: document has horizontal overflow`);
     assertPanelPlacement(wordState, mode);
     await capturePanel(page, mode, "word");
@@ -212,7 +216,7 @@ async function runScenario(browser, baseUrl, mode) {
     );
     await waitFor(page, () => document.querySelector("#detailTitle")?.textContent === "Parallel");
     const inheritedState = await contextState(page);
-    assert.equal(inheritedState.scopeOrder, "word verse chapter book", `${mode}: Verse view must retain containing Word context`);
+    assert.equal(inheritedState.scopeOrder, "word verse", `${mode}: Verse view must retain containing Word context`);
     assert.deepEqual(inheritedState.groupScopes, ["word", "verse"], `${mode}: inherited Word and Verse groups are out of order`);
     assert.deepEqual(inheritedState.active, ["verse:Parallel"], `${mode}: Parallel must be the current Verse view`);
     assert.equal(inheritedState.wordDisabled, false, `${mode}: inherited Word control must remain available`);
@@ -224,7 +228,7 @@ async function runScenario(browser, baseUrl, mode) {
     await click(page, ".verse-number");
     await waitFor(page, () => document.querySelector("#detailTitle")?.textContent === "Parallel");
     const verseOnlyState = await contextState(page);
-    assert.equal(verseOnlyState.scopeOrder, "verse chapter book", `${mode}: cleared context must return to Verse-first order`);
+    assert.equal(verseOnlyState.scopeOrder, "verse", `${mode}: cleared context must return to Verse-only order`);
     assert.deepEqual(verseOnlyState.groupScopes, ["verse"], `${mode}: cleared context must not render a Word group`);
     assert.deepEqual(verseOnlyState.active, ["verse:Parallel"], `${mode}: Verse-only Parallel state is incorrect`);
     assert(verseOnlyState.navOverflow <= 1, `${mode}: Verse-only navigation has horizontal overflow`);

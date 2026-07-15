@@ -616,6 +616,42 @@ export function createTagsView(ctx) {
     return menu;
   }
 
+  // The symbol lives here, beside the canonical picker, so every compact mark
+  // control shares one replaceable representation rather than ad-hoc glyphs.
+  function createStudyMarksIcon() {
+    const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    icon.setAttribute("viewBox", "0 0 24 24");
+    icon.setAttribute("aria-hidden", "true");
+    icon.setAttribute("focusable", "false");
+    icon.classList.add("study-marks-icon");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", "M6 3.75h12A2.25 2.25 0 0 1 20.25 6v14.25L16.5 18l-4.5 2.25L7.5 18l-3.75 2.25V6A2.25 2.25 0 0 1 6 3.75Zm0 2.5a.25.25 0 0 0-.25.25v9.34l1.75-1.05 4.5 2.25 4.5-2.25 1.75 1.05V6.5a.25.25 0 0 0-.25-.25H6Z");
+    icon.append(path);
+    return icon;
+  }
+
+  function renderStudyMarksTrigger(target, options = {}) {
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    if (options.id) trigger.id = options.id;
+    trigger.className = ["study-marks-trigger", options.className || ""].filter(Boolean).join(" ");
+    const label = options.label || targetTypeLabel(target);
+    trigger.append(createStudyMarksIcon());
+    const activeCount = getTargetTags(ctx.state, target).length;
+    const favoriteActive = getTargetTags(ctx.state, target).includes("favorite");
+    if (activeCount) {
+      const indicator = document.createElement("span");
+      indicator.className = "study-marks-count";
+      indicator.textContent = activeCount > 9 ? "9+" : String(activeCount);
+      indicator.setAttribute("aria-hidden", "true");
+      trigger.append(indicator);
+    }
+    trigger.setAttribute("aria-label", `Study Marks for ${label}`);
+    trigger.setAttribute("aria-pressed", String(favoriteActive));
+    trigger.title = `Study Marks for ${label}`;
+    return renderTargetTagPicker(target, { ...options, trigger, className: "study-marks-menu" });
+  }
+
   function renderTargetTagBadges(target, options = {}) {
     const tagIds = getTargetTags(ctx.state, target).filter(
       (tagId) => options.includeFavorite || tagId !== "favorite",
@@ -1044,9 +1080,11 @@ export function createTagsView(ctx) {
 
   return {
     createFavoriteButton,
+    createStudyMarksIcon,
     renderInlineTagPicker,
     renderTagBadges,
     renderTargetTagPicker,
+    renderStudyMarksTrigger,
     renderTargetTagBadges,
     showFavorites,
     showTargetTagEditor,

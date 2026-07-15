@@ -7,7 +7,7 @@ import {
   panelToolsForScope,
 } from "../panel-context-model.js";
 import { resolveInterlinearVerseTokens } from "../strongs.js?v=pr13-live-qa-20260711e";
-import { createVerseTarget } from "../semantic-targets.js?v=pr13-live-qa-20260711e";
+import { createSourceTokenTarget, createVerseTarget } from "../semantic-targets.js?v=pr13-live-qa-20260711e";
 
 function getVerseText(ctx, verse) {
   return ctx.state.verseBook?.chapters?.[ctx.state.chapter]?.[verse] || "";
@@ -41,13 +41,9 @@ function createScopeGroup(scope) {
   group.dataset.panelScope = scope;
   group.setAttribute("aria-label", `${PANEL_SCOPE_LABELS[scope]} scope`);
 
-  const label = document.createElement("span");
-  label.className = "panel-context-scope-label";
-  label.textContent = PANEL_SCOPE_LABELS[scope];
-
   const controls = document.createElement("div");
   controls.className = "panel-context-controls";
-  group.append(label, controls);
+  group.append(controls);
   return { group, controls };
 }
 
@@ -75,13 +71,21 @@ function actionForTool(ctx, tool, reference, verse, active, wordContext) {
       dataAvailable: Boolean(wordContext?.token),
       unavailableKey: "strongs",
       dataUnavailableMessage: `Word detail is not available for ${reference}.`,
-      run: () => {
-        if (!wordContext?.token || !wordContext?.options) return;
-        ctx.detailViews.showStrong(wordContext.token, {
-          ...wordContext.options,
-          force: true,
-        });
-      },
+      run: () => ctx.detailViews.scrollStrongSection?.("word"),
+    };
+  }
+
+  if (tool.id === "hebrew" || tool.id === "greek") {
+    const language = String(wordContext?.token?.language || "").toLowerCase();
+    const section = tool.id;
+    return {
+      ...tool,
+      current: false,
+      capabilityAvailable: ctx.canUseCapability?.("strongs-overlay") === true,
+      dataAvailable: Boolean(wordContext?.token && language === section),
+      unavailableKey: "strongs",
+      dataUnavailableMessage: `${tool.label} is not available for this selected word.`,
+      run: () => ctx.detailViews.scrollStrongSection?.(section),
     };
   }
 
@@ -203,7 +207,7 @@ function appendActionButton(ctx, controls, action, reference, verse, wordContext
 export function createVerseContextTabs(ctx, reference, verse, active, strongsContext = null) {
   const wordContext = resolveWordContext(ctx, strongsContext, verse);
   const hasWord = Boolean(wordContext?.token);
-  const scopeOrder = panelScopeSequence({ word: hasWord, verse: true, chapter: true, book: true });
+  const scopeOrder = panelScopeSequence({ word: hasWord, verse: true });
 
   const tabs = document.createElement("nav");
   tabs.className = "verse-context-tabs panel-context-navigation";
@@ -226,29 +230,17 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
         appendActionButton(ctx, controls, actionForTool(ctx, tool, reference, verse, active, wordContext), reference, verse, wordContext);
       });
 
-      if (scope === "verse") {
-        const favorite = ctx.detailViews.createFavoriteButton(
-          createVerseTarget(
-            {
-              translation_id: ctx.state.translationId,
-              book_id: ctx.state.bookId,
-              chapter: ctx.state.chapter,
-              verse,
-            },
-            ctx.state.translationId,
-          ),
-          {
-            className: "verse-context-favorite-button",
-            label: reference,
-            onChange: () => {
-              ctx.renderChapter();
-              ctx.syncFavoriteButtons?.();
-            },
-          },
+      if (scope === "word" && hasWord) {
+        const sourceTarget = createSourceTokenTarget(
+          { translation_id: ctx.state.translationId, book_id: ctx.state.bookId, chapter: ctx.state.chapter, verse },
+          wordContext.token,
+          ctx.state.translationId,
         );
-        favorite.dataset.panelScope = "verse";
-        favorite.title = `Verse scope: Favorite ${reference}`;
-        controls.append(favorite);
+        if (sourceTarget) controls.append(ctx.detailViews.renderStudyMarksTrigger(sourceTarget, { label: `selected source word in ${reference}`, onChange: () => { ctx.renderChapter(); ctx.syncFavoriteButtons?.(); } }));
+      }
+      if (scope === "verse") {
+        const verseTarget = createVerseTarget({ translation_id: ctx.state.translationId, book_id: ctx.state.bookId, chapter: ctx.state.chapter, verse }, ctx.state.translationId);
+        controls.append(ctx.detailViews.renderStudyMarksTrigger(verseTarget, { label: `verse ${reference}`, onChange: () => { ctx.renderChapter(); ctx.syncFavoriteButtons?.(); } }));
       }
 
       groups.append(group);

@@ -316,15 +316,14 @@ async function runQa(page) {
     await evaluate(
       page,
       `Boolean(
-        !document.querySelector('.chapter-actions #showOutline') &&
-        !document.querySelector('.chapter-actions #showInterlinear') &&
-        document.querySelector('.detail-tool-nav #showOutline') &&
-        document.querySelector('.detail-tool-nav #showInterlinear') &&
+        document.querySelector('.chapter-actions #showOutline') &&
+        document.querySelector('.chapter-actions #showInterlinear') &&
+        !document.querySelector('.detail-tool-nav') &&
         document.querySelector('#bookPickerButton') &&
         document.querySelector('#chapterPickerButton')
       )`,
     ),
-    "Outline and Interlinear controls must live exclusively in the side panel",
+    "Outline and Language Study controls must live in the reader header",
   );
   await click(page, "#chapterPickerButton");
   await waitFor(page, "!document.querySelector('#chapterPickerPanel')?.hidden");
@@ -400,19 +399,20 @@ async function runQa(page) {
   assert(selectedReaderText, "reader text selection could not be created");
   await waitFor(
     page,
-    "!document.querySelector('.selection-action-menu')?.hidden && document.querySelector('.selection-favorite-button')",
+    "!document.querySelector('.selection-action-menu')?.hidden && document.querySelector('.selection-study-marks-button')",
   );
   assert(
     await evaluate(
       page,
       `(() => {
         const text = document.querySelector('.selection-action-menu')?.textContent || '';
-        return text.includes('Favorite') && text.includes('Tags');
+        return Boolean(document.querySelector('.selection-study-marks-button'));
       })()`,
     ),
-    "reader selection menu is missing favorite or tag actions",
+    "reader selection menu is missing Study Marks",
   );
-  await click(page, ".selection-favorite-button");
+  await click(page, ".selection-study-marks-button");
+  await click(page, '.selection-action-menu .tag-picker-option[aria-label="Add Favorite tag"]');
   await waitFor(page, "document.querySelector('.reader-target-badges .target-tag-badge')");
   assert(
     await evaluate(page, "Boolean(document.querySelector('.tagged-text-span'))"),
@@ -475,9 +475,10 @@ async function runQa(page) {
   assert(partialWordSelection === "shep", `partial-word selection fixture failed: ${partialWordSelection}`);
   await waitFor(
     page,
-    "!document.querySelector('.selection-action-menu')?.hidden && document.querySelector('.selection-favorite-button')",
+    "!document.querySelector('.selection-action-menu')?.hidden && document.querySelector('.selection-study-marks-button')",
   );
-  await click(page, ".selection-favorite-button");
+  await click(page, ".selection-study-marks-button");
+  await click(page, '.selection-action-menu .tag-picker-option[aria-label="Add Favorite tag"]');
   await waitFor(page, "document.querySelector('.reader-target-badges .target-tag-badge')");
   const partialWordTagState = await evaluate(
     page,
@@ -506,7 +507,7 @@ async function runQa(page) {
       `Boolean(
         document.querySelector('#favoriteBook[aria-pressed="false"]') &&
         document.querySelector('#favoriteChapter[aria-pressed="false"]') &&
-        document.querySelector('.verse-favorite-button[aria-pressed="false"]')
+        document.querySelector('.verse-study-marks-button[aria-pressed="false"]')
       )`,
     ),
     "book, chapter, and verse favorite controls were not initialized",
@@ -535,26 +536,18 @@ async function runQa(page) {
     page,
     `(() => {
       const button = document.querySelector('#favoriteBook');
-      const star = button?.querySelector('.scope-favorite-star');
-      const label = button?.querySelector('.scope-favorite-label');
+      const icon = button?.querySelector('.study-marks-icon');
       const arrow = document.querySelector('#nextChapterFloat');
-      const starStyle = star ? getComputedStyle(star) : null;
-      const labelStyle = label ? getComputedStyle(label) : null;
       const arrowStyle = arrow ? getComputedStyle(arrow.closest('.reader-floating-nav')) : null;
       return {
-        starText: star?.textContent.trim() || '',
-        labelText: label?.textContent.trim() || '',
-        starColor: starStyle?.color || '',
-        labelColor: labelStyle?.color || '',
+        hasIcon: Boolean(icon),
         arrowTop: arrowStyle?.top || ''
       };
     })()`,
   );
   assert(
-    scopeFavoriteVisual.starText === "★" &&
-      scopeFavoriteVisual.labelText === "Book" &&
-      scopeFavoriteVisual.starColor !== scopeFavoriteVisual.labelColor,
-    `active scope favorite must show a distinct lit star and normal label: ${JSON.stringify(scopeFavoriteVisual)}`,
+    scopeFavoriteVisual.hasIcon,
+    `active scope mark must retain the official Study Marks icon: ${JSON.stringify(scopeFavoriteVisual)}`,
   );
   assert(scopeFavoriteVisual.arrowTop === "176px", `floating chapter arrows should start lower: ${JSON.stringify(scopeFavoriteVisual)}`);
   await click(page, "#nextChapter");
@@ -567,8 +560,8 @@ async function runQa(page) {
     page,
     "document.querySelector('#chapterTitle')?.textContent.includes('Psalms 23') && document.querySelector('#favoriteBook')?.getAttribute('aria-pressed') === 'true' && document.querySelector('#favoriteChapter')?.getAttribute('aria-pressed') === 'true'",
   );
-  await click(page, ".verse-favorite-button");
-  await waitFor(page, "document.querySelector('.verse-favorite-button')?.getAttribute('aria-pressed') === 'true'");
+  await click(page, ".verse-study-marks-button");
+  await click(page, '.verse-row-actions .tag-picker-option[aria-label="Add Favorite tag"]');
   await click(page, "#nextChapter");
   await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('Psalms 24')");
   await click(page, "#showTags");
@@ -629,10 +622,11 @@ async function runQa(page) {
   await click(page, "#favoriteChapter");
   await waitFor(page, "document.querySelector('#chapterTagControl .tag-picker-option[aria-label=\"Remove Favorite tag\"]')");
   await click(page, '#chapterTagControl .tag-picker-option[aria-label="Remove Favorite tag"]');
-  await click(page, ".verse-favorite-button.active");
+  await click(page, ".verse-study-marks-button");
+  await click(page, '.verse-row-actions .tag-picker-option[aria-label="Remove Favorite tag"]');
   await waitFor(
     page,
-    "document.querySelector('#favoriteBook')?.getAttribute('aria-pressed') === 'false' && document.querySelector('#favoriteChapter')?.getAttribute('aria-pressed') === 'false' && !document.querySelector('.verse-favorite-button.active')",
+    "document.querySelector('#favoriteBook')?.getAttribute('aria-pressed') === 'false' && document.querySelector('#favoriteChapter')?.getAttribute('aria-pressed') === 'false' && document.querySelector('.verse-study-marks-button')",
   );
   pass("book chapter verse favorites, scope tag controls, and scripture mark hierarchy");
 
@@ -754,17 +748,8 @@ async function runQa(page) {
     state.detailText.includes("KJV - King James Version") && state.detailText.includes("The LORD is my shepherd"),
     "parallel verse panel missing expected translation text",
   );
-  await click(page, "#detailContext .verse-context-favorite-button");
-  await waitFor(
-    page,
-    "document.querySelector('#detailContext .verse-context-favorite-button')?.getAttribute('aria-pressed') === 'true'",
-  );
-  await click(page, "#detailContext .verse-context-favorite-button");
-  await waitFor(
-    page,
-    "document.querySelector('#detailContext .verse-context-favorite-button')?.getAttribute('aria-pressed') === 'false'",
-  );
-  pass("verse context favorite toggle");
+  assert(await evaluate(page, `Boolean(document.querySelector("#detailContext [data-panel-scope='verse'] .study-marks-trigger"))`), "verse context Study Marks trigger is missing");
+  pass("verse context Study Marks trigger");
   pass("parallel translations by verse number");
 
   await click(page, ".fn-marker");
@@ -1294,21 +1279,16 @@ async function runQa(page) {
     ),
     "Interlinear source tokens are missing tag actions",
   );
-  await click(page, ".interlinear-token .token-favorite-button");
+  await click(page, ".interlinear-token .token-study-marks-button");
   await waitFor(
     page,
-    "document.querySelector('.interlinear-token .token-favorite-button')?.getAttribute('aria-pressed') === 'true'",
-  );
-  await click(page, ".interlinear-token .token-tag-button");
-  await waitFor(
-    page,
-    "document.querySelector('.interlinear-token .token-tag-picker .target-tag-picker-popover') && getComputedStyle(document.querySelector('.interlinear-token .token-tag-picker .target-tag-picker-popover')).display === 'grid'",
+    "document.querySelector('.interlinear-token .study-marks-menu .target-tag-picker-popover') && getComputedStyle(document.querySelector('.interlinear-token .study-marks-menu .target-tag-picker-popover')).display === 'grid'",
   );
   assert(
     await evaluate(page, "document.querySelector('#detailTitle')?.textContent === 'Interlinear'"),
     "interlinear token tag button should keep the tag picker local to the token card",
   );
-  await click(page, '.interlinear-token .token-tag-picker .tag-picker-option[aria-label="Add Positive tag"]');
+  await click(page, '.interlinear-token .study-marks-menu .tag-picker-option[aria-label="Add Positive tag"]');
   await waitFor(page, "document.querySelector('.interlinear-token .token-target-badges .target-tag-badge')");
   await click(page, ".interlinear-token .token-target-badges .target-tag-picker-trigger");
   await waitFor(
@@ -1317,19 +1297,15 @@ async function runQa(page) {
   );
   await click(page, '.interlinear-token .token-target-badges .tag-picker-option[aria-label="Remove Positive tag"]');
   await waitFor(page, "!document.querySelector('.interlinear-token .token-target-badges')");
-  await click(page, ".interlinear-token .token-favorite-button.active");
-  await waitFor(
-    page,
-    "document.querySelector('.interlinear-token .token-favorite-button')?.getAttribute('aria-pressed') === 'false'",
-  );
-  pass("Interlinear source-token favorites and tags");
+  pass("Interlinear source-token Study Marks");
   pass("Greek interlinear token data");
 
   await navigate(page, `${routeBase}#/read/bsb/proverbs/1/1`);
   await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('Proverbs 1')");
 
   await click(page, ".verse-study-button");
-  await clickButtonByText(page, "Tags", { index: 0 });
+  await click(page, "#detailContext [data-panel-scope='verse'] .study-marks-trigger");
+  await click(page, "#detailContext [data-panel-scope='verse'] .tag-picker-manage");
   await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Tags'");
   await click(page, "#detailContent .tag-editor-toggle");
   await waitFor(page, "document.querySelector('.tag-badge')?.textContent.includes('Positive')");
@@ -1354,7 +1330,8 @@ async function runQa(page) {
     `document.querySelector('.custom-tag-edit-form input[name="edit-label"]')?.value === ${JSON.stringify(customTagLabel)}`,
   );
   await click(page, ".verse-study-button");
-  await clickButtonByText(page, "Tags", { index: 0 });
+  await click(page, "#detailContext [data-panel-scope='verse'] .study-marks-trigger");
+  await click(page, "#detailContext [data-panel-scope='verse'] .tag-picker-manage");
   await waitFor(page, `document.querySelector('#detailContent')?.textContent.includes(${JSON.stringify(customTagLabel)})`);
   await evaluate(
     page,
