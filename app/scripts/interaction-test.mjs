@@ -751,14 +751,102 @@ async function runQa(page) {
   );
   assert(await evaluate(page, `Boolean(document.querySelector("#detailContext [data-panel-scope='verse'] .study-marks-trigger"))`), "verse context Study Marks trigger is missing");
   const studyTrigger = "#detailContext [data-panel-scope='verse'] .study-marks-trigger";
-  const marksBeforeDismissal = await evaluate(page, "document.querySelectorAll('.tag-picker-option[aria-pressed=\"true\"]').length");
-  await click(page, studyTrigger);
+  const readerStudyTrigger = ".verse-row-actions .verse-study-marks-button";
+  const activeReaderStudyTrigger = ".verse-row-actions .verse-study-marks-button[aria-expanded='true']";
+  const marksBeforeDismissal = await evaluate(
+    page,
+    "[...document.querySelectorAll('.target-tag-picker-menu')].map((menu) => [...menu.querySelectorAll('.tag-picker-option[aria-pressed=\"true\"]')].map((option) => option.getAttribute('aria-label')).sort().join('|')).sort().join('||')",
+  );
+  await evaluate(page, `document.querySelector(${JSON.stringify(studyTrigger)})?.focus()`);
+  await waitFor(page, `document.querySelector(${JSON.stringify(studyTrigger)})?.closest('.target-tag-picker-menu')?.dataset.menuOpen === 'true'`);
   await page.press(studyTrigger, "Escape");
-  const studyMarksDismissal = await evaluate(page, `({
+  const keyboardStudyMarksDismissal = await evaluate(page, `({
     restored: document.activeElement === document.querySelector(${JSON.stringify(studyTrigger)}),
-    unchanged: document.querySelectorAll('.tag-picker-option[aria-pressed="true"]').length === ${JSON.stringify(marksBeforeDismissal)}
+    closed: document.querySelector(${JSON.stringify(studyTrigger)})?.closest('.target-tag-picker-menu')?.dataset.menuOpen !== 'true',
+    unchanged: [...document.querySelectorAll('.target-tag-picker-menu')].map((menu) => [...menu.querySelectorAll('.tag-picker-option[aria-pressed="true"]')].map((option) => option.getAttribute('aria-label')).sort().join('|')).sort().join('||') === ${JSON.stringify(marksBeforeDismissal)}
   })`);
-  assert(studyMarksDismissal.restored && studyMarksDismissal.unchanged, `Study Marks Escape must restore trigger focus without mutation: ${JSON.stringify(studyMarksDismissal)}`);
+  assert(keyboardStudyMarksDismissal.closed && keyboardStudyMarksDismissal.restored && keyboardStudyMarksDismissal.unchanged, `keyboard-open Study Marks Escape must restore its trigger focus without mutation: ${JSON.stringify(keyboardStudyMarksDismissal)}`);
+
+  const hoverStudyMarksDismissal = await evaluate(page, `(async () => {
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const trigger = document.querySelector(${JSON.stringify(studyTrigger)});
+    const menu = trigger?.closest('.target-tag-picker-menu');
+    const outside = document.querySelector('#themeToggle');
+    const Ctor = window.PointerEvent || Event;
+    outside?.focus();
+    menu?.dispatchEvent(new Ctor('pointerenter', { bubbles: true, cancelable: true, pointerType: 'mouse' }));
+    await wait(0);
+    return { opened: menu?.dataset.menuOpen === 'true', focusOutside: document.activeElement === outside };
+  })()`);
+  await page.press("#themeToggle", "Escape");
+  const hoverEscapeState = await evaluate(page, `({
+    closed: document.querySelector(${JSON.stringify(studyTrigger)})?.closest('.target-tag-picker-menu')?.dataset.menuOpen !== 'true',
+    restored: document.activeElement === document.querySelector(${JSON.stringify(studyTrigger)})
+  })`);
+  assert(hoverStudyMarksDismissal.opened && hoverStudyMarksDismissal.focusOutside && hoverEscapeState.closed && hoverEscapeState.restored, `hover-open Study Marks Escape must restore its active trigger: ${JSON.stringify({ hoverStudyMarksDismissal, hoverEscapeState })}`);
+
+  const outsideDismissal = await evaluate(page, `(async () => {
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const trigger = document.querySelector(${JSON.stringify(studyTrigger)});
+    const menu = trigger?.closest('.target-tag-picker-menu');
+    const outside = document.querySelector('#themeToggle');
+    const Ctor = window.PointerEvent || Event;
+    trigger?.focus();
+    menu?.dispatchEvent(new Ctor('pointerenter', { bubbles: true, cancelable: true, pointerType: 'mouse' }));
+    await wait(0);
+    const openedBeforeDismissal = menu?.dataset.menuOpen === 'true';
+    outside?.dispatchEvent(new Ctor('pointerdown', { bubbles: true, cancelable: true, pointerType: 'mouse' }));
+    outside?.focus();
+    return {
+      openedBeforeDismissal,
+      closed: menu?.dataset.menuOpen !== 'true',
+      outsideRetainedFocus: document.activeElement === outside,
+    };
+  })()`);
+  assert(outsideDismissal.openedBeforeDismissal && outsideDismissal.closed && outsideDismissal.outsideRetainedFocus, `outside pointer dismissal must not steal focus: ${JSON.stringify(outsideDismissal)}`);
+
+  const menuSwitchState = await evaluate(page, `(async () => {
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const firstTrigger = document.querySelector(${JSON.stringify(studyTrigger)});
+    const firstMenu = firstTrigger?.closest('.target-tag-picker-menu');
+    const secondTrigger = document.querySelector(${JSON.stringify(readerStudyTrigger)});
+    const secondMenu = secondTrigger?.closest('.target-tag-picker-menu');
+    const Ctor = window.PointerEvent || Event;
+    firstTrigger?.focus();
+    firstMenu?.dispatchEvent(new Ctor('pointerenter', { bubbles: true, cancelable: true, pointerType: 'mouse' }));
+    await wait(0);
+    const firstOpened = firstMenu?.dataset.menuOpen === 'true';
+    secondTrigger?.dispatchEvent(new Ctor('pointerdown', { bubbles: true, cancelable: true, pointerType: 'mouse' }));
+    secondTrigger?.click();
+    secondTrigger?.focus();
+    return {
+      firstOpened,
+      firstClosed: firstMenu?.dataset.menuOpen !== 'true',
+      secondOpened: secondMenu?.dataset.menuOpen === 'true',
+      secondFocused: document.activeElement === secondTrigger,
+    };
+  })()`);
+  assert(menuSwitchState.firstOpened && menuSwitchState.firstClosed && menuSwitchState.secondOpened && menuSwitchState.secondFocused, `opening picker B must close picker A without returning focus to A: ${JSON.stringify(menuSwitchState)}`);
+  await page.press(activeReaderStudyTrigger, "Escape");
+  const marksAfterDismissal = await evaluate(
+    page,
+    "[...document.querySelectorAll('.target-tag-picker-menu')].map((menu) => [...menu.querySelectorAll('.tag-picker-option[aria-pressed=\"true\"]')].map((option) => option.getAttribute('aria-label')).sort().join('|')).sort().join('||')",
+  );
+  assert(marksAfterDismissal === marksBeforeDismissal, "all Study Marks dismissal paths must leave tag assertions unchanged");
+  const readerMarksBeforeClosedEscape = await evaluate(
+    page,
+    `[...(document.querySelector(${JSON.stringify(readerStudyTrigger)})?.closest('.target-tag-picker-menu')?.querySelectorAll('.tag-picker-option[aria-pressed="true"]') || [])].map((option) => option.getAttribute('aria-label')).sort().join('|')`,
+  );
+  await evaluate(page, "document.querySelector('#themeToggle')?.focus()");
+  await page.press("#themeToggle", "Escape");
+  const closedPickerEscape = await evaluate(
+    page,
+    `({
+      focusUnchanged: document.activeElement === document.querySelector('#themeToggle'),
+      marksUnchanged: [...(document.querySelector(${JSON.stringify(readerStudyTrigger)})?.closest('.target-tag-picker-menu')?.querySelectorAll('.tag-picker-option[aria-pressed="true"]') || [])].map((option) => option.getAttribute('aria-label')).sort().join('|') === ${JSON.stringify(readerMarksBeforeClosedEscape)}
+    })`,
+  );
+  assert(closedPickerEscape.focusUnchanged && closedPickerEscape.marksUnchanged, `Escape with no active Study Marks picker must leave focus and marks unchanged: ${JSON.stringify(closedPickerEscape)}`);
   pass("verse context Study Marks trigger");
   pass("parallel translations by verse number");
 

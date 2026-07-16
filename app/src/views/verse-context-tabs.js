@@ -8,6 +8,7 @@ import {
 } from "../panel-context-model.js";
 import { resolveInterlinearVerseTokens } from "../strongs.js?v=pr13-live-qa-20260711e";
 import { createSourceTokenTarget, createVerseTarget } from "../semantic-targets.js?v=pr13-live-qa-20260711e";
+import { strongSectionControlState } from "../strong-section-lifecycle.js?v=pr13-live-qa-20260711e";
 
 function getVerseText(ctx, verse) {
   return ctx.state.verseBook?.chapters?.[ctx.state.chapter]?.[verse] || "";
@@ -207,27 +208,13 @@ function appendActionButton(ctx, controls, action, reference, verse, wordContext
 
 function syncStrongSectionControl(button, section, availability, reference) {
   if (!button) return;
-  const label = section === "hebrew" ? "Hebrew concordance" : "Greek concordance";
-  const state = availability?.[section] || "absent";
-  const loading = state === "loading";
-  const present = state === "present";
-  button.disabled = !present;
-  button.setAttribute("aria-disabled", String(!present));
-  button.dataset.controlState = loading ? "loading" : present ? CONTROL_STATES.enabled : CONTROL_STATES.dataUnavailable;
-  button.dataset.unavailable = present || loading ? "false" : "true";
-  if (loading) {
-    const message = `${label} is loading for ${reference}`;
-    button.title = message;
-    button.setAttribute("aria-label", message);
-  } else if (present) {
-    const message = `Word scope: scroll to ${label.toLowerCase()} for ${reference}`;
-    button.title = message;
-    button.setAttribute("aria-label", message);
-  } else {
-    const message = `No ${label.toLowerCase()} section is available for the selected word in ${reference}`;
-    button.title = message;
-    button.setAttribute("aria-label", message);
-  }
+  const state = strongSectionControlState(section, availability, reference);
+  button.disabled = state.disabled;
+  button.setAttribute("aria-disabled", state.ariaDisabled);
+  button.dataset.controlState = state.controlState;
+  button.dataset.unavailable = state.unavailable;
+  button.title = state.title;
+  button.setAttribute("aria-label", state.ariaLabel);
 }
 
 export function createVerseContextTabs(ctx, reference, verse, active, strongsContext = null) {

@@ -217,7 +217,7 @@ async function runScenario(browser, baseUrl, mode) {
       const before = {
         disabled: button?.disabled,
         lock: document.querySelector(".detail-pane")?.dataset.panelMode,
-        token: document.querySelector(".reader-context-word")?.dataset.strongCode,
+        token: document.querySelector("#detailContent .strong-code")?.textContent,
         detail,
         backDisabled: document.querySelector("#detailBack")?.disabled,
       };
@@ -225,13 +225,32 @@ async function runScenario(browser, baseUrl, mode) {
       return {
         ...before,
         sameDetail: detail === document.querySelector("#detailContent .strong-detail"),
-        sameToken: before.token === document.querySelector(".reader-context-word")?.dataset.strongCode,
+        sameToken: before.token === document.querySelector("#detailContent .strong-code")?.textContent,
         sameLock: before.lock === document.querySelector(".detail-pane")?.dataset.panelMode,
         sameHistoryState: before.backDisabled === document.querySelector("#detailBack")?.disabled,
         scrolled: overview?.dataset.strongSectionActive === "true",
       };
     });
     assert(!wordReactivation.disabled && wordReactivation.sameDetail && wordReactivation.sameToken && wordReactivation.sameLock && wordReactivation.sameHistoryState && wordReactivation.scrolled, `${mode}: active Word must scroll without replacing detail, changing context, lock, or history`);
+
+    await click(page, "#detailBack");
+    await waitFor(page, () => document.querySelector("#detailTitle")?.textContent === "Interlinear");
+    const backState = await page.evaluate(() => ({
+      title: document.querySelector("#detailTitle")?.textContent,
+      hasStrong: Boolean(document.querySelector("#detailContent .strong-detail")),
+    }));
+    assert.equal(backState.title, "Interlinear", `${mode}: Back after current Word must return directly to the preceding view`);
+    assert.equal(backState.hasStrong, false, `${mode}: current Word must not add a duplicate Strong's history entry`);
+    await click(page, "#detailForward");
+    await waitFor(page, () => document.querySelector("#detailTitle")?.textContent === "Strong's");
+    const forwardState = await page.evaluate(() => ({
+      token: document.querySelector("#detailContent .strong-code")?.textContent,
+      lock: document.querySelector(".detail-pane")?.dataset.panelMode,
+      wordControl: document.querySelector("#detailContext [data-panel-scope='word'] .verse-context-tab[data-visible-label='Word']")?.getAttribute("aria-current"),
+    }));
+    assert.equal(forwardState.token, wordReactivation.token, `${mode}: Forward must restore the selected Strong's word`);
+    assert.equal(forwardState.lock, wordReactivation.lock, `${mode}: Forward must restore the locked panel state`);
+    assert.equal(forwardState.wordControl, "page", `${mode}: Forward must restore the active Word control`);
 
     await click(
       page,

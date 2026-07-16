@@ -394,7 +394,12 @@ export function createTagsView(ctx) {
     delete menu.dataset.menuOpen;
     setTargetTagMenuExpanded(menu, false);
     if (activeTargetTagMenu === menu) activeTargetTagMenu = null;
-    if (restoreFocus) (menu.__targetTagTrigger || menu.querySelector(".target-tag-picker-trigger, .tag-picker-trigger"))?.focus({ preventScroll: true });
+    if (restoreFocus) {
+      const trigger = menu.__targetTagTrigger || menu.querySelector(".target-tag-picker-trigger, .tag-picker-trigger");
+      menu.dataset.restoringFocus = "true";
+      trigger?.focus({ preventScroll: true });
+      window.setTimeout(() => delete menu.dataset.restoringFocus, 0);
+    }
   }
 
   function openTargetTagMenu(menu) {
@@ -423,22 +428,25 @@ export function createTagsView(ctx) {
       if (!activeTargetTagMenu || activeTargetTagMenu.contains(event.target)) return;
       closeTargetTagMenu(activeTargetTagMenu);
     });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || !activeTargetTagMenu) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      closeTargetTagMenu(activeTargetTagMenu, { restoreFocus: true });
+    }, true);
   }
 
   function wireTargetTagMenu(menu) {
     ensureTargetTagMenuDismissal();
     menu.addEventListener("pointerenter", () => openTargetTagMenu(menu));
     menu.addEventListener("pointerleave", () => scheduleTargetTagMenuClose(menu));
-    menu.addEventListener("focusin", () => openTargetTagMenu(menu));
+    menu.addEventListener("focusin", () => {
+      if (menu.dataset.restoringFocus === "true") return;
+      openTargetTagMenu(menu);
+    });
     menu.addEventListener("focusout", (event) => {
       if (menu.contains(event.relatedTarget)) return;
       scheduleTargetTagMenuClose(menu);
-    });
-    menu.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape" || activeTargetTagMenu !== menu) return;
-      event.preventDefault();
-      event.stopPropagation();
-      closeTargetTagMenu(menu, { restoreFocus: true });
     });
   }
 
