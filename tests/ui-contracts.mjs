@@ -56,6 +56,18 @@ assert.match(
   "all target badge surfaces must use the Favorite visibility policy",
 );
 
+const contextStyles = readFileSync(new URL("../app/styles-context.css", import.meta.url), "utf8");
+const summaryRule = contextStyles.match(/\.panel-context-summary\s*\{([^}]*)\}/s)?.[1] || "";
+assert.match(summaryRule, /color:\s*var\(--text\)/, "selected context title must use primary text contrast");
+assert.match(contextStyles, /#favoriteBook::before\s*\{\s*content:\s*"Book";/, "Book Study Marks trigger must show its scope label");
+assert.match(contextStyles, /#favoriteChapter::before\s*\{\s*content:\s*"Chapter";/, "Chapter Study Marks trigger must show its scope label");
+assert.match(contextStyles, /\.verse-row-actions \.study-marks-menu\s*\{\s*display:\s*none;/, "redundant verse-row Study Marks icon must stay hidden");
+assert.match(
+  contextStyles,
+  /\.original-language-transliteration,[\s\S]*color:\s*var\(--text\)/,
+  "Language Study transliteration must use primary text contrast",
+);
+
 const capabilityIds = new Set(CAPABILITY_REGISTRY.map((item) => item.capability_id));
 const actions = new Set();
 for (const [controlId, control] of Object.entries(STUDY_CONTROL_SCHEMA)) {
@@ -80,7 +92,7 @@ console.log(
     {
       status: "ok",
       controls_checked: Object.keys(STUDY_CONTROL_SCHEMA).length,
-      assertions: 22,
+      assertions: 27,
     },
     null,
     2,
