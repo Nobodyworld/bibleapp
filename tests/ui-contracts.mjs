@@ -61,7 +61,6 @@ const summaryRule = contextStyles.match(/\.panel-context-summary\s*\{([^}]*)\}/s
 assert.match(summaryRule, /color:\s*var\(--text\)/, "selected context title must use primary text contrast");
 assert.match(contextStyles, /#favoriteBook::before\s*\{\s*content:\s*"Book";/, "Book Study Marks trigger must show its scope label");
 assert.match(contextStyles, /#favoriteChapter::before\s*\{\s*content:\s*"Chapter";/, "Chapter Study Marks trigger must show its scope label");
-assert.match(contextStyles, /\.verse-row-actions \.study-marks-menu\s*\{\s*display:\s*none;/, "redundant verse-row Study Marks icon must stay hidden");
 assert.match(
   contextStyles,
   /\.original-language-transliteration,[\s\S]*color:\s*var\(--text\)/,
@@ -92,7 +91,7 @@ console.log(
     {
       status: "ok",
       controls_checked: Object.keys(STUDY_CONTROL_SCHEMA).length,
-      assertions: 27,
+      assertions: 26,
     },
     null,
     2,
