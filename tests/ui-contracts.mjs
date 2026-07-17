@@ -3,7 +3,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { CAPABILITY_REGISTRY } from "../app/src/capabilities.js";
-import { scopeStudyMarkLabel, studyMarkBadgeOptions } from "../app/src/study-mark-badges.js";
 import {
   chapterSwipeDirection,
   CONTROL_STATES,
@@ -45,14 +44,20 @@ assert.equal(
 );
 assert.equal(interlinearTokenIdentity({ strongCode: "G3754" }), "strong:G3754");
 
-assert.deepEqual(studyMarkBadgeOptions(), { includeFavorite: true });
-assert.deepEqual(
-  studyMarkBadgeOptions({ compact: true, interactive: true, includeFavorite: false }),
-  { compact: true, interactive: true, includeFavorite: true },
+const detailViewsSource = readFileSync(new URL("../app/src/detail-views.js", import.meta.url), "utf8");
+assert.match(
+  detailViewsSource,
+  /function studyMarkBadgeOptions[\s\S]*includeFavorite:\s*true/,
+  "Favorite must remain visible wherever Study Mark badges render",
 );
-assert.equal(scopeStudyMarkLabel({ id: "favoriteBook" }), "Book");
-assert.equal(scopeStudyMarkLabel({ id: "favoriteChapter" }), "Chapter");
-assert.equal(scopeStudyMarkLabel({ id: "other" }), "");
+assert.match(detailViewsSource, /options\.id === "favoriteBook"\) return "Book"/);
+assert.match(detailViewsSource, /options\.id === "favoriteChapter"\) return "Chapter"/);
+assert.match(detailViewsSource, /label\.className = "scope-mark-label"/);
+assert.match(
+  detailViewsSource,
+  /renderTargetTagBadges\(target, studyMarkBadgeOptions\(options\)\)/,
+  "all target badge surfaces must use the Favorite visibility policy",
+);
 
 const contextStyles = readFileSync(new URL("../app/styles-context.css", import.meta.url), "utf8");
 const summaryRule = contextStyles.match(/\.panel-context-summary\s*\{([^}]*)\}/s)?.[1] || "";
