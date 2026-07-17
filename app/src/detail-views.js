@@ -16,26 +16,6 @@ function studyMarkBadgeOptions(options = {}) {
   };
 }
 
-function scopeStudyMarkLabel(options = {}) {
-  if (options.id === "favoriteBook") return "Book";
-  if (options.id === "favoriteChapter") return "Chapter";
-  return "";
-}
-
-function renderStudyMarksTrigger(tagsView, target, options = {}) {
-  const menu = tagsView.renderStudyMarksTrigger(target, options);
-  const visibleLabel = scopeStudyMarkLabel(options);
-  if (!visibleLabel) return menu;
-
-  const trigger = menu.querySelector(".study-marks-trigger");
-  if (!trigger) return menu;
-  const label = document.createElement("span");
-  label.className = "scope-mark-label";
-  label.textContent = visibleLabel;
-  trigger.prepend(label);
-  return menu;
-}
-
 export function createDetailViews(ctx) {
   ctx.getActiveWordContext = (verse = null) => getActiveWordContext(ctx, verse);
   ctx.setActiveWordContext = (context) => setActiveWordContext(ctx, context);
@@ -74,7 +54,7 @@ export function createDetailViews(ctx) {
     renderInlineTagPicker: tagsView.renderInlineTagPicker,
     renderTagBadges: tagsView.renderTagBadges,
     renderTargetTagPicker: tagsView.renderTargetTagPicker,
-    renderStudyMarksTrigger: (target, options = {}) => renderStudyMarksTrigger(tagsView, target, options),
+    renderStudyMarksTrigger: tagsView.renderStudyMarksTrigger,
     renderTargetTagBadges: (target, options = {}) =>
       tagsView.renderTargetTagBadges(target, studyMarkBadgeOptions(options)),
     showCommentary: commentaryOutlineViews.showCommentary,
