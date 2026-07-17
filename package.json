@@ -1,5 +1,5 @@
 {
-  "name": "bible-app",
+  "name": "app-bible-language-study",
   "version": "1.0.0",
   "description": "Bible App Reader: a local-first static Bible study reader with Language Study, commentary, search, and analysis tools.",
   "type": "module",
@@ -41,6 +41,14 @@
   ],
   "author": "Nobody Production",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nobodyworld/app-bible-language-study.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Nobodyworld/app-bible-language-study/issues"
+  },
+  "homepage": "https://github.com/Nobodyworld/app-bible-language-study#readme",
   "devDependencies": {
     "playwright-core": "^1.61.1"
   }
