@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { CAPABILITY_REGISTRY } from "../app/src/capabilities.js";
-import { studyMarkBadgeOptions } from "../app/src/study-mark-badges.js";
+import { scopeStudyMarkLabel, studyMarkBadgeOptions } from "../app/src/study-mark-badges.js";
 import {
   chapterSwipeDirection,
   CONTROL_STATES,
@@ -50,11 +50,17 @@ assert.deepEqual(
   studyMarkBadgeOptions({ compact: true, interactive: true, includeFavorite: false }),
   { compact: true, interactive: true, includeFavorite: true },
 );
+assert.equal(scopeStudyMarkLabel({ id: "favoriteBook" }), "Book");
+assert.equal(scopeStudyMarkLabel({ id: "favoriteChapter" }), "Chapter");
+assert.equal(scopeStudyMarkLabel({ id: "other" }), "");
 
 const contextStyles = readFileSync(new URL("../app/styles-context.css", import.meta.url), "utf8");
 const summaryRule = contextStyles.match(/\.panel-context-summary\s*\{([^}]*)\}/s)?.[1] || "";
 assert.match(summaryRule, /color:\s*var\(--text\)/, "selected context summary must use the primary foreground color");
 assert.doesNotMatch(summaryRule, /color:\s*var\(--muted\)/, "selected context summary must not use muted control text");
+const scopeMarkRule = contextStyles.match(/\.scope-mark-button\s*\{([^}]*)\}/s)?.[1] || "";
+assert.match(scopeMarkRule, /display:\s*inline-flex/, "Book and Chapter Study Mark triggers must contain visible labels");
+assert.match(scopeMarkRule, /width:\s*auto/, "labeled Book and Chapter triggers must size to their content");
 
 const capabilityIds = new Set(CAPABILITY_REGISTRY.map((item) => item.capability_id));
 const actions = new Set();
@@ -80,7 +86,7 @@ console.log(
     {
       status: "ok",
       controls_checked: Object.keys(STUDY_CONTROL_SCHEMA).length,
-      assertions: 24,
+      assertions: 29,
     },
     null,
     2,
