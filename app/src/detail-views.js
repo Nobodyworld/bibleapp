@@ -7,8 +7,20 @@ import { createSearchView } from "./views/search-view.js?v=pr13-live-qa-20260711
 import { createStrongsView } from "./views/strongs-view.js?v=pr13-live-qa-20260711e";
 import { createTagsView } from "./views/tags-view.js?v=pr13-live-qa-20260711e";
 import { createUserDataView } from "./views/user-data-view.js?v=pr13-live-qa-20260711e";
-import { scopeStudyMarkLabel, studyMarkBadgeOptions } from "./study-mark-badges.js";
 import { setDetail } from "./dom.js?v=pr13-live-qa-20260711e";
+
+function studyMarkBadgeOptions(options = {}) {
+  return {
+    ...options,
+    includeFavorite: true,
+  };
+}
+
+function scopeStudyMarkLabel(options = {}) {
+  if (options.id === "favoriteBook") return "Book";
+  if (options.id === "favoriteChapter") return "Chapter";
+  return "";
+}
 
 function renderStudyMarksTrigger(tagsView, target, options = {}) {
   const menu = tagsView.renderStudyMarksTrigger(target, options);
