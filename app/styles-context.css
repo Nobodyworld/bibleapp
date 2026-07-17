@@ -13,7 +13,7 @@
 
 .panel-context-summary {
   overflow: hidden;
-  color: var(--muted);
+  color: var(--text);
   font-size: 12px;
   font-weight: 700;
   line-height: 1.35;
@@ -82,10 +82,52 @@
   border-radius: 8px;
 }
 
+.scope-mark-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: auto;
+  min-width: 0;
+  padding-inline: 8px;
+}
+
+#favoriteBook::before,
+#favoriteChapter::before {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+#favoriteBook::before { content: "Book"; }
+#favoriteChapter::before { content: "Chapter"; }
+
 .study-marks-icon { width: 16px; height: 16px; fill: currentColor; }
 .icon-definitions { display: none; }
 .study-marks-count { position: absolute; right: -5px; top: -5px; min-width: 13px; padding: 0 2px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 9px; font-weight: 800; line-height: 13px; }
 .strong-detail [data-strong-section-active="true"] { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+.verse-row-actions .study-marks-menu {
+  display: none;
+}
+
+body.detail-locked .verse-row.reader-context-verse .verse-study-button {
+  opacity: 0;
+  visibility: hidden;
+}
+
+body.detail-locked .verse-row.reader-context-verse:hover .verse-study-button,
+body.detail-locked .verse-row.reader-context-verse:focus-within .verse-study-button {
+  opacity: 0.85;
+  visibility: visible;
+}
+
+.original-language-transliteration,
+.original-language-word-source .token-translit,
+.original-language-word-source .original-language-token-transliteration {
+  color: var(--text);
+  font-weight: 600;
+}
 
 .target-tag-picker-menu[data-menu-boundary="detail-pane"] .tag-picker-popover {
   top: 100%;
@@ -93,6 +135,13 @@
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
+}
+
+@media (hover: none) {
+  body.detail-locked .verse-row.reader-context-verse .verse-study-button {
+    opacity: 0.85;
+    visibility: visible;
+  }
 }
 
 @media (min-width: 769px) and (max-width: 960px) {
