@@ -16,6 +16,18 @@ function studyMarkBadgeOptions(options = {}) {
   };
 }
 
+function renderStudyMarkBadges(tagsView, target, options = {}) {
+  const rendered = tagsView.renderTargetTagBadges(target, studyMarkBadgeOptions(options));
+  const badges = rendered?.classList?.contains("target-tag-badges")
+    ? rendered
+    : rendered?.querySelector?.(".target-tag-badges");
+  const favorite = [...(badges?.children || [])].find((badge) =>
+    String(badge.title || "").startsWith("Favorite"),
+  );
+  if (favorite) badges.append(favorite);
+  return rendered;
+}
+
 export function createDetailViews(ctx) {
   ctx.getActiveWordContext = (verse = null) => getActiveWordContext(ctx, verse);
   ctx.setActiveWordContext = (context) => setActiveWordContext(ctx, context);
@@ -55,8 +67,7 @@ export function createDetailViews(ctx) {
     renderTagBadges: tagsView.renderTagBadges,
     renderTargetTagPicker: tagsView.renderTargetTagPicker,
     renderStudyMarksTrigger: tagsView.renderStudyMarksTrigger,
-    renderTargetTagBadges: (target, options = {}) =>
-      tagsView.renderTargetTagBadges(target, studyMarkBadgeOptions(options)),
+    renderTargetTagBadges: (target, options = {}) => renderStudyMarkBadges(tagsView, target, options),
     showCommentary: commentaryOutlineViews.showCommentary,
     showCrossrefs: referenceViews.showCrossrefs,
     showFootnote: referenceViews.showFootnote,
