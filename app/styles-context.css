@@ -82,6 +82,20 @@
   border-radius: 8px;
 }
 
+.scope-mark-button {
+  display: inline-flex;
+  width: auto;
+  min-width: 0;
+  gap: 6px;
+  padding-inline: 8px;
+}
+
+.scope-mark-label {
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
 .study-marks-icon { width: 16px; height: 16px; fill: currentColor; }
 .icon-definitions { display: none; }
 .study-marks-count { position: absolute; right: -5px; top: -5px; min-width: 13px; padding: 0 2px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 9px; font-weight: 800; line-height: 13px; }
