@@ -7,8 +7,22 @@ import { createSearchView } from "./views/search-view.js?v=pr13-live-qa-20260711
 import { createStrongsView } from "./views/strongs-view.js?v=pr13-live-qa-20260711e";
 import { createTagsView } from "./views/tags-view.js?v=pr13-live-qa-20260711e";
 import { createUserDataView } from "./views/user-data-view.js?v=pr13-live-qa-20260711e";
-import { studyMarkBadgeOptions } from "./study-mark-badges.js";
+import { scopeStudyMarkLabel, studyMarkBadgeOptions } from "./study-mark-badges.js";
 import { setDetail } from "./dom.js?v=pr13-live-qa-20260711e";
+
+function renderStudyMarksTrigger(tagsView, target, options = {}) {
+  const menu = tagsView.renderStudyMarksTrigger(target, options);
+  const visibleLabel = scopeStudyMarkLabel(options);
+  if (!visibleLabel) return menu;
+
+  const trigger = menu.querySelector(".study-marks-trigger");
+  if (!trigger) return menu;
+  const label = document.createElement("span");
+  label.className = "scope-mark-label";
+  label.textContent = visibleLabel;
+  trigger.prepend(label);
+  return menu;
+}
 
 export function createDetailViews(ctx) {
   ctx.getActiveWordContext = (verse = null) => getActiveWordContext(ctx, verse);
@@ -48,7 +62,7 @@ export function createDetailViews(ctx) {
     renderInlineTagPicker: tagsView.renderInlineTagPicker,
     renderTagBadges: tagsView.renderTagBadges,
     renderTargetTagPicker: tagsView.renderTargetTagPicker,
-    renderStudyMarksTrigger: tagsView.renderStudyMarksTrigger,
+    renderStudyMarksTrigger: (target, options = {}) => renderStudyMarksTrigger(tagsView, target, options),
     renderTargetTagBadges: (target, options = {}) =>
       tagsView.renderTargetTagBadges(target, studyMarkBadgeOptions(options)),
     showCommentary: commentaryOutlineViews.showCommentary,
