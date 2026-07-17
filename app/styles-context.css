@@ -1,4 +1,6 @@
 .detail-context {
+  position: relative;
+  z-index: 20;
   padding: 8px 16px 0;
 }
 
@@ -6,6 +8,7 @@
   display: grid;
   gap: 5px;
   min-width: 0;
+  overflow: visible;
 }
 
 .panel-context-summary {
@@ -83,6 +86,14 @@
 .icon-definitions { display: none; }
 .study-marks-count { position: absolute; right: -5px; top: -5px; min-width: 13px; padding: 0 2px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 9px; font-weight: 800; line-height: 13px; }
 .strong-detail [data-strong-section-active="true"] { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+.target-tag-picker-menu[data-menu-boundary="detail-pane"] .tag-picker-popover {
+  top: 100%;
+  max-width: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
 
 @media (min-width: 769px) and (max-width: 960px) {
   .detail-pane {

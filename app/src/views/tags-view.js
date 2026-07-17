@@ -387,6 +387,47 @@ export function createTagsView(ctx) {
     targetTagMenuCloseTimer = null;
   }
 
+  function positionTargetTagMenu(menu) {
+    if (!menu || menu.dataset.menuBoundary !== "detail-pane") return;
+    const popover = menu.querySelector(".target-tag-picker-popover");
+    const pane = menu.closest(".detail-pane");
+    const trigger = menu.__targetTagTrigger || menu.querySelector(".target-tag-picker-trigger, .tag-picker-trigger");
+    if (!popover || !pane || !trigger) return;
+
+    const paneRect = pane.getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
+    const triggerRect = trigger.getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+    const viewportHeight = document.documentElement.clientHeight || window.innerHeight;
+    const inset = 8;
+    const minLeft = Math.max(inset, paneRect.left + inset);
+    const maxRight = Math.min(viewportWidth - inset, paneRect.right - inset);
+    if (maxRight <= minLeft) return;
+
+    const width = Math.max(1, Math.min(230, Math.floor(maxRight - minLeft)));
+    const left = Math.max(minLeft, Math.min(triggerRect.right - width, maxRight - width));
+    popover.style.left = `${Math.round(left - menuRect.left)}px`;
+    popover.style.right = "auto";
+    popover.style.width = `${width}px`;
+    popover.style.maxWidth = `${width}px`;
+    popover.style.boxSizing = "border-box";
+
+    const minTop = Math.max(inset, paneRect.top + inset);
+    const maxBottom = Math.min(viewportHeight - inset, paneRect.bottom - inset);
+    const spaceBelow = Math.max(0, maxBottom - triggerRect.bottom);
+    const spaceAbove = Math.max(0, triggerRect.top - minTop);
+    const requestedHeight = Math.min(260, Math.max(1, popover.scrollHeight));
+    const placeBelow = spaceBelow >= requestedHeight || spaceBelow >= spaceAbove;
+    const availableHeight = placeBelow ? spaceBelow : spaceAbove;
+    const height = Math.max(1, Math.floor(Math.min(260, availableHeight)));
+    const top = placeBelow
+      ? triggerRect.bottom - menuRect.top
+      : triggerRect.top - menuRect.top - height;
+    popover.style.top = `${Math.round(top)}px`;
+    popover.style.maxHeight = `${height}px`;
+    popover.dataset.menuPlacement = placeBelow ? "below" : "above";
+  }
+
   function closeTargetTagMenu(menu = activeTargetTagMenu, { restoreFocus = false } = {}) {
     if (!menu) return;
     cancelTargetTagMenuClose();
@@ -410,6 +451,7 @@ export function createTagsView(ctx) {
     delete menu.dataset.menuClosed;
     menu.dataset.menuOpen = "true";
     setTargetTagMenuExpanded(menu, true);
+    positionTargetTagMenu(menu);
   }
 
   function scheduleTargetTagMenuClose(menu) {
@@ -434,6 +476,7 @@ export function createTagsView(ctx) {
       event.stopImmediatePropagation();
       closeTargetTagMenu(activeTargetTagMenu, { restoreFocus: true });
     }, true);
+    window.addEventListener("resize", () => positionTargetTagMenu(activeTargetTagMenu));
   }
 
   function wireTargetTagMenu(menu) {
@@ -605,6 +648,7 @@ export function createTagsView(ctx) {
       .filter(Boolean)
       .join(" ");
     if (options.align === "right") menu.dataset.menuAlign = "right";
+    if (options.boundary === "detail-pane") menu.dataset.menuBoundary = "detail-pane";
 
     const trigger = options.trigger || document.createElement("button");
     if (trigger.tagName === "BUTTON") trigger.type = "button";

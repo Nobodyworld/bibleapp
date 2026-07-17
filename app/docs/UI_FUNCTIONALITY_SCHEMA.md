@@ -5,11 +5,11 @@ Reviewed: 2026-07-12
 ## Control placement
 
 - The chapter tool group contains Search, Study Marks, Translate, Processing, and Study Data.
-- Contextual side-panel navigation follows one visible scope order: `Word → Verse → Chapter → Book`.
-- Word and Verse controls render in `#detailContext` when a verse detail is active. Chapter and Book controls remain persistently mounted immediately after that contextual surface so containing-scope tools stay reachable while Word and Verse views change.
-- The derived order and tool ownership remain centralized in `src/panel-context-model.js`; persistent Chapter and Book mounts do not create independent scope state.
+- Contextual side-panel navigation follows one compact visible scope order: `Word → Verse`.
+- Word and Verse controls render in `#detailContext` when a verse detail is active. Chapter Language Study and Book Outline remain reader-header actions and do not mount as persistent side-panel groups.
+- The derived scope semantics and tool ownership remain centralized in `src/panel-context-model.js`; hiding Chapter and Book from the compact side panel does not remove their valid application scope.
 - Word is present only when canonical word/source-token context exists for the active verse, and it is always the first scope when present.
-- Verse owns Parallel, References, Commentary, verse Language Study, Tags, and the verse Favorite control.
+- Verse owns Parallel, References, Commentary, verse Language Study, and the verse Study Marks trigger.
 - Chapter owns the chapter-level Language Study entry. Book owns Outline.
 - A compact context summary identifies the selected word and containing verse without repeating explanatory prose inside each detail view.
 - Visible contextual labels use the full product terms Parallel, References, Commentary, Language, and Tags. Stable short DOM labels (`Par`, `Refs`, `Cmt`, `Int`) remain only for existing browser automation compatibility; full labels are rendered and exposed through `title` and `aria-label`.
@@ -31,12 +31,12 @@ The panel distinguishes direct data ownership from inherited containing context:
 | Scope | Direct tools/data | Availability |
 |---|---|---|
 | Word | Strong's/lexical detail, source word, morphology, word-level actions | Only when canonical word context exists |
-| Verse | Parallel text, references, commentary, verse Language Study, verse tags/favorite | When a verse is active |
-| Chapter | Chapter Language Study entry | When a chapter is active |
-| Book | Outline | When a book is active |
+| Verse | Parallel text, references, commentary, verse Language Study, verse Study Marks | When a verse is active |
+| Chapter | Reader-header Language Study entry | When a chapter is active |
+| Book | Reader-header Outline entry | When a book is active |
 | Global/user | Settings, personal data, maintenance, diagnostics | Reserved for the later Settings/My Data redesign |
 
-A word can inherit navigation to its containing Verse, Chapter, and Book tools, but those tools remain visibly attached to their true scope. Word detail must never imply that cross-references or commentary belong to the lexical entry itself.
+A selected word retains its containing Verse controls. Chapter and Book keep their valid scope semantics while remaining attached to their reader-header controls. Word detail must never imply that cross-references or commentary belong to the lexical entry itself.
 
 `src/active-word-context.js` is the explicit authority for the selected word available to contextual navigation. It stores only a token plus navigation options, suppresses forced duplicate history entries, rejects a stored word when its verse does not match the active verse, and clears through existing navigation/reset paths. View code must not read or write an ad hoc `studyContext.strong` property.
 
@@ -145,9 +145,11 @@ IndexedDB initialization and migration have a three-second boundary. If the brow
 - `tests/strong-reference-control.mjs`: exact concordance reference resolution and unresolved plain-text fallback.
 - `tests/reader-ui-regressions.mjs`: source-level reader layout, panel-aware tooltip, concordance control, and navigation-reset regressions.
 - `tests/original-language-study.mjs`: visible Language Study naming and source-backed study/reference behavior.
-- `app/scripts/panel-context-interaction-test.mjs`: desktop, narrow, and mobile Word-first ordering, inherited Verse navigation, Verse-only clearing, horizontal-overflow checks, sticky-header placement, visible headings, and browser-error coverage.
+- `app/scripts/panel-context-interaction-test.mjs`: light/dark desktop, narrow, and mobile Word-first ordering, inherited Verse navigation, Verse-only clearing, contained source-word and verse Study Marks popovers, picker-wheel ownership, horizontal-overflow checks, sticky-header placement, visible headings, and browser-error coverage.
 - `app/scripts/original-language-study-interaction-test.mjs`: rendered source/transliteration rows, lazy study enhancement, related-reference preview/navigation/history, and tooltip-containment behavior when the browser runner is available.
 - `app/scripts/interaction-test.mjs`: rendered interaction behavior, including reader text-span selection, favorite controls, editable target badges, source-token tagging, Favorites grouping, panel history, and cleanup, when the browser runner is available.
 # Compact side-panel Study Marks contract
 
 The reader side panel is limited to the current exact Word (when present) and Verse context.  Its selected-word summary is visually separated from a compact control row. Chapter Language Study and Book Outline remain reader-header actions. Study Marks is one reusable icon trigger backed by the canonical target-aware picker; Book, Chapter, Verse, selected English text, and exact source tokens preserve their existing separate semantic targets and Favorite remains the `favorite` tag assertion.
+
+Inside the compact detail pane, source-word and verse Study Marks pickers right-anchor within the intersection of the pane and viewport. They retain vertical picker scrolling, stay above Strong's detail content, and never change the selected word, panel lock, or detail history while opened, hovered, scrolled, or dismissed.

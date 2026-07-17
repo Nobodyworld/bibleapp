@@ -250,11 +250,33 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
           wordContext.token,
           ctx.state.translationId,
         );
-        if (sourceTarget) controls.append(ctx.detailViews.renderStudyMarksTrigger(sourceTarget, { label: `selected source word in ${reference}`, onChange: () => { ctx.renderChapter(); ctx.syncFavoriteButtons?.(); } }));
+        if (sourceTarget) {
+          controls.append(
+            ctx.detailViews.renderStudyMarksTrigger(sourceTarget, {
+              align: "right",
+              boundary: "detail-pane",
+              label: `selected source word in ${reference}`,
+              onChange: () => {
+                ctx.renderChapter();
+                ctx.syncFavoriteButtons?.();
+              },
+            }),
+          );
+        }
       }
       if (scope === "verse") {
         const verseTarget = createVerseTarget({ translation_id: ctx.state.translationId, book_id: ctx.state.bookId, chapter: ctx.state.chapter, verse }, ctx.state.translationId);
-        controls.append(ctx.detailViews.renderStudyMarksTrigger(verseTarget, { label: `verse ${reference}`, onChange: () => { ctx.renderChapter(); ctx.syncFavoriteButtons?.(); } }));
+        controls.append(
+          ctx.detailViews.renderStudyMarksTrigger(verseTarget, {
+            align: "right",
+            boundary: "detail-pane",
+            label: `verse ${reference}`,
+            onChange: () => {
+              ctx.renderChapter();
+              ctx.syncFavoriteButtons?.();
+            },
+          }),
+        );
       }
 
       groups.append(group);
