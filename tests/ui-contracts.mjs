@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { CAPABILITY_REGISTRY } from "../app/src/capabilities.js";
 import { studyMarkBadgeOptions } from "../app/src/study-mark-badges.js";
 import {
@@ -50,6 +51,11 @@ assert.deepEqual(
   { compact: true, interactive: true, includeFavorite: true },
 );
 
+const contextStyles = readFileSync(new URL("../app/styles-context.css", import.meta.url), "utf8");
+const summaryRule = contextStyles.match(/\.panel-context-summary\s*\{([^}]*)\}/s)?.[1] || "";
+assert.match(summaryRule, /color:\s*var\(--text\)/, "selected context summary must use the primary foreground color");
+assert.doesNotMatch(summaryRule, /color:\s*var\(--muted\)/, "selected context summary must not use muted control text");
+
 const capabilityIds = new Set(CAPABILITY_REGISTRY.map((item) => item.capability_id));
 const actions = new Set();
 for (const [controlId, control] of Object.entries(STUDY_CONTROL_SCHEMA)) {
@@ -74,7 +80,7 @@ console.log(
     {
       status: "ok",
       controls_checked: Object.keys(STUDY_CONTROL_SCHEMA).length,
-      assertions: 22,
+      assertions: 24,
     },
     null,
     2,
