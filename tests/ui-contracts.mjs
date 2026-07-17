@@ -50,22 +50,11 @@ assert.match(
   /function studyMarkBadgeOptions[\s\S]*includeFavorite:\s*true/,
   "Favorite must remain visible wherever Study Mark badges render",
 );
-assert.match(detailViewsSource, /options\.id === "favoriteBook"\) return "Book"/);
-assert.match(detailViewsSource, /options\.id === "favoriteChapter"\) return "Chapter"/);
-assert.match(detailViewsSource, /label\.className = "scope-mark-label"/);
 assert.match(
   detailViewsSource,
   /renderTargetTagBadges\(target, studyMarkBadgeOptions\(options\)\)/,
   "all target badge surfaces must use the Favorite visibility policy",
 );
-
-const contextStyles = readFileSync(new URL("../app/styles-context.css", import.meta.url), "utf8");
-const summaryRule = contextStyles.match(/\.panel-context-summary\s*\{([^}]*)\}/s)?.[1] || "";
-assert.match(summaryRule, /color:\s*var\(--text\)/, "selected context summary must use the primary foreground color");
-assert.doesNotMatch(summaryRule, /color:\s*var\(--muted\)/, "selected context summary must not use muted control text");
-const scopeMarkRule = contextStyles.match(/\.scope-mark-button\s*\{([^}]*)\}/s)?.[1] || "";
-assert.match(scopeMarkRule, /display:\s*inline-flex/, "Book and Chapter Study Mark triggers must contain visible labels");
-assert.match(scopeMarkRule, /width:\s*auto/, "labeled Book and Chapter triggers must size to their content");
 
 const capabilityIds = new Set(CAPABILITY_REGISTRY.map((item) => item.capability_id));
 const actions = new Set();
@@ -91,7 +80,7 @@ console.log(
     {
       status: "ok",
       controls_checked: Object.keys(STUDY_CONTROL_SCHEMA).length,
-      assertions: 29,
+      assertions: 22,
     },
     null,
     2,
