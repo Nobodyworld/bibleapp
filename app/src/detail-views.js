@@ -7,6 +7,7 @@ import { createSearchView } from "./views/search-view.js?v=pr13-live-qa-20260711
 import { createStrongsView } from "./views/strongs-view.js?v=pr13-live-qa-20260711e";
 import { createTagsView } from "./views/tags-view.js?v=pr13-live-qa-20260711e";
 import { createUserDataView } from "./views/user-data-view.js?v=pr13-live-qa-20260711e";
+import { studyMarkBadgeOptions } from "./study-mark-badges.js";
 import { setDetail } from "./dom.js?v=pr13-live-qa-20260711e";
 
 export function createDetailViews(ctx) {
@@ -48,7 +49,8 @@ export function createDetailViews(ctx) {
     renderTagBadges: tagsView.renderTagBadges,
     renderTargetTagPicker: tagsView.renderTargetTagPicker,
     renderStudyMarksTrigger: tagsView.renderStudyMarksTrigger,
-    renderTargetTagBadges: tagsView.renderTargetTagBadges,
+    renderTargetTagBadges: (target, options = {}) =>
+      tagsView.renderTargetTagBadges(target, studyMarkBadgeOptions(options)),
     showCommentary: commentaryOutlineViews.showCommentary,
     showCrossrefs: referenceViews.showCrossrefs,
     showFootnote: referenceViews.showFootnote,
