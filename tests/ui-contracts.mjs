@@ -2,6 +2,7 @@
 
 import assert from "node:assert/strict";
 import { CAPABILITY_REGISTRY } from "../app/src/capabilities.js";
+import { studyMarkBadgeOptions } from "../app/src/study-mark-badges.js";
 import {
   chapterSwipeDirection,
   CONTROL_STATES,
@@ -43,6 +44,12 @@ assert.equal(
 );
 assert.equal(interlinearTokenIdentity({ strongCode: "G3754" }), "strong:G3754");
 
+assert.deepEqual(studyMarkBadgeOptions(), { includeFavorite: true });
+assert.deepEqual(
+  studyMarkBadgeOptions({ compact: true, interactive: true, includeFavorite: false }),
+  { compact: true, interactive: true, includeFavorite: true },
+);
+
 const capabilityIds = new Set(CAPABILITY_REGISTRY.map((item) => item.capability_id));
 const actions = new Set();
 for (const [controlId, control] of Object.entries(STUDY_CONTROL_SCHEMA)) {
@@ -67,7 +74,7 @@ console.log(
     {
       status: "ok",
       controls_checked: Object.keys(STUDY_CONTROL_SCHEMA).length,
-      assertions: 20,
+      assertions: 22,
     },
     null,
     2,
