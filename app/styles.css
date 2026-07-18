@@ -1076,8 +1076,7 @@ button:disabled {
 }
 
 .verse-row:hover .verse-study-button,
-.verse-row:focus-within .verse-study-button,
-body.detail-locked .verse-row.reader-context-verse .verse-study-button {
+.verse-row:focus-within .verse-study-button {
   opacity: 0.85;
   visibility: visible;
 }
@@ -2968,6 +2967,10 @@ body.detail-locked .verse-row.reader-context-verse .verse-study-button {
   box-shadow: var(--shadow);
   color: var(--text);
   text-align: left;
+}
+
+.word-meaning-menu[hidden] {
+  display: none;
 }
 
 .word-meaning-menu h5,

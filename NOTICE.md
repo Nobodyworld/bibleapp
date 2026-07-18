@@ -3,8 +3,8 @@
 The bundled Bible and study data was prepared from the OpenBible.com
 downloadable application archive `openbible.zip` (SHA-256
 `5873f5a28ceb3cb760cc0dcaa9b9d28ffaf00595bad0c424b60c7f1ad56283fe`)
-and supplemental translation material in `bibles.xlsx`. The downloaded
-package identifies OpenBible.com as a production of Bible Hub.
+and supplemental translation material in `bibles.xlsx`. The downloaded package
+identifies OpenBible.com as a production of Bible Hub.
 
 OpenBible's package terms state that the majority of its content and code is
 provided under CC0 and may be copied, adapted, and shared commercially or
@@ -44,5 +44,12 @@ Coverage and source-specific paths are recorded in
 Westminster Leningrad Codex, WLC Consonants Only, Nestle Greek New Testament
 1904, and Scrivener's Textus Receptus 1894; no additional rights conclusion is
 asserted beyond the archive terms preserved above.
+
+Public repository visibility does not relicense bundled third-party data. This
+notice records source provenance, retained terms, and transformations rather
+than asserting one blanket license for the complete data package. Anyone
+redistributing bundled content must review this file together with
+`app/data/source-manifest.json` and retain all applicable source-attached
+notices.
 
 The software and bundled data are provided as-is, without warranty.

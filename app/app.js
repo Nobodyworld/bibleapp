@@ -338,28 +338,20 @@ function syncFavoriteButtons() {
 }
 
 function renderScopeMarkControl(mount, target, label, options = {}) {
-  if (!mount || !target || !detailViews?.renderTargetTagPicker) return;
+  if (!mount || !target || !detailViews?.renderStudyMarksTrigger) return;
   mount.replaceChildren();
-  const favoriteActive = getTagTargets(state, "favorite").includes(target.target_id);
   const refresh = () => {
     syncScopeControls();
     renderer.renderChapter();
   };
 
-  const trigger = document.createElement("button");
-  trigger.type = "button";
-  trigger.id = label === "Book" ? "favoriteBook" : "favoriteChapter";
-  trigger.className = ["scope-favorite-button", "scope-mark-button", favoriteActive ? "active" : ""]
-    .filter(Boolean)
-    .join(" ");
-  trigger.innerHTML = `<span class="scope-favorite-star" aria-hidden="true">${favoriteActive ? "★" : "☆"}</span><span class="scope-favorite-label">${label}</span>`;
-  trigger.setAttribute("aria-label", `Edit current ${label.toLowerCase()} favorite and tags`);
-  trigger.setAttribute("aria-pressed", favoriteActive ? "true" : "false");
   mount.append(
-    detailViews.renderTargetTagPicker(target, {
-      trigger,
+    detailViews.renderStudyMarksTrigger(target, {
+      className: "scope-mark-button",
+      id: label === "Book" ? "favoriteBook" : "favoriteChapter",
       align: options.align || "left",
-      label: `Current ${label.toLowerCase()}`,
+      label: `current ${label.toLowerCase()}`,
+      visibleLabel: label,
       title: `${label} marks`,
       manageLabel: "Manage other tags",
       onChange: refresh,

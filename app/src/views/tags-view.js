@@ -387,23 +387,85 @@ export function createTagsView(ctx) {
     targetTagMenuCloseTimer = null;
   }
 
-  function closeTargetTagMenu(menu = activeTargetTagMenu) {
+  // A tag toggle can rerender its owner synchronously. Do not let the
+  // document-level dismissal handlers retain that detached menu or attempt to
+  // restore focus to its equally detached trigger on a later Escape.
+  function currentTargetTagMenu() {
+    if (activeTargetTagMenu?.isConnected) return activeTargetTagMenu;
+    activeTargetTagMenu = null;
+    return null;
+  }
+
+  function positionTargetTagMenu(menu) {
+    if (!menu || menu.dataset.menuBoundary !== "detail-pane") return;
+    const popover = menu.querySelector(".target-tag-picker-popover");
+    const pane = menu.closest(".detail-pane");
+    const trigger = menu.__targetTagTrigger || menu.querySelector(".target-tag-picker-trigger, .tag-picker-trigger");
+    if (!popover || !pane || !trigger) return;
+
+    const paneRect = pane.getBoundingClientRect();
+    const menuRect = menu.getBoundingClientRect();
+    const triggerRect = trigger.getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
+    const viewportHeight = document.documentElement.clientHeight || window.innerHeight;
+    const inset = 8;
+    const minLeft = Math.max(inset, paneRect.left + inset);
+    const maxRight = Math.min(viewportWidth - inset, paneRect.right - inset);
+    if (maxRight <= minLeft) return;
+
+    const width = Math.max(1, Math.min(230, Math.floor(maxRight - minLeft)));
+    const left = Math.max(minLeft, Math.min(triggerRect.right - width, maxRight - width));
+    popover.style.left = `${Math.round(left - menuRect.left)}px`;
+    popover.style.right = "auto";
+    popover.style.width = `${width}px`;
+    popover.style.maxWidth = `${width}px`;
+    popover.style.boxSizing = "border-box";
+
+    const minTop = Math.max(inset, paneRect.top + inset);
+    const maxBottom = Math.min(viewportHeight - inset, paneRect.bottom - inset);
+    const spaceBelow = Math.max(0, maxBottom - triggerRect.bottom);
+    const spaceAbove = Math.max(0, triggerRect.top - minTop);
+    const requestedHeight = Math.min(260, Math.max(1, popover.scrollHeight));
+    const placeBelow = spaceBelow >= requestedHeight || spaceBelow >= spaceAbove;
+    const availableHeight = placeBelow ? spaceBelow : spaceAbove;
+    const height = Math.max(1, Math.floor(Math.min(260, availableHeight)));
+    const top = placeBelow
+      ? triggerRect.bottom - menuRect.top
+      : triggerRect.top - menuRect.top - height;
+    popover.style.top = `${Math.round(top)}px`;
+    popover.style.maxHeight = `${height}px`;
+    popover.dataset.menuPlacement = placeBelow ? "below" : "above";
+  }
+
+  function closeTargetTagMenu(menu = activeTargetTagMenu, { restoreFocus = false } = {}) {
     if (!menu) return;
     cancelTargetTagMenuClose();
+    if (activeTargetTagMenu === menu) activeTargetTagMenu = null;
+    if (!menu.isConnected) return;
+    delete menu.dataset.openedFromFocus;
+    delete menu.__targetTagPointerStartedFocused;
     menu.dataset.menuClosed = "true";
     delete menu.dataset.menuOpen;
     setTargetTagMenuExpanded(menu, false);
-    if (activeTargetTagMenu === menu) activeTargetTagMenu = null;
+    if (restoreFocus) {
+      const trigger = menu.__targetTagTrigger || menu.querySelector(".target-tag-picker-trigger, .tag-picker-trigger");
+      if (!trigger?.isConnected) return;
+      menu.dataset.restoringFocus = "true";
+      trigger.focus({ preventScroll: true });
+      window.setTimeout(() => delete menu.dataset.restoringFocus, 0);
+    }
   }
 
   function openTargetTagMenu(menu) {
     if (!menu) return;
     cancelTargetTagMenuClose();
-    if (activeTargetTagMenu && activeTargetTagMenu !== menu) closeTargetTagMenu(activeTargetTagMenu);
+    const openMenu = currentTargetTagMenu();
+    if (openMenu && openMenu !== menu) closeTargetTagMenu(openMenu);
     activeTargetTagMenu = menu;
     delete menu.dataset.menuClosed;
     menu.dataset.menuOpen = "true";
     setTargetTagMenuExpanded(menu, true);
+    positionTargetTagMenu(menu);
   }
 
   function scheduleTargetTagMenuClose(menu) {
@@ -419,22 +481,30 @@ export function createTagsView(ctx) {
     if (targetTagMenuDismissalBound) return;
     targetTagMenuDismissalBound = true;
     document.addEventListener("pointerdown", (event) => {
-      if (!activeTargetTagMenu || activeTargetTagMenu.contains(event.target)) return;
-      closeTargetTagMenu(activeTargetTagMenu);
+      const menu = currentTargetTagMenu();
+      if (!menu || menu.contains(event.target)) return;
+      closeTargetTagMenu(menu);
     });
     document.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape" || !activeTargetTagMenu) return;
-      event.stopPropagation();
-      closeTargetTagMenu(activeTargetTagMenu);
-      document.activeElement?.blur?.();
-    });
+      if (event.key !== "Escape") return;
+      const menu = currentTargetTagMenu();
+      if (!menu) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      closeTargetTagMenu(menu, { restoreFocus: true });
+    }, true);
+    window.addEventListener("resize", () => positionTargetTagMenu(currentTargetTagMenu()));
   }
 
   function wireTargetTagMenu(menu) {
     ensureTargetTagMenuDismissal();
     menu.addEventListener("pointerenter", () => openTargetTagMenu(menu));
     menu.addEventListener("pointerleave", () => scheduleTargetTagMenuClose(menu));
-    menu.addEventListener("focusin", () => openTargetTagMenu(menu));
+    menu.addEventListener("focusin", () => {
+      if (menu.dataset.restoringFocus === "true") return;
+      if (menu.dataset.menuOpen !== "true") menu.dataset.openedFromFocus = "true";
+      openTargetTagMenu(menu);
+    });
     menu.addEventListener("focusout", (event) => {
       if (menu.contains(event.relatedTarget)) return;
       scheduleTargetTagMenuClose(menu);
@@ -596,6 +666,7 @@ export function createTagsView(ctx) {
       .filter(Boolean)
       .join(" ");
     if (options.align === "right") menu.dataset.menuAlign = "right";
+    if (options.boundary === "detail-pane") menu.dataset.menuBoundary = "detail-pane";
 
     const trigger = options.trigger || document.createElement("button");
     if (trigger.tagName === "BUTTON") trigger.type = "button";
@@ -605,15 +676,77 @@ export function createTagsView(ctx) {
     if (!trigger.getAttribute("aria-label")) {
       trigger.setAttribute("aria-label", `${options.label || "Target"} tags`);
     }
+    const rememberPointerFocus = () => {
+      if (typeof menu.__targetTagPointerStartedFocused !== "undefined") return;
+      menu.__targetTagPointerStartedFocused = document.activeElement === trigger;
+    };
+    trigger.addEventListener("pointerdown", rememberPointerFocus);
+    trigger.addEventListener("touchstart", rememberPointerFocus, { passive: true });
+    trigger.addEventListener("mousedown", rememberPointerFocus);
     trigger.addEventListener("click", (event) => {
       event.stopPropagation();
+      if (!window.matchMedia("(hover: hover)").matches) {
+        openTargetTagMenu(menu);
+        return;
+      }
+      const keepFocusOpenedMenu =
+        event.detail > 0 &&
+        menu.dataset.openedFromFocus === "true" &&
+        menu.__targetTagPointerStartedFocused === false;
+      delete menu.__targetTagPointerStartedFocused;
+      delete menu.dataset.openedFromFocus;
+      if (keepFocusOpenedMenu) return;
       if (menu.dataset.menuOpen === "true") closeTargetTagMenu(menu);
       else openTargetTagMenu(menu);
     });
 
+    menu.__targetTagTrigger = trigger;
+
     menu.append(trigger, createTargetTagPickerPopover(target, options));
     wireTargetTagMenu(menu);
     return menu;
+  }
+
+  // The symbol lives here, beside the canonical picker, so every compact mark
+  // control shares one replaceable representation rather than ad-hoc glyphs.
+  function createStudyMarksIcon() {
+    const icon = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    icon.setAttribute("viewBox", "0 0 24 24");
+    icon.setAttribute("aria-hidden", "true");
+    icon.setAttribute("focusable", "false");
+    icon.classList.add("study-marks-icon");
+    const use = document.createElementNS("http://www.w3.org/2000/svg", "use");
+    use.setAttribute("href", "#study-marks-icon");
+    icon.append(use);
+    return icon;
+  }
+
+  function renderStudyMarksTrigger(target, options = {}) {
+    const trigger = document.createElement("button");
+    trigger.type = "button";
+    if (options.id) trigger.id = options.id;
+    trigger.className = ["study-marks-trigger", options.className || ""].filter(Boolean).join(" ");
+    const label = options.label || targetTypeLabel(target);
+    if (options.visibleLabel) {
+      const visibleLabel = document.createElement("span");
+      visibleLabel.className = "study-marks-trigger-label";
+      visibleLabel.textContent = options.visibleLabel;
+      trigger.append(visibleLabel);
+    }
+    trigger.append(createStudyMarksIcon());
+    const activeCount = getTargetTags(ctx.state, target).length;
+    const favoriteActive = getTargetTags(ctx.state, target).includes("favorite");
+    if (activeCount) {
+      const indicator = document.createElement("span");
+      indicator.className = "study-marks-count";
+      indicator.textContent = activeCount > 9 ? "9+" : String(activeCount);
+      indicator.setAttribute("aria-hidden", "true");
+      trigger.append(indicator);
+    }
+    trigger.setAttribute("aria-label", `Study Marks for ${label}`);
+    trigger.setAttribute("aria-pressed", String(favoriteActive));
+    trigger.title = `Study Marks for ${label}`;
+    return renderTargetTagPicker(target, { ...options, trigger, className: "study-marks-menu" });
   }
 
   function renderTargetTagBadges(target, options = {}) {
@@ -1044,9 +1177,11 @@ export function createTagsView(ctx) {
 
   return {
     createFavoriteButton,
+    createStudyMarksIcon,
     renderInlineTagPicker,
     renderTagBadges,
     renderTargetTagPicker,
+    renderStudyMarksTrigger,
     renderTargetTagBadges,
     showFavorites,
     showTargetTagEditor,

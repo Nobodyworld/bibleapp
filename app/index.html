@@ -14,6 +14,7 @@
     <link rel="stylesheet" href="./styles-context.css?v=pr13-live-qa-20260711e" />
   </head>
   <body>
+    <svg class="icon-definitions" aria-hidden="true" focusable="false"><symbol id="study-marks-icon" viewBox="0 0 24 24"><path d="M6 3.75h12A2.25 2.25 0 0 1 20.25 6v14.25L16.5 18l-4.5 2.25L7.5 18l-3.75 2.25V6A2.25 2.25 0 0 1 6 3.75Zm0 2.5a.25.25 0 0 0-.25.25v9.34l1.75-1.05 4.5 2.25 4.5-2.25 1.75 1.05V6.5a.25.25 0 0 0-.25-.25H6Z"></path></symbol></svg>
     <header class="app-header">
       <button id="homeButton" class="brand home-button" type="button" title="Open home">
         <span class="brand-mark">BA</span>
@@ -85,10 +86,16 @@
                 <span aria-hidden="true" class="toolbar-icon">☰</span>
                 <span>Study panel</span>
               </button>
+              <button id="showInterlinear" class="toolbar-button" type="button" title="Original language study" aria-label="Language Study">
+                <span aria-hidden="true" class="toolbar-icon">א</span><span>Language Study</span>
+              </button>
+              <button id="showOutline" class="toolbar-button" type="button" title="Book outline" aria-label="Outline">
+                <span aria-hidden="true" class="toolbar-icon">☷</span><span>Outline</span>
+              </button>
             </div>
             <div class="action-group" aria-label="Workspace tools">
               <button id="showTags" class="toolbar-button" type="button" title="Review study marks and labels">
-                <span aria-hidden="true" class="toolbar-icon">◆</span>
+                <svg aria-hidden="true" class="toolbar-icon study-marks-icon"><use href="#study-marks-icon"></use></svg>
                 <span>Study Marks</span>
               </button>
               <button id="showJobs" class="toolbar-button" type="button" title="Local study processing">
@@ -121,26 +128,6 @@
           </div>
         </div>
         <div id="detailContext" class="detail-context" hidden></div>
-        <nav class="detail-tool-nav" aria-label="Chapter and book study tools">
-          <section class="panel-context-group" data-panel-scope="chapter" aria-label="Chapter scope">
-            <span class="panel-context-scope-label">Chapter</span>
-            <div class="panel-context-controls">
-              <button id="showInterlinear" class="detail-tool-button" type="button" title="Original language study" aria-label="Chapter scope, Language Study">
-                <span aria-hidden="true">א</span>
-                <span>Language Study</span>
-              </button>
-            </div>
-          </section>
-          <section class="panel-context-group" data-panel-scope="book" aria-label="Book scope">
-            <span class="panel-context-scope-label">Book</span>
-            <div class="panel-context-controls">
-              <button id="showOutline" class="detail-tool-button" type="button" title="Book scope: Outline" aria-label="Book scope, Outline">
-                <span aria-hidden="true">☷</span>
-                <span>Outline</span>
-              </button>
-            </div>
-          </section>
-        </nav>
         <div class="detail-floating-nav" aria-label="Detail panel history">
           <button id="detailBack" class="detail-nav-arrow" type="button" title="Panel history back" aria-label="Panel history back" disabled>
             ↶

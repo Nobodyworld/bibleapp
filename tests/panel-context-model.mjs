@@ -14,6 +14,7 @@ import {
   panelContextSummary,
   panelScopeSequence,
   panelToolsForScope,
+  panelToolsForWordContext,
 } from "../app/src/panel-context-model.js";
 
 assert.deepEqual(PANEL_SCOPE_ORDER, ["word", "verse", "chapter", "book", "global"]);
@@ -23,25 +24,36 @@ assert.equal(PANEL_SCOPE_LABELS.chapter, "Chapter");
 assert.equal(PANEL_SCOPE_LABELS.book, "Book");
 
 assert.deepEqual(
-  panelScopeSequence({ word: true, verse: true, chapter: true, book: true }),
-  ["word", "verse", "chapter", "book"],
+  panelScopeSequence({ word: true, verse: true }),
+  ["word", "verse"],
 );
 assert.deepEqual(
-  panelScopeSequence({ verse: true, chapter: true, book: true }),
-  ["verse", "chapter", "book"],
+  panelScopeSequence({ verse: true }),
+  ["verse"],
 );
 assert.deepEqual(
   panelToolsForScope("verse").map((tool) => tool.id),
-  ["par", "refs", "commentary", "interlinear", "tags"],
+  ["verse", "par", "refs", "commentary", "interlinear"],
+);
+assert.deepEqual(panelToolsForScope("word").map((tool) => tool.id), ["strongs"]);
+assert.deepEqual(
+  panelToolsForWordContext({ token: { language: "hebrew", strong_code: "H4912" } }, { bookId: "john" }).map(
+    (tool) => tool.id,
+  ),
+  ["strongs", "hebrew"],
 );
 assert.deepEqual(
-  panelToolsForScope("chapter").map((tool) => tool.id),
-  ["interlinearChapter"],
+  panelToolsForWordContext({ token: { language: "greek", strong_code: "G3056" } }, { bookId: "proverbs" }).map(
+    (tool) => tool.id,
+  ),
+  ["strongs", "greek"],
 );
 assert.deepEqual(
-  panelToolsForScope("book").map((tool) => tool.id),
-  ["outline"],
+  panelToolsForWordContext({ token: { language: "unknown" } }, { bookId: "proverbs" }).map((tool) => tool.id),
+  ["strongs"],
 );
+assert.deepEqual(panelToolsForScope("chapter"), []);
+assert.deepEqual(panelToolsForScope("book"), []);
 
 for (const [scope, tools] of Object.entries(PANEL_CONTEXT_TOOL_MATRIX)) {
   tools.forEach((tool) => {
@@ -80,14 +92,10 @@ const [index, contextCss, tabsSource, detailViewsSource, browserSource] = await 
 ]);
 
 const detailContextIndex = index.indexOf('id="detailContext"');
-const detailToolNavIndex = index.indexOf('class="detail-tool-nav"');
-assert.ok(detailContextIndex >= 0 && detailContextIndex < detailToolNavIndex, "Word/Verse context must render before Chapter/Book tools.");
-
-const chapterScopeIndex = index.indexOf('data-panel-scope="chapter"');
-const bookScopeIndex = index.indexOf('data-panel-scope="book"');
-assert.ok(chapterScopeIndex >= 0 && chapterScopeIndex < bookScopeIndex, "Chapter tools must render before Book tools.");
-assert.match(index, /data-panel-scope="chapter"[\s\S]*?id="showInterlinear"/);
-assert.match(index, /data-panel-scope="book"[\s\S]*?id="showOutline"/);
+assert.ok(detailContextIndex >= 0, "Word/Verse context must be available in the side panel.");
+assert.doesNotMatch(index, /class="detail-tool-nav"/);
+assert.match(index, /id="showInterlinear"[\s\S]*?Language Study/);
+assert.match(index, /id="showOutline"[\s\S]*?Outline/);
 assert.match(index, /styles-context\.css\?v=pr13-live-qa-20260711e/);
 
 assert.match(tabsSource, /scope === "word" \|\| scope === "verse"/);
@@ -99,8 +107,14 @@ assert.match(tabsSource, /dataPanelScope|panelScope/);
 assert.match(detailViewsSource, /setActiveWordContext/);
 assert.match(detailViewsSource, /Object\.defineProperty\(strongsCtx, "studyContext"/);
 assert.match(detailViewsSource, /showStrong: createSearchView|createSearchView\(ctx, \{ showStrong \}\)/);
-assert.match(browserSource, /word verse chapter book/);
-assert.match(browserSource, /verse chapter book/);
+assert.match(tabsSource, /renderStudyMarksTrigger/);
+assert.match(tabsSource, /scrollStrongSection/);
+assert.match(tabsSource, /reactivatableCurrent/);
+assert.match(tabsSource, /updateStrongSectionAvailability/);
+assert.match(tabsSource, /dataset\.panelOccupant/);
+assert.match(tabsSource, /panelToolsForWordContext/);
+assert.doesNotMatch(tabsSource, /window\.addEventListener\("strong:sections"/);
+assert.match(detailViewsSource, /scrollStrongSection/);
 assert.match(browserSource, /mode === "mobile"/);
 assert.match(browserSource, /mode === "narrow"/);
 assert.match(browserSource, /panelHeaderGap/);
@@ -118,7 +132,7 @@ console.log(
       status: "ok",
       scopes: PANEL_SCOPE_ORDER.length,
       tools: Object.values(PANEL_CONTEXT_TOOL_MATRIX).flat().length,
-      assertions: 39,
+      assertions: 46,
     },
     null,
     2,
