@@ -120,6 +120,9 @@ async function launchBrowser() {
     async press(selector, key) {
       await playwrightPage.locator(selector).press(key);
     },
+    async tap(selector) {
+      await playwrightPage.locator(selector).tap();
+    },
     async send(method, params = {}) {
       if (method === "Page.enable" || method === "Runtime.enable") return {};
       if (method === "Page.navigate") {
@@ -316,15 +319,14 @@ async function runQa(page) {
     await evaluate(
       page,
       `Boolean(
-        !document.querySelector('.chapter-actions #showOutline') &&
-        !document.querySelector('.chapter-actions #showInterlinear') &&
-        document.querySelector('.detail-tool-nav #showOutline') &&
-        document.querySelector('.detail-tool-nav #showInterlinear') &&
+        document.querySelector('.chapter-actions #showOutline') &&
+        document.querySelector('.chapter-actions #showInterlinear') &&
+        !document.querySelector('.detail-tool-nav') &&
         document.querySelector('#bookPickerButton') &&
         document.querySelector('#chapterPickerButton')
       )`,
     ),
-    "Outline and Interlinear controls must live exclusively in the side panel",
+    "Outline and Language Study controls must live in the reader header",
   );
   await click(page, "#chapterPickerButton");
   await waitFor(page, "!document.querySelector('#chapterPickerPanel')?.hidden");
@@ -400,19 +402,20 @@ async function runQa(page) {
   assert(selectedReaderText, "reader text selection could not be created");
   await waitFor(
     page,
-    "!document.querySelector('.selection-action-menu')?.hidden && document.querySelector('.selection-favorite-button')",
+    "!document.querySelector('.selection-action-menu')?.hidden && document.querySelector('.selection-study-marks-button')",
   );
   assert(
     await evaluate(
       page,
       `(() => {
         const text = document.querySelector('.selection-action-menu')?.textContent || '';
-        return text.includes('Favorite') && text.includes('Tags');
+        return Boolean(document.querySelector('.selection-study-marks-button'));
       })()`,
     ),
-    "reader selection menu is missing favorite or tag actions",
+    "reader selection menu is missing Study Marks",
   );
-  await click(page, ".selection-favorite-button");
+  await click(page, ".selection-study-marks-button");
+  await click(page, '.selection-action-menu .tag-picker-option[aria-label="Add Favorite tag"]');
   await waitFor(page, "document.querySelector('.reader-target-badges .target-tag-badge')");
   assert(
     await evaluate(page, "Boolean(document.querySelector('.tagged-text-span'))"),
@@ -475,9 +478,10 @@ async function runQa(page) {
   assert(partialWordSelection === "shep", `partial-word selection fixture failed: ${partialWordSelection}`);
   await waitFor(
     page,
-    "!document.querySelector('.selection-action-menu')?.hidden && document.querySelector('.selection-favorite-button')",
+    "!document.querySelector('.selection-action-menu')?.hidden && document.querySelector('.selection-study-marks-button')",
   );
-  await click(page, ".selection-favorite-button");
+  await click(page, ".selection-study-marks-button");
+  await click(page, '.selection-action-menu .tag-picker-option[aria-label="Add Favorite tag"]');
   await waitFor(page, "document.querySelector('.reader-target-badges .target-tag-badge')");
   const partialWordTagState = await evaluate(
     page,
@@ -506,10 +510,11 @@ async function runQa(page) {
       `Boolean(
         document.querySelector('#favoriteBook[aria-pressed="false"]') &&
         document.querySelector('#favoriteChapter[aria-pressed="false"]') &&
-        document.querySelector('.verse-favorite-button[aria-pressed="false"]')
+        document.querySelector('.verse-number-menu-wrap .verse-number') &&
+        !document.querySelector('.verse-study-marks-button')
       )`,
     ),
-    "book, chapter, and verse favorite controls were not initialized",
+    "book, chapter, and canonical verse-number Study Marks controls were not initialized",
   );
   assert(
     await evaluate(page, `document.querySelectorAll('.scope-mark-button').length === 2 && ![...document.querySelectorAll('button')].some((button) => /^(Book|Chapter) tags$/.test(button.textContent.trim()))`),
@@ -534,27 +539,60 @@ async function runQa(page) {
   const scopeFavoriteVisual = await evaluate(
     page,
     `(() => {
-      const button = document.querySelector('#favoriteBook');
-      const star = button?.querySelector('.scope-favorite-star');
-      const label = button?.querySelector('.scope-favorite-label');
+      const snapshot = (id, label) => {
+        const button = document.querySelector(id);
+        const trigger = button?.closest('.target-tag-picker-menu');
+        const labelNode = button?.querySelector('.study-marks-trigger-label');
+        const icon = button?.querySelector('.study-marks-icon use');
+        const rect = button?.getBoundingClientRect();
+        const header = document.querySelector('.chapter-heading')?.getBoundingClientRect();
+        const activeBefore = button?.getAttribute('aria-pressed');
+        const enter = (node) => node?.dispatchEvent(new (window.PointerEvent || Event)('pointerenter', { bubbles: true, pointerType: 'mouse' }));
+        enter(labelNode);
+        const labelHoverOpen = trigger?.dataset.menuOpen === 'true';
+        document.body.dispatchEvent(new (window.PointerEvent || Event)('pointerdown', { bubbles: true, pointerType: 'mouse' }));
+        enter(button?.querySelector('.study-marks-icon'));
+        const iconHoverOpen = trigger?.dataset.menuOpen === 'true';
+        document.body.dispatchEvent(new (window.PointerEvent || Event)('pointerdown', { bubbles: true, pointerType: 'mouse' }));
+        const afterRect = button?.getBoundingClientRect();
+        const afterHeader = document.querySelector('.chapter-heading')?.getBoundingClientRect();
+        return {
+          visibleLabel: labelNode?.textContent.trim() || '',
+          iconHref: icon?.getAttribute('href') || '',
+          count: button?.querySelector('.study-marks-count')?.textContent.trim() || '',
+          ariaLabel: button?.getAttribute('aria-label') || '',
+          targetLabel: label,
+          activeBefore,
+          activeAfter: button?.getAttribute('aria-pressed'),
+          labelHoverOpen,
+          iconHoverOpen,
+          stableTrigger: Boolean(rect && afterRect && Math.abs(rect.left - afterRect.left) <= 1 && Math.abs(rect.top - afterRect.top) <= 1 && Math.abs(rect.width - afterRect.width) <= 1 && Math.abs(rect.height - afterRect.height) <= 1),
+          stableHeader: Boolean(header && afterHeader && Math.abs(header.width - afterHeader.width) <= 1 && Math.abs(header.height - afterHeader.height) <= 1),
+        };
+      };
       const arrow = document.querySelector('#nextChapterFloat');
-      const starStyle = star ? getComputedStyle(star) : null;
-      const labelStyle = label ? getComputedStyle(label) : null;
       const arrowStyle = arrow ? getComputedStyle(arrow.closest('.reader-floating-nav')) : null;
       return {
-        starText: star?.textContent.trim() || '',
-        labelText: label?.textContent.trim() || '',
-        starColor: starStyle?.color || '',
-        labelColor: labelStyle?.color || '',
+        book: snapshot('#favoriteBook', 'Book'),
+        chapter: snapshot('#favoriteChapter', 'Chapter'),
         arrowTop: arrowStyle?.top || ''
       };
     })()`,
   );
   assert(
-    scopeFavoriteVisual.starText === "★" &&
-      scopeFavoriteVisual.labelText === "Book" &&
-      scopeFavoriteVisual.starColor !== scopeFavoriteVisual.labelColor,
-    `active scope favorite must show a distinct lit star and normal label: ${JSON.stringify(scopeFavoriteVisual)}`,
+    [scopeFavoriteVisual.book, scopeFavoriteVisual.chapter].every((state) =>
+      state.visibleLabel === state.targetLabel &&
+      state.iconHref === '#study-marks-icon' &&
+      state.count === '2' &&
+      state.ariaLabel === `Study Marks for current ${state.targetLabel.toLowerCase()}` &&
+      state.activeBefore === 'true' &&
+      state.activeAfter === 'true' &&
+      state.labelHoverOpen &&
+      state.iconHoverOpen &&
+      state.stableTrigger &&
+      state.stableHeader,
+    ),
+    `Book and Chapter Study Marks must render real labels, shared icons, independent counts, hover menus, and stable header geometry: ${JSON.stringify(scopeFavoriteVisual)}`,
   );
   assert(scopeFavoriteVisual.arrowTop === "176px", `floating chapter arrows should start lower: ${JSON.stringify(scopeFavoriteVisual)}`);
   await click(page, "#nextChapter");
@@ -567,8 +605,13 @@ async function runQa(page) {
     page,
     "document.querySelector('#chapterTitle')?.textContent.includes('Psalms 23') && document.querySelector('#favoriteBook')?.getAttribute('aria-pressed') === 'true' && document.querySelector('#favoriteChapter')?.getAttribute('aria-pressed') === 'true'",
   );
-  await click(page, ".verse-favorite-button");
-  await waitFor(page, "document.querySelector('.verse-favorite-button')?.getAttribute('aria-pressed') === 'true'");
+  await evaluate(page, "document.querySelector('.verse-number')?.focus()");
+  await waitFor(page, "document.querySelector('.verse-number-menu-wrap')?.dataset.menuOpen === 'true'");
+  await evaluate(
+    page,
+    "[...document.querySelectorAll('.verse-number-menu-wrap .tag-picker-option')].find((option) => /Favorite/u.test(option.textContent.trim()))?.click()",
+  );
+  await waitFor(page, "document.querySelector('.verse-number-wrap .tag-badge')?.textContent.includes('Favorite')");
   await click(page, "#nextChapter");
   await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('Psalms 24')");
   await click(page, "#showTags");
@@ -629,10 +672,15 @@ async function runQa(page) {
   await click(page, "#favoriteChapter");
   await waitFor(page, "document.querySelector('#chapterTagControl .tag-picker-option[aria-label=\"Remove Favorite tag\"]')");
   await click(page, '#chapterTagControl .tag-picker-option[aria-label="Remove Favorite tag"]');
-  await click(page, ".verse-favorite-button.active");
+  await evaluate(page, "document.querySelector('.verse-number')?.focus()");
+  await waitFor(page, "document.querySelector('.verse-number-menu-wrap')?.dataset.menuOpen === 'true'");
+  await evaluate(
+    page,
+    "[...document.querySelectorAll('.verse-number-menu-wrap .tag-picker-option')].find((option) => /Favorite/u.test(option.textContent.trim()))?.click()",
+  );
   await waitFor(
     page,
-    "document.querySelector('#favoriteBook')?.getAttribute('aria-pressed') === 'false' && document.querySelector('#favoriteChapter')?.getAttribute('aria-pressed') === 'false' && !document.querySelector('.verse-favorite-button.active')",
+    "document.querySelector('#favoriteBook')?.getAttribute('aria-pressed') === 'false' && document.querySelector('#favoriteChapter')?.getAttribute('aria-pressed') === 'false' && !document.querySelector('.verse-number-wrap .tag-badge') && !document.querySelector('.verse-study-marks-button')",
   );
   pass("book chapter verse favorites, scope tag controls, and scripture mark hierarchy");
 
@@ -732,7 +780,8 @@ async function runQa(page) {
       option.focus();
       document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }));
       const escapeClosed = state();
-      return { opened, duringDelay, afterDelay, focused, outsideClosed, escapeClosed };
+      const escapeFocusRestored = document.activeElement === menu.querySelector('.target-tag-picker-trigger, .tag-picker-trigger');
+      return { opened, duringDelay, afterDelay, focused, outsideClosed, escapeClosed, escapeFocusRestored };
     })()`,
   );
   assert(
@@ -754,17 +803,160 @@ async function runQa(page) {
     state.detailText.includes("KJV - King James Version") && state.detailText.includes("The LORD is my shepherd"),
     "parallel verse panel missing expected translation text",
   );
-  await click(page, "#detailContext .verse-context-favorite-button");
-  await waitFor(
+  assert(await evaluate(page, `Boolean(document.querySelector("#detailContext [data-panel-scope='verse'] .study-marks-trigger"))`), "verse context Study Marks trigger is missing");
+  const studyTrigger = "#detailContext [data-panel-scope='verse'] .study-marks-trigger";
+  const secondStudyTrigger = "#favoriteBook";
+  const activeSecondStudyTrigger = "#favoriteBook[aria-expanded='true']";
+  const pickerMarksExpression = "[...document.querySelectorAll('.target-tag-picker-menu')].map((menu) => [...menu.querySelectorAll('.tag-picker-option[aria-pressed=\"true\"]')].map((option) => option.getAttribute('aria-label')).sort().join('|')).filter(Boolean).sort().join('||')";
+  const marksBeforeDismissal = await evaluate(
     page,
-    "document.querySelector('#detailContext .verse-context-favorite-button')?.getAttribute('aria-pressed') === 'true'",
+    pickerMarksExpression,
   );
-  await click(page, "#detailContext .verse-context-favorite-button");
-  await waitFor(
+  await evaluate(page, `document.querySelector(${JSON.stringify(studyTrigger)})?.focus()`);
+  await waitFor(page, `document.querySelector(${JSON.stringify(studyTrigger)})?.closest('.target-tag-picker-menu')?.dataset.menuOpen === 'true'`);
+  await page.press(studyTrigger, "Escape");
+  const keyboardStudyMarksDismissal = await evaluate(page, `({
+    restored: document.activeElement === document.querySelector(${JSON.stringify(studyTrigger)}),
+    closed: document.querySelector(${JSON.stringify(studyTrigger)})?.closest('.target-tag-picker-menu')?.dataset.menuOpen !== 'true',
+    unchanged: ${pickerMarksExpression} === ${JSON.stringify(marksBeforeDismissal)}
+  })`);
+  assert(keyboardStudyMarksDismissal.closed && keyboardStudyMarksDismissal.restored && keyboardStudyMarksDismissal.unchanged, `keyboard-open Study Marks Escape must restore its trigger focus without mutation: ${JSON.stringify(keyboardStudyMarksDismissal)}`);
+  const hoverStudyMarksDismissal = await evaluate(page, `(async () => {
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const trigger = document.querySelector(${JSON.stringify(studyTrigger)});
+    const menu = trigger?.closest('.target-tag-picker-menu');
+    const outside = document.querySelector('#themeToggle');
+    const Ctor = window.PointerEvent || Event;
+    outside?.focus();
+    menu?.dispatchEvent(new Ctor('pointerenter', { bubbles: true, cancelable: true, pointerType: 'mouse' }));
+    await wait(0);
+    return { opened: menu?.dataset.menuOpen === 'true', focusOutside: document.activeElement === outside };
+  })()`);
+  await page.press("#themeToggle", "Escape");
+  const hoverEscapeState = await evaluate(page, `({
+    closed: document.querySelector(${JSON.stringify(studyTrigger)})?.closest('.target-tag-picker-menu')?.dataset.menuOpen !== 'true',
+    restored: document.activeElement === document.querySelector(${JSON.stringify(studyTrigger)})
+  })`);
+  assert(hoverStudyMarksDismissal.opened && hoverStudyMarksDismissal.focusOutside && hoverEscapeState.closed && hoverEscapeState.restored, `hover-open Study Marks Escape must restore its active trigger: ${JSON.stringify({ hoverStudyMarksDismissal, hoverEscapeState })}`);
+
+  const outsideDismissal = await evaluate(page, `(async () => {
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const trigger = document.querySelector(${JSON.stringify(studyTrigger)});
+    const menu = trigger?.closest('.target-tag-picker-menu');
+    const outside = document.querySelector('#themeToggle');
+    const Ctor = window.PointerEvent || Event;
+    trigger?.focus();
+    menu?.dispatchEvent(new Ctor('pointerenter', { bubbles: true, cancelable: true, pointerType: 'mouse' }));
+    await wait(0);
+    const openedBeforeDismissal = menu?.dataset.menuOpen === 'true';
+    outside?.dispatchEvent(new Ctor('pointerdown', { bubbles: true, cancelable: true, pointerType: 'mouse' }));
+    outside?.focus();
+    return {
+      openedBeforeDismissal,
+      closed: menu?.dataset.menuOpen !== 'true',
+      outsideRetainedFocus: document.activeElement === outside,
+    };
+  })()`);
+  assert(outsideDismissal.openedBeforeDismissal && outsideDismissal.closed && outsideDismissal.outsideRetainedFocus, `outside pointer dismissal must not steal focus: ${JSON.stringify(outsideDismissal)}`);
+
+  const menuSwitchState = await evaluate(page, `(async () => {
+    const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+    const firstTrigger = document.querySelector(${JSON.stringify(studyTrigger)});
+    const firstMenu = firstTrigger?.closest('.target-tag-picker-menu');
+    const secondTrigger = document.querySelector(${JSON.stringify(secondStudyTrigger)});
+    const secondMenu = secondTrigger?.closest('.target-tag-picker-menu');
+    const Ctor = window.PointerEvent || Event;
+    firstTrigger?.focus();
+    firstMenu?.dispatchEvent(new Ctor('pointerenter', { bubbles: true, cancelable: true, pointerType: 'mouse' }));
+    await wait(0);
+    const firstOpened = firstMenu?.dataset.menuOpen === 'true';
+    secondTrigger?.dispatchEvent(new Ctor('pointerdown', { bubbles: true, cancelable: true, pointerType: 'mouse' }));
+    secondTrigger?.click();
+    secondTrigger?.focus();
+    return {
+      firstOpened,
+      firstClosed: firstMenu?.dataset.menuOpen !== 'true',
+      secondOpened: secondMenu?.dataset.menuOpen === 'true',
+      secondFocused: document.activeElement === secondTrigger,
+    };
+  })()`);
+  assert(menuSwitchState.firstOpened && menuSwitchState.firstClosed && menuSwitchState.secondOpened && menuSwitchState.secondFocused, `opening picker B must close picker A without returning focus to A: ${JSON.stringify(menuSwitchState)}`);
+  await page.press(activeSecondStudyTrigger, "Escape");
+  const marksAfterDismissal = await evaluate(
     page,
-    "document.querySelector('#detailContext .verse-context-favorite-button')?.getAttribute('aria-pressed') === 'false'",
+    pickerMarksExpression,
   );
-  pass("verse context favorite toggle");
+  assert(marksAfterDismissal === marksBeforeDismissal, "all Study Marks dismissal paths must leave tag assertions unchanged");
+  if (qaDevice === "mobile") {
+    const touchMarksBefore = await evaluate(
+      page,
+      `[...(document.querySelector(${JSON.stringify(studyTrigger)})?.closest('.target-tag-picker-menu')?.querySelectorAll('.tag-picker-option[aria-pressed=\"true\"]') || [])].map((option) => option.getAttribute('aria-label')).sort().join('|')`,
+    );
+    await page.tap("#openStudyPanel");
+    await waitFor(page, "document.querySelector('.detail-pane')?.classList.contains('visible')");
+    await page.tap(studyTrigger);
+    await waitFor(page, `document.querySelector(${JSON.stringify(studyTrigger)})?.closest('.target-tag-picker-menu')?.dataset.menuOpen === 'true'`);
+    await page.press(studyTrigger, "Escape");
+    const touchStudyMarks = await evaluate(page, `({
+      closed: document.querySelector(${JSON.stringify(studyTrigger)})?.closest('.target-tag-picker-menu')?.dataset.menuOpen !== 'true',
+      unchanged: [...(document.querySelector(${JSON.stringify(studyTrigger)})?.closest('.target-tag-picker-menu')?.querySelectorAll('.tag-picker-option[aria-pressed=\"true\"]') || [])].map((option) => option.getAttribute('aria-label')).sort().join('|') === ${JSON.stringify(touchMarksBefore)}
+    })`);
+    assert(touchStudyMarks.closed && touchStudyMarks.unchanged, `touch Study Marks activation must open once without mutating marks: ${JSON.stringify(touchStudyMarks)}`);
+  }
+  const secondMarksBeforeClosedEscape = await evaluate(
+    page,
+    `[...(document.querySelector(${JSON.stringify(secondStudyTrigger)})?.closest('.target-tag-picker-menu')?.querySelectorAll('.tag-picker-option[aria-pressed="true"]') || [])].map((option) => option.getAttribute('aria-label')).sort().join('|')`,
+  );
+  await evaluate(page, "document.querySelector('#themeToggle')?.focus()");
+  await page.press("#themeToggle", "Escape");
+  const closedPickerEscape = await evaluate(
+    page,
+    `({
+      focusUnchanged: document.activeElement === document.querySelector('#themeToggle'),
+      marksUnchanged: [...(document.querySelector(${JSON.stringify(secondStudyTrigger)})?.closest('.target-tag-picker-menu')?.querySelectorAll('.tag-picker-option[aria-pressed="true"]') || [])].map((option) => option.getAttribute('aria-label')).sort().join('|') === ${JSON.stringify(secondMarksBeforeClosedEscape)}
+    })`,
+  );
+  assert(closedPickerEscape.focusUnchanged && closedPickerEscape.marksUnchanged, `Escape with no active Study Marks picker must leave focus and marks unchanged: ${JSON.stringify(closedPickerEscape)}`);
+  if (qaDevice !== "mobile") {
+    const rerenderingStudyTrigger = "#favoriteBook";
+    await evaluate(page, `(() => {
+      const trigger = document.querySelector(${JSON.stringify(rerenderingStudyTrigger)});
+      window.__staleReaderTagMenu = trigger?.closest('.target-tag-picker-menu');
+      trigger?.focus();
+    })()`);
+    await waitFor(page, `document.querySelector(${JSON.stringify(rerenderingStudyTrigger)})?.closest('.target-tag-picker-menu')?.dataset.menuOpen === 'true'`);
+    const initialReaderFavoriteAction = await evaluate(
+      page,
+      `document.querySelector(${JSON.stringify(rerenderingStudyTrigger)})?.closest('.target-tag-picker-menu')?.querySelector('.tag-picker-option[aria-label$="Favorite tag"]')?.getAttribute('aria-label') || ''`,
+    );
+    assert(/^Add |^Remove /u.test(initialReaderFavoriteAction), `rerendering Study Marks picker is missing Favorite: ${initialReaderFavoriteAction}`);
+    const initialReaderFavoriteSelector = `${rerenderingStudyTrigger} ~ .target-tag-picker-popover .tag-picker-option[aria-label=${JSON.stringify(initialReaderFavoriteAction)}]`;
+    await click(page, initialReaderFavoriteSelector);
+    await waitFor(page, `window.__staleReaderTagMenu && !window.__staleReaderTagMenu.isConnected && document.querySelector(${JSON.stringify(rerenderingStudyTrigger)})`);
+    await evaluate(page, "document.querySelector('#themeToggle')?.focus()");
+    await page.press("#themeToggle", "Escape");
+    const detachedMenuEscape = await evaluate(page, `({
+      focusUnchanged: document.activeElement === document.querySelector('#themeToggle'),
+      menuClosed: document.querySelector(${JSON.stringify(rerenderingStudyTrigger)})?.closest('.target-tag-picker-menu')?.dataset.menuOpen !== 'true'
+    })`);
+    assert(detachedMenuEscape.focusUnchanged && detachedMenuEscape.menuClosed, `Escape after a picker rerender must ignore its detached former menu: ${JSON.stringify(detachedMenuEscape)}`);
+    const reverseReaderFavoriteAction = initialReaderFavoriteAction.startsWith("Add ")
+      ? initialReaderFavoriteAction.replace("Add ", "Remove ")
+      : initialReaderFavoriteAction.replace("Remove ", "Add ");
+    const reverseReaderFavoriteSelector = `${rerenderingStudyTrigger} ~ .target-tag-picker-popover .tag-picker-option[aria-label=${JSON.stringify(reverseReaderFavoriteAction)}]`;
+    await evaluate(page, `document.querySelector(${JSON.stringify(rerenderingStudyTrigger)})?.focus()`);
+    await waitFor(page, `document.querySelector(${JSON.stringify(rerenderingStudyTrigger)})?.closest('.target-tag-picker-menu')?.dataset.menuOpen === 'true'`);
+    await click(page, reverseReaderFavoriteSelector);
+    await waitFor(page, `document.querySelector(${JSON.stringify(rerenderingStudyTrigger)})?.closest('.target-tag-picker-menu')?.dataset.menuOpen !== 'true'`);
+    await evaluate(page, "document.querySelector('#themeToggle')?.focus()");
+    await page.press("#themeToggle", "Escape");
+    const marksAfterRerenderDismissal = await evaluate(page, pickerMarksExpression);
+    assert(
+      marksAfterRerenderDismissal === marksBeforeDismissal,
+      `rerendered picker Escape coverage must restore the original tag assertions: ${JSON.stringify({ marksBeforeDismissal, marksAfterRerenderDismissal })}`,
+    );
+  }
+  pass("verse context Study Marks trigger");
   pass("parallel translations by verse number");
 
   await click(page, ".fn-marker");
@@ -1294,21 +1486,16 @@ async function runQa(page) {
     ),
     "Interlinear source tokens are missing tag actions",
   );
-  await click(page, ".interlinear-token .token-favorite-button");
+  await click(page, ".interlinear-token .token-study-marks-button");
   await waitFor(
     page,
-    "document.querySelector('.interlinear-token .token-favorite-button')?.getAttribute('aria-pressed') === 'true'",
-  );
-  await click(page, ".interlinear-token .token-tag-button");
-  await waitFor(
-    page,
-    "document.querySelector('.interlinear-token .token-tag-picker .target-tag-picker-popover') && getComputedStyle(document.querySelector('.interlinear-token .token-tag-picker .target-tag-picker-popover')).display === 'grid'",
+    "document.querySelector('.interlinear-token .study-marks-menu .target-tag-picker-popover') && getComputedStyle(document.querySelector('.interlinear-token .study-marks-menu .target-tag-picker-popover')).display === 'grid'",
   );
   assert(
     await evaluate(page, "document.querySelector('#detailTitle')?.textContent === 'Interlinear'"),
     "interlinear token tag button should keep the tag picker local to the token card",
   );
-  await click(page, '.interlinear-token .token-tag-picker .tag-picker-option[aria-label="Add Positive tag"]');
+  await click(page, '.interlinear-token .study-marks-menu .tag-picker-option[aria-label="Add Positive tag"]');
   await waitFor(page, "document.querySelector('.interlinear-token .token-target-badges .target-tag-badge')");
   await click(page, ".interlinear-token .token-target-badges .target-tag-picker-trigger");
   await waitFor(
@@ -1317,19 +1504,15 @@ async function runQa(page) {
   );
   await click(page, '.interlinear-token .token-target-badges .tag-picker-option[aria-label="Remove Positive tag"]');
   await waitFor(page, "!document.querySelector('.interlinear-token .token-target-badges')");
-  await click(page, ".interlinear-token .token-favorite-button.active");
-  await waitFor(
-    page,
-    "document.querySelector('.interlinear-token .token-favorite-button')?.getAttribute('aria-pressed') === 'false'",
-  );
-  pass("Interlinear source-token favorites and tags");
+  pass("Interlinear source-token Study Marks");
   pass("Greek interlinear token data");
 
   await navigate(page, `${routeBase}#/read/bsb/proverbs/1/1`);
   await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('Proverbs 1')");
 
   await click(page, ".verse-study-button");
-  await clickButtonByText(page, "Tags", { index: 0 });
+  await click(page, "#detailContext [data-panel-scope='verse'] .study-marks-trigger");
+  await click(page, "#detailContext [data-panel-scope='verse'] .tag-picker-manage");
   await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Tags'");
   await click(page, "#detailContent .tag-editor-toggle");
   await waitFor(page, "document.querySelector('.tag-badge')?.textContent.includes('Positive')");
@@ -1354,7 +1537,8 @@ async function runQa(page) {
     `document.querySelector('.custom-tag-edit-form input[name="edit-label"]')?.value === ${JSON.stringify(customTagLabel)}`,
   );
   await click(page, ".verse-study-button");
-  await clickButtonByText(page, "Tags", { index: 0 });
+  await click(page, "#detailContext [data-panel-scope='verse'] .study-marks-trigger");
+  await click(page, "#detailContext [data-panel-scope='verse'] .tag-picker-manage");
   await waitFor(page, `document.querySelector('#detailContent')?.textContent.includes(${JSON.stringify(customTagLabel)})`);
   await evaluate(
     page,

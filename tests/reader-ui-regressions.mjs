@@ -3,9 +3,10 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [index, css, stylesPolish, app, pickerFlow, renderer, tagsView, strongsView] = await Promise.all([
+const [index, css, contextCss, stylesPolish, app, pickerFlow, renderer, tagsView, strongsView] = await Promise.all([
   readFile(new URL("../app/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/styles.css", import.meta.url), "utf8"),
+  readFile(new URL("../app/styles-context.css", import.meta.url), "utf8"),
   readFile(new URL("../app/styles-polish.css", import.meta.url), "utf8"),
   readFile(new URL("../app/app.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/reader-picker-flow.js", import.meta.url), "utf8"),
@@ -14,21 +15,25 @@ const [index, css, stylesPolish, app, pickerFlow, renderer, tagsView, strongsVie
   readFile(new URL("../app/src/views/strongs-view.js", import.meta.url), "utf8"),
 ]);
 
+assert.equal((index.match(/id="study-marks-icon"/g) || []).length, 1, "Study Marks must have one official icon definition.");
+assert.equal((tagsView.match(/#study-marks-icon/g) || []).length, 1, "Study Marks triggers must reference the shared icon.");
+assert(!`${css}\n${contextCss}\n${stylesPolish}`.includes("color-mix("), "App stylesheets must not use color-mix().");
+
 const chapterTools = index.match(/<div class="chapter-actions"[\s\S]*?<\/div>\s*<\/div>\s*<\/div>/)?.[0] || "";
 const sideTools = index.match(/<nav class="detail-tool-nav"[\s\S]*?<\/nav>/)?.[0] || "";
 const homeButtonMarkup = index.match(/<button id="homeButton"[\s\S]*?<\/button>/)?.[0] || "";
 
-assert(!chapterTools.includes('id="showOutline"'), "Outline must not appear in chapter tools.");
-assert(!chapterTools.includes('id="showInterlinear"'), "Interlinear must not appear in chapter tools.");
-assert(sideTools.includes('id="showOutline"'), "Outline must remain available in the side panel.");
-assert(sideTools.includes('id="showInterlinear"'), "Interlinear must remain available in the side panel.");
+assert(chapterTools.includes('id="showOutline"'), "Outline must remain available in reader header tools.");
+assert(chapterTools.includes('id="showInterlinear"'), "Language Study must remain available in reader header tools.");
+assert.equal(sideTools, "", "Chapter and Book tool groups must not reserve side-panel height.");
 
 assert(/html\s*{\s*overflow-x:\s*clip;/.test(css), "The document must not create a sticky-breaking horizontal overflow container.");
 assert(/body\s*{[\s\S]*?overflow-x:\s*clip;/.test(css), "The body must not create a sticky-breaking horizontal overflow container.");
 assert(/\.detail-pane\s*{[\s\S]*?position:\s*sticky;[\s\S]*?top:\s*76px;[\s\S]*?height:\s*calc\(100dvh - 88px\);/.test(css), "Desktop detail panel must remain viewport-sticky and tall.");
 assert(/\.strong-sticky-summary\s*{[\s\S]*?position:\s*static;/.test(css), "Strong summary must not create a second sticky scrolling region.");
-assert(/\.verse-favorite-button\s*{[\s\S]*?opacity:\s*0;[\s\S]*?visibility:\s*hidden;/.test(css), "Inactive verse favorites must be hidden until row interaction.");
-assert(/@media\s*\(hover:\s*none\)\s*{[\s\S]*?\.verse-favorite-button\s*{[\s\S]*?visibility:\s*visible;/.test(css), "Verse favorites must remain available on touch devices.");
+assert(/renderInlineTagPicker/.test(renderer), "Reader verse numbers must retain the canonical inline Study Marks picker.");
+assert(!/verse-study-marks-button/.test(renderer), "Reader rows must not render a duplicate Study Marks trigger beside the verse number.");
+assert(/verseActions\.append\(studyButton\)/.test(renderer), "Reader row actions must retain only the ellipsis study-tools launcher.");
 assert(/@media\s*\(min-width:\s*641px\)\s*and\s*\(max-width:\s*1380px\)[\s\S]*?\.chapter-actions \.toolbar-button\s*{[\s\S]*?width:\s*34px;/.test(css), "Workspace controls must compact at intermediate widths.");
 assert(/:root\[data-theme="dark"\] \.parallel-verse\.active\s*{[\s\S]*?background:\s*rgba\(148,\s*163,\s*184,\s*0\.12\)/.test(css), "Dark parallel selection must not use a white background.");
 assert(/:root\[data-theme="dark"\] \.reader-context-verse\s*{[\s\S]*?background:\s*rgba\(148,\s*163,\s*184,\s*0\.08\)/.test(css), "Dark reader selection must use the calm slate highlight.");
@@ -38,8 +43,7 @@ assert(/\.detail-floating-nav\s*{[\s\S]*?top:\s*18px;[\s\S]*?margin:\s*0 24px 0 
 assert(
   (index.match(/class="scope-mark-control"/g) || []).length === 2 &&
     !/Book tags|Chapter tags/.test(index) &&
-    /class="scope-favorite-star"/.test(app) &&
-    /class="scope-favorite-label"/.test(app),
+    /renderStudyMarksTrigger/.test(app),
   "Exactly one consolidated Book control and one consolidated Chapter control must be mounted.",
 );
 assert(
@@ -55,7 +59,7 @@ assert(
   /id="bookTagControl" class="scope-mark-control"/.test(index) &&
     /id="chapterTagControl" class="scope-mark-control"/.test(index) &&
     /function syncScopeControls\(\)/.test(app) &&
-    /renderTargetTagPicker\(target/.test(app) &&
+    /renderStudyMarksTrigger\(target/.test(app) &&
     /Favorite/.test(tagsView),
   "Favorite and non-favorite tags must share each consolidated scope picker.",
 );

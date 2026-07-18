@@ -9,6 +9,25 @@ import { createTagsView } from "./views/tags-view.js?v=pr13-live-qa-20260711e";
 import { createUserDataView } from "./views/user-data-view.js?v=pr13-live-qa-20260711e";
 import { setDetail } from "./dom.js?v=pr13-live-qa-20260711e";
 
+function studyMarkBadgeOptions(options = {}) {
+  return {
+    ...options,
+    includeFavorite: true,
+  };
+}
+
+function renderStudyMarkBadges(tagsView, target, options = {}) {
+  const rendered = tagsView.renderTargetTagBadges(target, studyMarkBadgeOptions(options));
+  const badges = rendered?.classList?.contains("target-tag-badges")
+    ? rendered
+    : rendered?.querySelector?.(".target-tag-badges");
+  const favorite = [...(badges?.children || [])].find((badge) =>
+    String(badge.title || "").startsWith("Favorite"),
+  );
+  if (favorite) badges.append(favorite);
+  return rendered;
+}
+
 export function createDetailViews(ctx) {
   ctx.getActiveWordContext = (verse = null) => getActiveWordContext(ctx, verse);
   ctx.setActiveWordContext = (context) => setActiveWordContext(ctx, context);
@@ -34,6 +53,7 @@ export function createDetailViews(ctx) {
   const interlinearTranslationViews = createInterlinearTranslationViews(ctx, {
     appendLanguageBreakdown: strongsView.appendLanguageBreakdown,
     showStrong,
+    scrollStrongSection: strongsView.scrollStrongSection,
   });
   const jobsView = createJobsView(ctx);
   const referenceViews = createReferenceViews(ctx);
@@ -42,10 +62,12 @@ export function createDetailViews(ctx) {
   return {
     clearStrongPin: strongsView.clearStrongPin,
     createFavoriteButton: tagsView.createFavoriteButton,
+    createStudyMarksIcon: tagsView.createStudyMarksIcon,
     renderInlineTagPicker: tagsView.renderInlineTagPicker,
     renderTagBadges: tagsView.renderTagBadges,
     renderTargetTagPicker: tagsView.renderTargetTagPicker,
-    renderTargetTagBadges: tagsView.renderTargetTagBadges,
+    renderStudyMarksTrigger: tagsView.renderStudyMarksTrigger,
+    renderTargetTagBadges: (target, options = {}) => renderStudyMarkBadges(tagsView, target, options),
     showCommentary: commentaryOutlineViews.showCommentary,
     showCrossrefs: referenceViews.showCrossrefs,
     showFootnote: referenceViews.showFootnote,
@@ -58,6 +80,7 @@ export function createDetailViews(ctx) {
     showSearch: createSearchView(ctx, { showStrong }),
     showStudyUnavailable: (title, node, options = {}) => setDetail(title, node, options),
     showStrong,
+    scrollStrongSection: strongsView.scrollStrongSection,
     showJobs: jobsView,
     showFavorites: tagsView.showFavorites,
     showTargetTagEditor: tagsView.showTargetTagEditor,

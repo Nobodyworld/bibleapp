@@ -5,9 +5,11 @@ import {
   panelContextSummary,
   panelScopeSequence,
   panelToolsForScope,
+  panelToolsForWordContext,
 } from "../panel-context-model.js";
 import { resolveInterlinearVerseTokens } from "../strongs.js?v=pr13-live-qa-20260711e";
-import { createVerseTarget } from "../semantic-targets.js?v=pr13-live-qa-20260711e";
+import { createSourceTokenTarget, createVerseTarget } from "../semantic-targets.js?v=pr13-live-qa-20260711e";
+import { strongSectionControlState } from "../strong-section-lifecycle.js?v=pr13-live-qa-20260711e";
 
 function getVerseText(ctx, verse) {
   return ctx.state.verseBook?.chapters?.[ctx.state.chapter]?.[verse] || "";
@@ -41,13 +43,9 @@ function createScopeGroup(scope) {
   group.dataset.panelScope = scope;
   group.setAttribute("aria-label", `${PANEL_SCOPE_LABELS[scope]} scope`);
 
-  const label = document.createElement("span");
-  label.className = "panel-context-scope-label";
-  label.textContent = PANEL_SCOPE_LABELS[scope];
-
   const controls = document.createElement("div");
   controls.className = "panel-context-controls";
-  group.append(label, controls);
+  group.append(controls);
   return { group, controls };
 }
 
@@ -67,28 +65,59 @@ function wordHighlightOptions(wordContext, verse) {
 }
 
 function actionForTool(ctx, tool, reference, verse, active, wordContext) {
-  if (tool.id === "strongs") {
+  if (tool.id === "verse") {
+    const isWholeVerseContext = !wordContext?.token;
     return {
       ...tool,
-      current: active === "strongs",
+      current: isWholeVerseContext,
+      reactivatableCurrent: isWholeVerseContext,
+      skipReaderHighlight: isWholeVerseContext,
+      capabilityAvailable: true,
+      dataAvailable: Boolean(getVerseText(ctx, verse)),
+      run: isWholeVerseContext
+        ? () => {}
+        : () => {
+            ctx.clearActiveWordContext?.();
+            return ctx.detailViews.showParallelVerse(reference, verse, getVerseText(ctx, verse), {
+              history: "replace",
+              lock: true,
+              verse,
+            });
+          },
+    };
+  }
+
+  if (tool.id === "strongs") {
+    const hasCanonicalWord = Boolean(wordContext?.token);
+    return {
+      ...tool,
+      current: hasCanonicalWord,
+      reactivatableCurrent: active === "strongs" && hasCanonicalWord,
       capabilityAvailable: ctx.canUseCapability?.("strongs-overlay") === true,
       dataAvailable: Boolean(wordContext?.token),
       unavailableKey: "strongs",
       dataUnavailableMessage: `Word detail is not available for ${reference}.`,
-      run: () => {
-        if (!wordContext?.token || !wordContext?.options) return;
-        ctx.detailViews.showStrong(wordContext.token, {
-          ...wordContext.options,
-          force: true,
-        });
-      },
+      run: () => ctx.detailViews.scrollStrongSection?.("word"),
+    };
+  }
+
+  if (tool.id === "hebrew" || tool.id === "greek") {
+    const section = tool.id;
+    return {
+      ...tool,
+      current: false,
+      capabilityAvailable: ctx.canUseCapability?.("strongs-overlay") === true,
+      dataAvailable: wordContext?.sectionAvailability?.[section] === "present",
+      unavailableKey: "strongs",
+      dataUnavailableMessage: `${tool.label} is not available for this selected word.`,
+      run: () => ctx.detailViews.scrollStrongSection?.(section),
     };
   }
 
   if (tool.id === "par") {
     return {
       ...tool,
-      current: active === tool.id,
+      current: false,
       capabilityAvailable: true,
       dataAvailable: Boolean(getVerseText(ctx, verse)),
       run: () =>
@@ -103,7 +132,7 @@ function actionForTool(ctx, tool, reference, verse, active, wordContext) {
   if (tool.id === "refs") {
     return {
       ...tool,
-      current: active === tool.id,
+      current: false,
       capabilityAvailable: ctx.canUseCapability?.("crossrefs") === true,
       dataAvailable: Boolean(getCrossRecord(ctx, verse)),
       unavailableKey: "crossrefs",
@@ -120,7 +149,7 @@ function actionForTool(ctx, tool, reference, verse, active, wordContext) {
   if (tool.id === "commentary") {
     return {
       ...tool,
-      current: active === tool.id,
+      current: false,
       capabilityAvailable: ctx.canUseCapability?.("commentary") === true,
       dataAvailable: true,
       unavailableKey: "commentary",
@@ -131,7 +160,7 @@ function actionForTool(ctx, tool, reference, verse, active, wordContext) {
   if (tool.id === "interlinear") {
     return {
       ...tool,
-      current: active === tool.id,
+      current: false,
       capabilityAvailable: ctx.canUseCapability?.("interlinear") === true,
       dataAvailable: hasInterlinear(ctx, verse),
       unavailableKey: "interlinear",
@@ -142,7 +171,7 @@ function actionForTool(ctx, tool, reference, verse, active, wordContext) {
 
   return {
     ...tool,
-    current: active === tool.id,
+    current: false,
     capabilityAvailable: true,
     dataAvailable: Boolean(getVerseText(ctx, verse)),
     run: () =>
@@ -167,7 +196,8 @@ function appendActionButton(ctx, controls, action, reference, verse, wordContext
   button.dataset.panelScope = action.scope;
   button.dataset.controlState = control.state;
   button.dataset.unavailable = control.disabled ? "true" : "false";
-  button.disabled = control.disabled || action.current;
+  const reactivatableCurrent = action.current && action.reactivatableCurrent === true;
+  button.disabled = control.disabled || (action.current && !reactivatableCurrent);
   button.setAttribute("aria-pressed", action.current ? "true" : "false");
   if (action.current) button.setAttribute("aria-current", "page");
 
@@ -189,25 +219,40 @@ function appendActionButton(ctx, controls, action, reference, verse, wordContext
     button.setAttribute("aria-label", `${scopeLabel} scope, ${action.label} for ${reference}`);
   }
 
-  if (action.run && !action.current) {
+  if (action.run && (!action.current || reactivatableCurrent)) {
     button.addEventListener("click", () => {
-      ctx.highlightReaderContext?.(
-        action.scope === "word" ? wordHighlightOptions(wordContext, verse) : { verse, commit: true },
-      );
+      if (!action.skipReaderHighlight) {
+        ctx.highlightReaderContext?.(
+          action.scope === "word" ? wordHighlightOptions(wordContext, verse) : { verse, commit: true },
+        );
+      }
       action.run();
     });
   }
   controls.append(button);
+  return button;
+}
+
+function syncStrongSectionControl(button, section, availability, reference) {
+  if (!button) return;
+  const state = strongSectionControlState(section, availability, reference);
+  button.disabled = state.disabled;
+  button.setAttribute("aria-disabled", state.ariaDisabled);
+  button.dataset.controlState = state.controlState;
+  button.dataset.unavailable = state.unavailable;
+  button.title = state.title;
+  button.setAttribute("aria-label", state.ariaLabel);
 }
 
 export function createVerseContextTabs(ctx, reference, verse, active, strongsContext = null) {
   const wordContext = resolveWordContext(ctx, strongsContext, verse);
   const hasWord = Boolean(wordContext?.token);
-  const scopeOrder = panelScopeSequence({ word: hasWord, verse: true, chapter: true, book: true });
+  const scopeOrder = panelScopeSequence({ word: hasWord, verse: true });
 
   const tabs = document.createElement("nav");
   tabs.className = "verse-context-tabs panel-context-navigation";
   tabs.dataset.scopeOrder = scopeOrder.join(" ");
+  tabs.dataset.panelOccupant = active || "unknown";
   tabs.setAttribute("aria-label", `Contextual study tools for ${reference}`);
 
   const summary = document.createElement("div");
@@ -222,38 +267,62 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
     .filter((scope) => scope === "word" || scope === "verse")
     .forEach((scope) => {
       const { group, controls } = createScopeGroup(scope);
-      panelToolsForScope(scope).forEach((tool) => {
-        appendActionButton(ctx, controls, actionForTool(ctx, tool, reference, verse, active, wordContext), reference, verse, wordContext);
+      const tools =
+        scope === "word"
+          ? panelToolsForWordContext(wordContext, {
+              bookId: ctx.state.bookId,
+              sources: ctx.state.manifest?.original_language_sources,
+            })
+          : panelToolsForScope(scope);
+      tools.forEach((tool) => {
+        const button = appendActionButton(ctx, controls, actionForTool(ctx, tool, reference, verse, active, wordContext), reference, verse, wordContext);
+        if (tool.id === "hebrew" || tool.id === "greek") button.dataset.strongSectionControl = tool.id;
       });
 
+      if (scope === "word" && hasWord) {
+        const sourceTarget = createSourceTokenTarget(
+          { translation_id: ctx.state.translationId, book_id: ctx.state.bookId, chapter: ctx.state.chapter, verse },
+          wordContext.token,
+          ctx.state.translationId,
+        );
+        if (sourceTarget) {
+          controls.append(
+            ctx.detailViews.renderStudyMarksTrigger(sourceTarget, {
+              align: "right",
+              boundary: "detail-pane",
+              label: `selected source word in ${reference}`,
+              onChange: () => {
+                ctx.renderChapter();
+                ctx.syncFavoriteButtons?.();
+              },
+            }),
+          );
+        }
+      }
       if (scope === "verse") {
-        const favorite = ctx.detailViews.createFavoriteButton(
-          createVerseTarget(
-            {
-              translation_id: ctx.state.translationId,
-              book_id: ctx.state.bookId,
-              chapter: ctx.state.chapter,
-              verse,
-            },
-            ctx.state.translationId,
-          ),
-          {
-            className: "verse-context-favorite-button",
-            label: reference,
+        const verseTarget = createVerseTarget({ translation_id: ctx.state.translationId, book_id: ctx.state.bookId, chapter: ctx.state.chapter, verse }, ctx.state.translationId);
+        controls.append(
+          ctx.detailViews.renderStudyMarksTrigger(verseTarget, {
+            align: "right",
+            boundary: "detail-pane",
+            label: `verse ${reference}`,
             onChange: () => {
               ctx.renderChapter();
               ctx.syncFavoriteButtons?.();
             },
-          },
+          }),
         );
-        favorite.dataset.panelScope = "verse";
-        favorite.title = `Verse scope: Favorite ${reference}`;
-        controls.append(favorite);
       }
 
       groups.append(group);
     });
 
   tabs.append(groups);
+  tabs.updateStrongSectionAvailability = (availability) => {
+    if (!hasWord) return;
+    ["hebrew", "greek"].forEach((section) => {
+      syncStrongSectionControl(tabs.querySelector(`[data-strong-section-control="${section}"]`), section, availability, reference);
+    });
+  };
   return tabs;
 }

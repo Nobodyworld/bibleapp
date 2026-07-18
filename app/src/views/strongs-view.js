@@ -15,6 +15,14 @@ import { setMorphologyHelp } from "../morphology-tooltips.js?v=pr13-live-qa-2026
 import { analyzeOriginalWord, gematriaValueForUnit, languageUnitDisplayGlyph, wordHasLanguageScript } from "../language.js";
 import { createStrongReferenceControl, resolveStrongSeeSegments } from "../strong-reference-control.js?v=pr13-live-qa-20260711e";
 import { createVerseContextTabs } from "./verse-context-tabs.js?v=pr13-live-qa-20260711e";
+import {
+  absentStrongSections,
+  createStrongSectionLifecycle,
+  resolveStrongLanguage,
+  resolveStrongSectionLifecycle,
+  strongSectionAvailabilityFor,
+  STRONG_SECTION_AVAILABILITY,
+} from "../strong-section-lifecycle.js?v=pr13-live-qa-20260711e";
 
 function languageTitle(language) {
   return language === "hebrew" ? "Hebrew" : "Greek";
@@ -418,7 +426,7 @@ function appendTranslationRenderings(container, token, options = {}, viewCtx = n
     });
 }
 
-function appendLexiconConcordance(container, entry, openStrongCode) {
+function appendLexiconConcordance(container, entry, openStrongCode, token = {}, languageContext = {}) {
   const sections = [];
   const seen = new Set();
 
@@ -433,10 +441,19 @@ function appendLexiconConcordance(container, entry, openStrongCode) {
     seen.add(label);
   });
 
-  if (!sections.length) return;
+  const language = resolveStrongLanguage({
+    token,
+    strongMetadata: entry,
+    sourceMetadata: languageContext.sourceMetadata,
+    sources: languageContext.sources,
+    bookId: languageContext.bookId,
+    testament: languageContext.testament,
+  });
+  if (!sections.length) return absentStrongSections();
 
   const wrap = document.createElement("section");
   wrap.className = "lexicon-sections";
+  if (language === "hebrew" || language === "greek") wrap.dataset.strongSection = language;
   const heading = document.createElement("h4");
   heading.textContent = "Concordance and lexicon notes";
   wrap.append(heading);
@@ -454,6 +471,7 @@ function appendLexiconConcordance(container, entry, openStrongCode) {
   });
 
   container.append(wrap);
+  return strongSectionAvailabilityFor(language, STRONG_SECTION_AVAILABILITY.present);
 }
 
 function formatLexiconText(text, refs = [], openStrongCode = null) {
@@ -511,9 +529,19 @@ function setOptionalLine(node, value) {
 
 export function createStrongsView(ctx = null) {
   let strongPinned = false;
+  let currentStrongDetail = null;
 
   function clearStrongPin() {
     strongPinned = false;
+  }
+
+  function scrollStrongSection(section) {
+    const target = currentStrongDetail?.querySelector(`[data-strong-section="${section}"]`);
+    if (!target) return false;
+    target.scrollIntoView({ block: "start", behavior: "smooth" });
+    target.dataset.strongSectionActive = "true";
+    window.setTimeout(() => delete target.dataset.strongSectionActive, 700);
+    return true;
   }
 
   function openStrongCode(strongCode, language) {
@@ -556,6 +584,12 @@ export function createStrongsView(ctx = null) {
 
     const wrap = document.createElement("div");
     wrap.className = "strong-detail";
+    currentStrongDetail = wrap;
+    let updateStrongSections = () => {};
+    const strongSectionLifecycle = createStrongSectionLifecycle(
+      (availability) => updateStrongSections(availability),
+      () => currentStrongDetail === wrap && wrap.isConnected,
+    );
     const heading = document.createElement("h3");
     heading.textContent = token.english || token.original || token.strong_code || "Strong's entry";
 
@@ -564,6 +598,7 @@ export function createStrongsView(ctx = null) {
 
     const overview = document.createElement("section");
     overview.className = "strong-overview";
+    overview.dataset.strongSection = "word";
 
     const primary = document.createElement("div");
     primary.className = "strong-overview-primary";
@@ -653,14 +688,9 @@ export function createStrongsView(ctx = null) {
     stickySummary.append(heading, overview);
     wrap.append(stickySummary);
     if (options.verseContext && !options.hover && ctx) {
-      // Store Strong's context for tab switching
-      if (ctx.studyContext) {
-        ctx.studyContext.strong = {
-          token,
-          options: { ...options, forceHistory: false },
-        };
-      }
-      wrap.append(createVerseContextTabs(ctx, options.verseContext.reference, options.verseContext.verse, "strongs", null));
+      const tabs = createVerseContextTabs(ctx, options.verseContext.reference, options.verseContext.verse, "strongs", null);
+      updateStrongSections = tabs.updateStrongSectionAvailability || updateStrongSections;
+      wrap.append(tabs);
     }
     const renderedTokenBreakdown = appendLanguageBreakdown(wrap, token);
     setDetail("Strong's", wrap, {
@@ -670,25 +700,25 @@ export function createStrongsView(ctx = null) {
       readerContext: readerContextForStrong(token, options),
     });
 
-    if (!token.strong_code) {
-      appendTranslationRenderings(wrap, token, options, ctx);
-      return;
+    const extra = token.strong_code ? document.createElement("div") : null;
+    if (extra) {
+      extra.className = "lexicon-extra";
+      extra.textContent = "Loading lexicon entry...";
+      wrap.append(extra);
     }
-
-    const extra = document.createElement("div");
-    extra.className = "lexicon-extra";
-    extra.textContent = "Loading lexicon entry...";
-    wrap.append(extra);
     appendTranslationRenderings(wrap, token, options, ctx);
 
-    fetchLexiconEntry(token.strong_code)
-      .then((entry) => {
-        if (!wrap.isConnected) return;
+    void resolveStrongSectionLifecycle({
+      token,
+      lifecycle: strongSectionLifecycle,
+      loadEntry: fetchLexiconEntry,
+      isCurrent: () => wrap.isConnected && currentStrongDetail === wrap,
+      onAbsent: (reason) => {
+        if (!extra) return;
+        extra.textContent = reason === "null" ? "No lexicon entry found." : "Lexicon entry could not be loaded.";
+      },
+      availabilityForEntry: (entry) => {
         extra.replaceChildren();
-        if (!entry) {
-          extra.textContent = "No lexicon entry found.";
-          return;
-        }
         const title = document.createElement("h4");
         title.textContent = entry.summary || entry.title || token.strong_code;
         renderOverview(entry);
@@ -698,12 +728,16 @@ export function createStrongsView(ctx = null) {
         if (!renderedTokenBreakdown && entry.original_word) {
           appendLanguageBreakdown(extra, { ...token, language: entry.language || token.language }, entry.original_word);
         }
-        appendLexiconConcordance(extra, entry, openStrongCode);
-      })
-      .catch(() => {
-        if (wrap.isConnected) extra.textContent = "Lexicon entry could not be loaded.";
-      });
+        const availability = appendLexiconConcordance(extra, entry, openStrongCode, token, {
+          bookId: ctx?.state?.bookId,
+          sourceMetadata: token?.source_metadata || token?.sourceMetadata || null,
+          sources: ctx?.state?.manifest?.original_language_sources,
+          testament: token?.testament,
+        });
+        return availability;
+      },
+    });
   }
 
-  return { appendLanguageBreakdown, clearStrongPin, showStrong };
+  return { appendLanguageBreakdown, clearStrongPin, showStrong, scrollStrongSection };
 }

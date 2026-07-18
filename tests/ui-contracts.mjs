@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { CAPABILITY_REGISTRY } from "../app/src/capabilities.js";
 import {
   chapterSwipeDirection,
@@ -43,6 +44,29 @@ assert.equal(
 );
 assert.equal(interlinearTokenIdentity({ strongCode: "G3754" }), "strong:G3754");
 
+const detailViewsSource = readFileSync(new URL("../app/src/detail-views.js", import.meta.url), "utf8");
+assert.match(
+  detailViewsSource,
+  /function studyMarkBadgeOptions[\s\S]*includeFavorite:\s*true/,
+  "Favorite must remain visible wherever Study Mark badges render",
+);
+assert.match(
+  detailViewsSource,
+  /renderTargetTagBadges\(target, studyMarkBadgeOptions\(options\)\)/,
+  "all target badge surfaces must use the Favorite visibility policy",
+);
+
+const contextStyles = readFileSync(new URL("../app/styles-context.css", import.meta.url), "utf8");
+const summaryRule = contextStyles.match(/\.panel-context-summary\s*\{([^}]*)\}/s)?.[1] || "";
+assert.match(summaryRule, /color:\s*var\(--text\)/, "selected context title must use primary text contrast");
+assert.doesNotMatch(contextStyles, /#favoriteBook::before|#favoriteChapter::before/, "Book and Chapter labels must be real trigger markup, not CSS pseudo-elements");
+assert.match(contextStyles, /\.study-marks-trigger-label\s*\{/, "visible Book and Chapter labels need a shared trigger label style");
+assert.match(
+  contextStyles,
+  /\.original-language-transliteration,[\s\S]*color:\s*var\(--text\)/,
+  "Language Study transliteration must use primary text contrast",
+);
+
 const capabilityIds = new Set(CAPABILITY_REGISTRY.map((item) => item.capability_id));
 const actions = new Set();
 for (const [controlId, control] of Object.entries(STUDY_CONTROL_SCHEMA)) {
@@ -67,7 +91,7 @@ console.log(
     {
       status: "ok",
       controls_checked: Object.keys(STUDY_CONTROL_SCHEMA).length,
-      assertions: 20,
+      assertions: 27,
     },
     null,
     2,
