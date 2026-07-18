@@ -351,6 +351,7 @@ function renderScopeMarkControl(mount, target, label, options = {}) {
       id: label === "Book" ? "favoriteBook" : "favoriteChapter",
       align: options.align || "left",
       label: `current ${label.toLowerCase()}`,
+      visibleLabel: label,
       title: `${label} marks`,
       manageLabel: "Manage other tags",
       onChange: refresh,

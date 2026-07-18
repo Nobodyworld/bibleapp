@@ -1,24 +1,25 @@
 # UI Functionality Contract
 
-Reviewed: 2026-07-12
+Reviewed: 2026-07-18
 
 ## Control placement
 
-- The chapter tool group contains Search, Study Marks, Translate, Processing, and Study Data.
+- The chapter tool group contains Search, Language Study, Outline, Study Marks, Translate, Processing, and Study Data.
 - Contextual side-panel navigation follows one compact visible scope order: `Word → Verse`.
 - Word and Verse controls render in `#detailContext` when a verse detail is active. Chapter Language Study and Book Outline remain reader-header actions and do not mount as persistent side-panel groups.
 - The derived scope semantics and tool ownership remain centralized in `src/panel-context-model.js`; hiding Chapter and Book from the compact side panel does not remove their valid application scope.
 - Word is present only when canonical word/source-token context exists for the active verse, and it is always the first scope when present.
-- Verse owns Parallel, References, Commentary, verse Language Study, and the verse Study Marks trigger.
+- Verse owns the Verse self-control, Parallel, References, Commentary, verse Language Study, and the side-panel verse Study Marks trigger. In the reader, the verse number owns the canonical inline verse Study Marks picker; there is no separate verse-row Study Marks icon.
 - Chapter owns the chapter-level Language Study entry. Book owns Outline.
 - A compact context summary identifies the selected word and containing verse without repeating explanatory prose inside each detail view.
-- Visible contextual labels use the full product terms Parallel, References, Commentary, Language, and Tags. Stable short DOM labels (`Par`, `Refs`, `Cmt`, `Int`) remain only for existing browser automation compatibility; full labels are rendered and exposed through `title` and `aria-label`.
+- Visible contextual labels use the full product terms Verse, Parallel, References, Commentary, and Language. Stable short DOM labels (`Par`, `Refs`, `Cmt`, `Int`) remain only for existing browser automation compatibility; full labels are rendered and exposed through `title` and `aria-label`.
 - `Language Study` is the user-facing name. Existing `Interlinear` identifiers, capability names, data contracts, and test names remain intentionally internal.
 - Mobile exposes a Study panel launcher so side-panel-only tools remain reachable.
-- There is exactly one Book mark control and one Chapter mark control. Each trigger displays `☆` or `★` from its Favorite state, reports that state through `aria-pressed`, and opens one target-aware menu containing Favorite and the other tags applicable to that target.
+- There is exactly one Book mark control and one Chapter mark control. Each shared trigger contains a real visible `Book` or `Chapter` label, the official Study Marks SVG, and its bounded active-mark count in one button. Favorite remains a `favorite` assertion reported through `aria-pressed`; the menu also exposes the other tags applicable to that target.
 - Book and Chapter mark triggers expose menu state through `aria-haspopup="menu"` and `aria-expanded`. Active non-favorite tags remain visible outside the closed menu as persistent editable badges.
-- Book and Chapter mark controls rerender after tag changes and after navigation so their stars, badges, targets, and menu contents remain current.
-- Verse-row, verse-context, and Language Study source-token favorite stars remain direct `tag:favorite` toggles and expose state through `aria-pressed`.
+- Book and Chapter mark controls rerender after tag changes and after navigation so their labels, icons, counts, badges, targets, and menu contents remain current.
+- The reader ellipsis is only the verse study-tools launcher. It remains hover/focus-revealed on pointer devices and touch-reachable on coarse layouts; a locked reader context does not make it permanently visible.
+- Verse-context and Language Study source-token Study Marks controls use canonical targets and preserve Favorite as the `favorite` assertion.
 - Interlinear source-token tag actions open the target-aware tag editor. The editor only presents active tags whose `allowed_target_types` include `source_token`.
 - Selecting reader text exposes Favorite, Tags, Study, Draft, and Red letters actions. Favorite and Tags use one canonical `text_span` target.
 
@@ -36,7 +37,7 @@ The panel distinguishes direct data ownership from inherited containing context:
 | Book | Reader-header Outline entry | When a book is active |
 | Global/user | Settings, personal data, maintenance, diagnostics | Reserved for the later Settings/My Data redesign |
 
-A selected word retains its containing Verse controls. Chapter and Book keep their valid scope semantics while remaining attached to their reader-header controls. Word detail must never imply that cross-references or commentary belong to the lexical entry itself.
+A selected word retains its containing Verse controls. `Word` is the current self-control only for exact canonical word context; `Verse` is the current self-control for whole-verse context. Parallel, References, Commentary, and Language are actions rather than false current-context claims. Chapter and Book keep their valid scope semantics while remaining attached to their reader-header controls. Word detail must never imply that cross-references or commentary belong to the lexical entry itself.
 
 `src/active-word-context.js` is the explicit authority for the selected word available to contextual navigation. It stores only a token plus navigation options, suppresses forced duplicate history entries, rejects a stored word when its verse does not match the active verse, and clears through existing navigation/reset paths. View code must not read or write an ad hoc `studyContext.strong` property.
 
@@ -57,7 +58,7 @@ Every study control resolves to exactly one state:
 | `capability_unavailable` | no | A required package or capability is disabled, missing, or invalid. |
 | `data_unavailable` | no | The capability exists, but the current book, chapter, or verse has no applicable data. |
 
-The chapter Language Study control and Translation workspace require the internal interlinear capability plus at least one tokenized verse in the current chapter. The verse `Int` automation label represents the visibly rendered Language control and requires tokens for that exact verse. Disabled controls use native `disabled`, `aria-disabled`, a reason in `title`, and unavailable styling. The current scoped view uses `aria-current="page"` and remains visually distinct.
+The chapter Language Study control and Translation workspace require the internal interlinear capability plus at least one tokenized verse in the current chapter. The verse `Int` automation label represents the visibly rendered Language control and requires tokens for that exact verse. Strong's concordance controls resolve in this order: recognized canonical selected-token language, Strong code or authoritative Strong metadata, source metadata, then book/testament fallback. An unrecognized canonical placeholder may still yield to exact Strong/source evidence, but never to broad testament inference; otherwise unknown language renders neither. Only the resolved Hebrew or Greek control renders. The rendered control follows the existing loading/present/absent lifecycle with native `disabled`, `aria-disabled`, title, accessible name, and unavailable state. The current scoped self-control uses `aria-current="page"` and remains visually distinct.
 
 ## Panel interaction modes
 
@@ -150,6 +151,8 @@ IndexedDB initialization and migration have a three-second boundary. If the brow
 - `app/scripts/interaction-test.mjs`: rendered interaction behavior, including reader text-span selection, favorite controls, editable target badges, source-token tagging, Favorites grouping, panel history, and cleanup, when the browser runner is available.
 # Compact side-panel Study Marks contract
 
-The reader side panel is limited to the current exact Word (when present) and Verse context.  Its selected-word summary is visually separated from a compact control row. Chapter Language Study and Book Outline remain reader-header actions. Study Marks is one reusable icon trigger backed by the canonical target-aware picker; Book, Chapter, Verse, selected English text, and exact source tokens preserve their existing separate semantic targets and Favorite remains the `favorite` tag assertion.
+The reader side panel is limited to the current exact Word (when present) and Verse context. Its selected-word summary is visually separated from a compact control row. Chapter Language Study and Book Outline remain reader-header actions. Study Marks is one reusable icon trigger backed by the canonical target-aware picker; Book, Chapter, Verse, selected English text, and exact source tokens preserve their existing separate semantic targets and Favorite remains the `favorite` tag assertion. Meaning remains a separate future action and is not a Study Marks behavior.
+
+The reader verse number retains its inline picker as the canonical verse Study Marks control, while the adjacent ellipsis opens verse study tools. Book and Chapter use actual visible scope labels inside their shared triggers, not CSS-generated label text.
 
 Inside the compact detail pane, source-word and verse Study Marks pickers right-anchor within the intersection of the pane and viewport. They retain vertical picker scrolling, stay above Strong's detail content, and never change the selected word, panel lock, or detail history while opened, hovered, scrolled, or dismissed.

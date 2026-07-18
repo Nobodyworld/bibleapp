@@ -5,6 +5,7 @@ import {
   panelContextSummary,
   panelScopeSequence,
   panelToolsForScope,
+  panelToolsForWordContext,
 } from "../panel-context-model.js";
 import { resolveInterlinearVerseTokens } from "../strongs.js?v=pr13-live-qa-20260711e";
 import { createSourceTokenTarget, createVerseTarget } from "../semantic-targets.js?v=pr13-live-qa-20260711e";
@@ -64,10 +65,34 @@ function wordHighlightOptions(wordContext, verse) {
 }
 
 function actionForTool(ctx, tool, reference, verse, active, wordContext) {
-  if (tool.id === "strongs") {
+  if (tool.id === "verse") {
+    const isWholeVerseContext = !wordContext?.token;
     return {
       ...tool,
-      current: active === "strongs",
+      current: isWholeVerseContext,
+      reactivatableCurrent: isWholeVerseContext,
+      skipReaderHighlight: isWholeVerseContext,
+      capabilityAvailable: true,
+      dataAvailable: Boolean(getVerseText(ctx, verse)),
+      run: isWholeVerseContext
+        ? () => {}
+        : () => {
+            ctx.clearActiveWordContext?.();
+            return ctx.detailViews.showParallelVerse(reference, verse, getVerseText(ctx, verse), {
+              history: "replace",
+              lock: true,
+              verse,
+            });
+          },
+    };
+  }
+
+  if (tool.id === "strongs") {
+    const hasCanonicalWord = Boolean(wordContext?.token);
+    return {
+      ...tool,
+      current: hasCanonicalWord,
+      reactivatableCurrent: active === "strongs" && hasCanonicalWord,
       capabilityAvailable: ctx.canUseCapability?.("strongs-overlay") === true,
       dataAvailable: Boolean(wordContext?.token),
       unavailableKey: "strongs",
@@ -92,7 +117,7 @@ function actionForTool(ctx, tool, reference, verse, active, wordContext) {
   if (tool.id === "par") {
     return {
       ...tool,
-      current: active === tool.id,
+      current: false,
       capabilityAvailable: true,
       dataAvailable: Boolean(getVerseText(ctx, verse)),
       run: () =>
@@ -107,7 +132,7 @@ function actionForTool(ctx, tool, reference, verse, active, wordContext) {
   if (tool.id === "refs") {
     return {
       ...tool,
-      current: active === tool.id,
+      current: false,
       capabilityAvailable: ctx.canUseCapability?.("crossrefs") === true,
       dataAvailable: Boolean(getCrossRecord(ctx, verse)),
       unavailableKey: "crossrefs",
@@ -124,7 +149,7 @@ function actionForTool(ctx, tool, reference, verse, active, wordContext) {
   if (tool.id === "commentary") {
     return {
       ...tool,
-      current: active === tool.id,
+      current: false,
       capabilityAvailable: ctx.canUseCapability?.("commentary") === true,
       dataAvailable: true,
       unavailableKey: "commentary",
@@ -135,7 +160,7 @@ function actionForTool(ctx, tool, reference, verse, active, wordContext) {
   if (tool.id === "interlinear") {
     return {
       ...tool,
-      current: active === tool.id,
+      current: false,
       capabilityAvailable: ctx.canUseCapability?.("interlinear") === true,
       dataAvailable: hasInterlinear(ctx, verse),
       unavailableKey: "interlinear",
@@ -146,7 +171,7 @@ function actionForTool(ctx, tool, reference, verse, active, wordContext) {
 
   return {
     ...tool,
-    current: active === tool.id,
+    current: false,
     capabilityAvailable: true,
     dataAvailable: Boolean(getVerseText(ctx, verse)),
     run: () =>
@@ -171,8 +196,8 @@ function appendActionButton(ctx, controls, action, reference, verse, wordContext
   button.dataset.panelScope = action.scope;
   button.dataset.controlState = control.state;
   button.dataset.unavailable = control.disabled ? "true" : "false";
-  const reactivatableCurrentWord = action.id === "strongs" && action.current;
-  button.disabled = control.disabled || (action.current && !reactivatableCurrentWord);
+  const reactivatableCurrent = action.current && action.reactivatableCurrent === true;
+  button.disabled = control.disabled || (action.current && !reactivatableCurrent);
   button.setAttribute("aria-pressed", action.current ? "true" : "false");
   if (action.current) button.setAttribute("aria-current", "page");
 
@@ -194,11 +219,13 @@ function appendActionButton(ctx, controls, action, reference, verse, wordContext
     button.setAttribute("aria-label", `${scopeLabel} scope, ${action.label} for ${reference}`);
   }
 
-  if (action.run && (!action.current || reactivatableCurrentWord)) {
+  if (action.run && (!action.current || reactivatableCurrent)) {
     button.addEventListener("click", () => {
-      ctx.highlightReaderContext?.(
-        action.scope === "word" ? wordHighlightOptions(wordContext, verse) : { verse, commit: true },
-      );
+      if (!action.skipReaderHighlight) {
+        ctx.highlightReaderContext?.(
+          action.scope === "word" ? wordHighlightOptions(wordContext, verse) : { verse, commit: true },
+        );
+      }
       action.run();
     });
   }
@@ -225,6 +252,7 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
   const tabs = document.createElement("nav");
   tabs.className = "verse-context-tabs panel-context-navigation";
   tabs.dataset.scopeOrder = scopeOrder.join(" ");
+  tabs.dataset.panelOccupant = active || "unknown";
   tabs.setAttribute("aria-label", `Contextual study tools for ${reference}`);
 
   const summary = document.createElement("div");
@@ -239,7 +267,14 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
     .filter((scope) => scope === "word" || scope === "verse")
     .forEach((scope) => {
       const { group, controls } = createScopeGroup(scope);
-      panelToolsForScope(scope).forEach((tool) => {
+      const tools =
+        scope === "word"
+          ? panelToolsForWordContext(wordContext, {
+              bookId: ctx.state.bookId,
+              sources: ctx.state.manifest?.original_language_sources,
+            })
+          : panelToolsForScope(scope);
+      tools.forEach((tool) => {
         const button = appendActionButton(ctx, controls, actionForTool(ctx, tool, reference, verse, active, wordContext), reference, verse, wordContext);
         if (tool.id === "hebrew" || tool.id === "greek") button.dataset.strongSectionControl = tool.id;
       });

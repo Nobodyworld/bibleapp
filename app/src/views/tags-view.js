@@ -387,6 +387,15 @@ export function createTagsView(ctx) {
     targetTagMenuCloseTimer = null;
   }
 
+  // A tag toggle can rerender its owner synchronously. Do not let the
+  // document-level dismissal handlers retain that detached menu or attempt to
+  // restore focus to its equally detached trigger on a later Escape.
+  function currentTargetTagMenu() {
+    if (activeTargetTagMenu?.isConnected) return activeTargetTagMenu;
+    activeTargetTagMenu = null;
+    return null;
+  }
+
   function positionTargetTagMenu(menu) {
     if (!menu || menu.dataset.menuBoundary !== "detail-pane") return;
     const popover = menu.querySelector(".target-tag-picker-popover");
@@ -431,14 +440,18 @@ export function createTagsView(ctx) {
   function closeTargetTagMenu(menu = activeTargetTagMenu, { restoreFocus = false } = {}) {
     if (!menu) return;
     cancelTargetTagMenuClose();
+    if (activeTargetTagMenu === menu) activeTargetTagMenu = null;
+    if (!menu.isConnected) return;
+    delete menu.dataset.openedFromFocus;
+    delete menu.__targetTagPointerStartedFocused;
     menu.dataset.menuClosed = "true";
     delete menu.dataset.menuOpen;
     setTargetTagMenuExpanded(menu, false);
-    if (activeTargetTagMenu === menu) activeTargetTagMenu = null;
     if (restoreFocus) {
       const trigger = menu.__targetTagTrigger || menu.querySelector(".target-tag-picker-trigger, .tag-picker-trigger");
+      if (!trigger?.isConnected) return;
       menu.dataset.restoringFocus = "true";
-      trigger?.focus({ preventScroll: true });
+      trigger.focus({ preventScroll: true });
       window.setTimeout(() => delete menu.dataset.restoringFocus, 0);
     }
   }
@@ -446,7 +459,8 @@ export function createTagsView(ctx) {
   function openTargetTagMenu(menu) {
     if (!menu) return;
     cancelTargetTagMenuClose();
-    if (activeTargetTagMenu && activeTargetTagMenu !== menu) closeTargetTagMenu(activeTargetTagMenu);
+    const openMenu = currentTargetTagMenu();
+    if (openMenu && openMenu !== menu) closeTargetTagMenu(openMenu);
     activeTargetTagMenu = menu;
     delete menu.dataset.menuClosed;
     menu.dataset.menuOpen = "true";
@@ -467,16 +481,19 @@ export function createTagsView(ctx) {
     if (targetTagMenuDismissalBound) return;
     targetTagMenuDismissalBound = true;
     document.addEventListener("pointerdown", (event) => {
-      if (!activeTargetTagMenu || activeTargetTagMenu.contains(event.target)) return;
-      closeTargetTagMenu(activeTargetTagMenu);
+      const menu = currentTargetTagMenu();
+      if (!menu || menu.contains(event.target)) return;
+      closeTargetTagMenu(menu);
     });
     document.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape" || !activeTargetTagMenu) return;
+      if (event.key !== "Escape") return;
+      const menu = currentTargetTagMenu();
+      if (!menu) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      closeTargetTagMenu(activeTargetTagMenu, { restoreFocus: true });
+      closeTargetTagMenu(menu, { restoreFocus: true });
     }, true);
-    window.addEventListener("resize", () => positionTargetTagMenu(activeTargetTagMenu));
+    window.addEventListener("resize", () => positionTargetTagMenu(currentTargetTagMenu()));
   }
 
   function wireTargetTagMenu(menu) {
@@ -485,6 +502,7 @@ export function createTagsView(ctx) {
     menu.addEventListener("pointerleave", () => scheduleTargetTagMenuClose(menu));
     menu.addEventListener("focusin", () => {
       if (menu.dataset.restoringFocus === "true") return;
+      if (menu.dataset.menuOpen !== "true") menu.dataset.openedFromFocus = "true";
       openTargetTagMenu(menu);
     });
     menu.addEventListener("focusout", (event) => {
@@ -658,8 +676,26 @@ export function createTagsView(ctx) {
     if (!trigger.getAttribute("aria-label")) {
       trigger.setAttribute("aria-label", `${options.label || "Target"} tags`);
     }
+    const rememberPointerFocus = () => {
+      if (typeof menu.__targetTagPointerStartedFocused !== "undefined") return;
+      menu.__targetTagPointerStartedFocused = document.activeElement === trigger;
+    };
+    trigger.addEventListener("pointerdown", rememberPointerFocus);
+    trigger.addEventListener("touchstart", rememberPointerFocus, { passive: true });
+    trigger.addEventListener("mousedown", rememberPointerFocus);
     trigger.addEventListener("click", (event) => {
       event.stopPropagation();
+      if (!window.matchMedia("(hover: hover)").matches) {
+        openTargetTagMenu(menu);
+        return;
+      }
+      const keepFocusOpenedMenu =
+        event.detail > 0 &&
+        menu.dataset.openedFromFocus === "true" &&
+        menu.__targetTagPointerStartedFocused === false;
+      delete menu.__targetTagPointerStartedFocused;
+      delete menu.dataset.openedFromFocus;
+      if (keepFocusOpenedMenu) return;
       if (menu.dataset.menuOpen === "true") closeTargetTagMenu(menu);
       else openTargetTagMenu(menu);
     });
@@ -691,6 +727,12 @@ export function createTagsView(ctx) {
     if (options.id) trigger.id = options.id;
     trigger.className = ["study-marks-trigger", options.className || ""].filter(Boolean).join(" ");
     const label = options.label || targetTypeLabel(target);
+    if (options.visibleLabel) {
+      const visibleLabel = document.createElement("span");
+      visibleLabel.className = "study-marks-trigger-label";
+      visibleLabel.textContent = options.visibleLabel;
+      trigger.append(visibleLabel);
+    }
     trigger.append(createStudyMarksIcon());
     const activeCount = getTargetTags(ctx.state, target).length;
     const favoriteActive = getTargetTags(ctx.state, target).includes("favorite");

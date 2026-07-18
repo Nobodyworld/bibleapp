@@ -92,15 +92,11 @@
   padding-inline: 8px;
 }
 
-#favoriteBook::before,
-#favoriteChapter::before {
+.study-marks-trigger-label {
   font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
 }
-
-#favoriteBook::before { content: "Book"; }
-#favoriteChapter::before { content: "Chapter"; }
 
 .study-marks-icon { width: 16px; height: 16px; fill: currentColor; }
 .icon-definitions { display: none; }

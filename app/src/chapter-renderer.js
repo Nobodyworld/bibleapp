@@ -9,7 +9,6 @@ import {
 } from "./stores.js?v=pr13-live-qa-20260711e";
 import {
   createTextSpanTarget,
-  createVerseTarget,
   resolveTextSpanAnchor,
 } from "./semantic-targets.js?v=pr13-live-qa-20260711e";
 import { mapStrongChapterRanges, resolveSourceBearingPresentationSegment } from "./strongs.js";
@@ -755,7 +754,8 @@ export function createChapterRenderer(ctx) {
     number.type = "button";
     number.className = "verse-number";
     number.textContent = verse;
-    number.title = "Show parallel translations";
+    number.title = "Verse Study Marks and parallel translations";
+    number.setAttribute("aria-label", `Verse ${verse}: Study Marks and parallel translations`);
     number.addEventListener("click", () => {
       ctx.highlightReaderContext?.({ verse, commit: true });
       void ctx.detailViews.showParallelVerse(reference, verse, verseText, { history: "replace", lock: true, verse });
@@ -875,14 +875,9 @@ export function createChapterRenderer(ctx) {
       }
     });
 
-    const marksButton = ctx.detailViews.renderStudyMarksTrigger(createVerseTarget(key, ctx.state.translationId), {
-      className: "verse-study-marks-button",
-      label: `verse ${reference}`,
-      onChange: () => { ctx.renderChapter(); ctx.syncFavoriteButtons?.(); },
-    });
     const verseActions = document.createElement("div");
     verseActions.className = "verse-row-actions";
-    verseActions.append(marksButton, studyButton);
+    verseActions.append(studyButton);
 
     body.addEventListener("mouseup", () => showSelectionMenuForVerse(reference, verse, verseText, body, key));
     body.addEventListener("touchend", () => window.setTimeout(() => showSelectionMenuForVerse(reference, verse, verseText, body, key), 0));

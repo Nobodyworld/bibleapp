@@ -59,8 +59,8 @@ assert.match(
 const contextStyles = readFileSync(new URL("../app/styles-context.css", import.meta.url), "utf8");
 const summaryRule = contextStyles.match(/\.panel-context-summary\s*\{([^}]*)\}/s)?.[1] || "";
 assert.match(summaryRule, /color:\s*var\(--text\)/, "selected context title must use primary text contrast");
-assert.match(contextStyles, /#favoriteBook::before\s*\{\s*content:\s*"Book";/, "Book Study Marks trigger must show its scope label");
-assert.match(contextStyles, /#favoriteChapter::before\s*\{\s*content:\s*"Chapter";/, "Chapter Study Marks trigger must show its scope label");
+assert.doesNotMatch(contextStyles, /#favoriteBook::before|#favoriteChapter::before/, "Book and Chapter labels must be real trigger markup, not CSS pseudo-elements");
+assert.match(contextStyles, /\.study-marks-trigger-label\s*\{/, "visible Book and Chapter labels need a shared trigger label style");
 assert.match(
   contextStyles,
   /\.original-language-transliteration,[\s\S]*color:\s*var\(--text\)/,
@@ -91,7 +91,7 @@ console.log(
     {
       status: "ok",
       controls_checked: Object.keys(STUDY_CONTROL_SCHEMA).length,
-      assertions: 26,
+      assertions: 27,
     },
     null,
     2,

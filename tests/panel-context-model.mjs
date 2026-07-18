@@ -14,6 +14,7 @@ import {
   panelContextSummary,
   panelScopeSequence,
   panelToolsForScope,
+  panelToolsForWordContext,
 } from "../app/src/panel-context-model.js";
 
 assert.deepEqual(PANEL_SCOPE_ORDER, ["word", "verse", "chapter", "book", "global"]);
@@ -32,9 +33,25 @@ assert.deepEqual(
 );
 assert.deepEqual(
   panelToolsForScope("verse").map((tool) => tool.id),
-  ["par", "refs", "commentary", "interlinear"],
+  ["verse", "par", "refs", "commentary", "interlinear"],
 );
-assert.deepEqual(panelToolsForScope("word").map((tool) => tool.id), ["strongs", "hebrew", "greek"]);
+assert.deepEqual(panelToolsForScope("word").map((tool) => tool.id), ["strongs"]);
+assert.deepEqual(
+  panelToolsForWordContext({ token: { language: "hebrew", strong_code: "H4912" } }, { bookId: "john" }).map(
+    (tool) => tool.id,
+  ),
+  ["strongs", "hebrew"],
+);
+assert.deepEqual(
+  panelToolsForWordContext({ token: { language: "greek", strong_code: "G3056" } }, { bookId: "proverbs" }).map(
+    (tool) => tool.id,
+  ),
+  ["strongs", "greek"],
+);
+assert.deepEqual(
+  panelToolsForWordContext({ token: { language: "unknown" } }, { bookId: "proverbs" }).map((tool) => tool.id),
+  ["strongs"],
+);
 assert.deepEqual(panelToolsForScope("chapter"), []);
 assert.deepEqual(panelToolsForScope("book"), []);
 
@@ -92,8 +109,10 @@ assert.match(detailViewsSource, /Object\.defineProperty\(strongsCtx, "studyConte
 assert.match(detailViewsSource, /showStrong: createSearchView|createSearchView\(ctx, \{ showStrong \}\)/);
 assert.match(tabsSource, /renderStudyMarksTrigger/);
 assert.match(tabsSource, /scrollStrongSection/);
-assert.match(tabsSource, /reactivatableCurrentWord/);
+assert.match(tabsSource, /reactivatableCurrent/);
 assert.match(tabsSource, /updateStrongSectionAvailability/);
+assert.match(tabsSource, /dataset\.panelOccupant/);
+assert.match(tabsSource, /panelToolsForWordContext/);
 assert.doesNotMatch(tabsSource, /window\.addEventListener\("strong:sections"/);
 assert.match(detailViewsSource, /scrollStrongSection/);
 assert.match(browserSource, /mode === "mobile"/);
@@ -113,7 +132,7 @@ console.log(
       status: "ok",
       scopes: PANEL_SCOPE_ORDER.length,
       tools: Object.values(PANEL_CONTEXT_TOOL_MATRIX).flat().length,
-      assertions: 39,
+      assertions: 46,
     },
     null,
     2,
