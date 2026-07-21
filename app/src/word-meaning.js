@@ -4,6 +4,11 @@ import {
   setTokenRendering,
 } from "./stores.js?v=pr13-live-qa-20260711e";
 import { normalizeTarget } from "./semantic-targets.js?v=pr13-live-qa-20260711e";
+import {
+  activateOverlay,
+  deactivateOverlay,
+  isActiveOverlay,
+} from "./overlay-coordinator.js?v=pr13-live-qa-20260711e";
 
 export const CUSTOM_MEANING_MAX_LENGTH = 180;
 
@@ -120,15 +125,20 @@ export function createWordMeaningControl({
   let editingCustom = false;
   let loadingExact = false;
   let loadingLexicon = false;
+  const overlayOwner = {
+    document,
+    isConnected: () => root.isConnected && open,
+    close: (options) => close(options),
+  };
 
   const removeGlobalListeners = () => {
     document.removeEventListener("pointerdown", onOutsidePointerDown, true);
-    document.removeEventListener("keydown", onKeyDown, true);
     window.removeEventListener("resize", positionMenu);
     window.removeEventListener("scroll", positionMenu, true);
   };
 
   const close = ({ restoreFocus = false } = {}) => {
+    deactivateOverlay(overlayOwner);
     if (!open) return;
     open = false;
     editingCustom = false;
@@ -282,18 +292,15 @@ export function createWordMeaningControl({
   };
 
   function onOutsidePointerDown(event) {
+    if (!isActiveOverlay(overlayOwner)) return;
     if (!root.contains(event.target)) close();
   }
 
-  function onKeyDown(event) {
-    if (event.key !== "Escape") return;
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation?.();
-    close({ restoreFocus: true });
-  }
-
   function positionMenu() {
+    if (!root.isConnected) {
+      close();
+      return;
+    }
     if (!open || menu.hidden) return;
     const gutter = 12;
     const width = Math.min(340, Math.max(0, window.innerWidth - gutter * 2));
@@ -344,11 +351,11 @@ export function createWordMeaningControl({
     }
     open = true;
     editingCustom = false;
+    activateOverlay(overlayOwner);
     trigger.setAttribute("aria-expanded", "true");
     menu.hidden = false;
     renderPicker();
     document.addEventListener("pointerdown", onOutsidePointerDown, true);
-    document.addEventListener("keydown", onKeyDown, true);
     window.addEventListener("resize", positionMenu);
     window.addEventListener("scroll", positionMenu, true);
     loadCandidates();

@@ -391,6 +391,7 @@ export function createInterlinearTranslationViews(ctx, { appendLanguageBreakdown
       const marks = ctx.detailViews.renderStudyMarksTrigger(sourceTarget, {
         className: "token-study-marks-button",
         align: "right",
+        boundary: "detail-pane",
         label: tokenLabel,
         preview: [token.english, token.gloss].filter(Boolean).join(" — "),
         onChange: refreshTargetActions,

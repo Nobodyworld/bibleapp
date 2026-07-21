@@ -100,8 +100,10 @@ async function workspaceSnapshot(page) {
 
     const store = await readWorkspace();
     return JSON.stringify({
+      indexedDbWorkspace: store || {},
       localStorageWorkspace: window.localStorage.getItem(localStorageKey),
       tokenRenderings: store?.token_renderings || {},
+      tagAssertions: store?.tag_assertions || {},
       workspaceJobs: store?.job_events || [],
     });
   });
@@ -147,13 +149,17 @@ async function runProfile(browser, url, profile) {
       Boolean(document.querySelector('.interlinear-verse-section[data-verse="1"] .word-meaning-control')),
     );
 
-    stage = "prepare focus target";
-    const card = page
+    stage = "prepare exact-token controls";
+    const cards = page
       .locator('.interlinear-verse-section[data-verse="1"] .interlinear-token')
-      .filter({ has: page.locator(".word-meaning-control") })
-      .first();
-    const trigger = card.locator(".word-meaning-trigger");
-    await card.evaluate((node) => {
+      .filter({ has: page.locator(".word-meaning-control") });
+    assert((await cards.count()) >= 2, `${profile.name}: two exact-token Meaning controls were not rendered`);
+    const firstCard = cards.nth(0);
+    const secondCard = cards.nth(1);
+    const firstMeaning = firstCard.locator(".word-meaning-trigger");
+    const secondMeaning = secondCard.locator(".word-meaning-trigger");
+    const firstStudyMarks = firstCard.locator(".study-marks-trigger");
+    await firstCard.evaluate((node) => {
       const existing = node.querySelector("#qa-word-meaning-outside-focus");
       if (existing) existing.remove();
       const outside = document.createElement("button");
@@ -162,20 +168,118 @@ async function runProfile(browser, url, profile) {
       outside.textContent = "Outside focus target";
       node.append(outside);
     });
-    const outsideControl = card.locator("#qa-word-meaning-outside-focus");
-
-    stage = "open Meaning picker";
-    await trigger.scrollIntoViewIfNeeded();
+    const outsideControl = firstCard.locator("#qa-word-meaning-outside-focus");
+    const assertWorkspaceUnchanged = async (label) => {
+      const after = await workspaceSnapshot(page);
+      assert(before === after, `${profile.name}: ${label} mutated token renderings, Study Marks, jobs, IndexedDB, or local storage`);
+    };
     const before = await workspaceSnapshot(page);
-    await trigger.click();
-    await waitFor(page, () => Boolean(document.querySelector(".word-meaning-menu:not([hidden])")));
 
-    stage = "dismiss through outside focus target";
+    stage = "Meaning A to Meaning B";
+    await firstMeaning.scrollIntoViewIfNeeded();
+    await firstMeaning.focus();
+    await firstMeaning.press("Enter");
+    await waitFor(page, () => document.querySelectorAll(".word-meaning-menu:not([hidden])").length === 1);
+    await secondMeaning.focus();
+    await secondMeaning.press("Enter");
+    await waitFor(page, () => document.querySelectorAll(".word-meaning-menu:not([hidden])").length === 1);
+    const meaningSwitch = await page.evaluate(() => {
+      const triggers = [...document.querySelectorAll('.interlinear-verse-section[data-verse="1"] .word-meaning-trigger')];
+      return {
+        visible: document.querySelectorAll(".word-meaning-menu:not([hidden])").length,
+        firstExpanded: triggers[0]?.getAttribute("aria-expanded"),
+        secondExpanded: triggers[1]?.getAttribute("aria-expanded"),
+        firstFocused: document.activeElement === triggers[0],
+      };
+    });
+    assert(
+      meaningSwitch.visible === 1 && meaningSwitch.firstExpanded === "false" &&
+        meaningSwitch.secondExpanded === "true" && !meaningSwitch.firstFocused,
+      `${profile.name}: Meaning A to B did not leave B as the sole overlay: ${JSON.stringify(meaningSwitch)}`,
+    );
+    await secondMeaning.press("Escape");
+    const meaningEscape = await page.evaluate(() => {
+      const triggers = [...document.querySelectorAll('.interlinear-verse-section[data-verse="1"] .word-meaning-trigger')];
+      return {
+        visible: document.querySelectorAll(".word-meaning-menu:not([hidden])").length,
+        secondFocused: document.activeElement === triggers[1],
+      };
+    });
+    assert(meaningEscape.visible === 0 && meaningEscape.secondFocused, `${profile.name}: Escape did not close/focus Meaning B`);
+    await assertWorkspaceUnchanged("Meaning A to Meaning B switching");
+
+    stage = "Study Marks focus to Meaning";
+    await firstStudyMarks.focus();
+    await waitFor(page, () => document.querySelector('.interlinear-verse-section[data-verse="1"] .study-marks-menu')?.dataset.menuOpen === "true");
+    await firstMeaning.focus();
+    await firstMeaning.press("Enter");
+    const marksToMeaning = await page.evaluate(() => {
+      const card = document.querySelector('.interlinear-verse-section[data-verse="1"] .interlinear-token:has(.word-meaning-control)');
+      return {
+        marksOpen: card?.querySelector(".study-marks-menu")?.dataset.menuOpen === "true",
+        meaningsVisible: document.querySelectorAll(".word-meaning-menu:not([hidden])").length,
+      };
+    });
+    assert(!marksToMeaning.marksOpen && marksToMeaning.meaningsVisible === 1, `${profile.name}: Study Marks to Meaning overlap: ${JSON.stringify(marksToMeaning)}`);
+    await firstMeaning.press("Escape");
+    assert(await firstMeaning.evaluate((node) => document.activeElement === node), `${profile.name}: Meaning trigger did not regain focus`);
+    await assertWorkspaceUnchanged("Study Marks focus to Meaning switching");
+
+    stage = "Study Marks click to Meaning";
+    await outsideControl.focus();
+    await firstStudyMarks.evaluate((trigger) => trigger.click());
+    await waitFor(page, () => document.querySelector('.interlinear-verse-section[data-verse="1"] .study-marks-menu')?.dataset.menuOpen === "true");
+    await firstMeaning.focus();
+    await firstMeaning.press("Enter");
+    assert(
+      await page.evaluate(() =>
+        document.querySelector('.interlinear-verse-section[data-verse="1"] .study-marks-menu')?.dataset.menuOpen !== "true" &&
+        document.querySelectorAll(".word-meaning-menu:not([hidden])").length === 1),
+      `${profile.name}: click-open Study Marks remained open behind Meaning`,
+    );
+    await firstMeaning.press("Escape");
+    await assertWorkspaceUnchanged("Study Marks click to Meaning switching");
+
+    if (!profile.mobile) {
+      stage = "Study Marks hover to Meaning";
+      const studyMenu = firstCard.locator(".study-marks-menu");
+      await outsideControl.focus();
+      await studyMenu.hover();
+      await waitFor(page, () => document.querySelector('.interlinear-verse-section[data-verse="1"] .study-marks-menu')?.dataset.menuOpen === "true");
+      await firstMeaning.focus();
+      await firstMeaning.press("Enter");
+      assert(
+        await page.evaluate(() =>
+          document.querySelector('.interlinear-verse-section[data-verse="1"] .study-marks-menu')?.dataset.menuOpen !== "true" &&
+          document.querySelectorAll(".word-meaning-menu:not([hidden])").length === 1),
+        `${profile.name}: hover-open Study Marks remained open behind Meaning`,
+      );
+      await firstMeaning.press("Escape");
+      await assertWorkspaceUnchanged("Study Marks hover to Meaning switching");
+    }
+
+    stage = "Meaning to Study Marks";
+    await firstMeaning.focus();
+    await firstMeaning.press("Enter");
+    await waitFor(page, () => document.querySelectorAll(".word-meaning-menu:not([hidden])").length === 1);
+    await firstStudyMarks.focus();
+    await waitFor(page, () => document.querySelector('.interlinear-verse-section[data-verse="1"] .study-marks-menu')?.dataset.menuOpen === "true");
+    const meaningToMarks = await page.evaluate(() => ({
+      meaningsVisible: document.querySelectorAll(".word-meaning-menu:not([hidden])").length,
+      marksOpen: document.querySelector('.interlinear-verse-section[data-verse="1"] .study-marks-menu')?.dataset.menuOpen === "true",
+    }));
+    assert(meaningToMarks.meaningsVisible === 0 && meaningToMarks.marksOpen, `${profile.name}: Meaning to Study Marks overlap: ${JSON.stringify(meaningToMarks)}`);
+    await firstStudyMarks.press("Escape");
+    assert(await firstStudyMarks.evaluate((node) => document.activeElement === node), `${profile.name}: Study Marks trigger did not regain focus`);
+    await assertWorkspaceUnchanged("Meaning to Study Marks switching");
+
+    stage = "outside dismissal";
+    await firstMeaning.focus();
+    await firstMeaning.press("Enter");
+    await waitFor(page, () => Boolean(document.querySelector(".word-meaning-menu:not([hidden])")));
     await outsideControl.click();
     await waitFor(page, () => !document.querySelector(".word-meaning-menu:not([hidden])"));
     await delay(100);
-
-    stage = "verify focus and persistence";
     const focusState = await page.evaluate(() => ({
       outsideFocused: document.activeElement?.id === "qa-word-meaning-outside-focus",
       meaningFocused: document.activeElement?.classList?.contains("word-meaning-trigger") || false,
@@ -186,12 +290,55 @@ async function runProfile(browser, url, profile) {
       focusState.outsideFocused && !focusState.meaningFocused,
       `${profile.name}: outside control did not retain focus after Meaning dismissal: ${JSON.stringify(focusState)}`,
     );
-    assert(
-      before === after,
-      `${profile.name}: outside Meaning dismissal mutated token renderings, workspace jobs, or the local-storage mirror`,
-    );
+    assert(before === after, `${profile.name}: outside Meaning dismissal mutated workspace data`);
 
-    return profile.name;
+    stage = "detached Meaning cleanup";
+    const preRerenderState = await page.evaluate(() => ({
+      title: document.querySelector("#detailTitle")?.textContent,
+      meanings: document.querySelectorAll(".word-meaning-control").length,
+      hash: location.hash,
+      focus: document.activeElement?.id || document.activeElement?.className || document.activeElement?.tagName,
+    }));
+    assert(preRerenderState.meanings >= 2, `${profile.name}: Language Study rerendered unexpectedly before cleanup test: ${JSON.stringify(preRerenderState)}`);
+    await firstMeaning.focus();
+    await firstMeaning.press("Enter");
+    await waitFor(page, () => Boolean(document.querySelector(".word-meaning-menu:not([hidden])")));
+    await page.evaluate(() => {
+      const current = [...document.querySelectorAll("#detailContext .verse-context-tab")]
+        .find((button) => !button.disabled && button.getAttribute("aria-current") !== "page");
+      if (!current) throw new Error("No non-destructive detail rerender control is available");
+      current.dataset.qaRerenderTarget = "true";
+      window.__detachedMeaningRoot = document.querySelector('.interlinear-verse-section[data-verse="1"] .word-meaning-control');
+      current.focus();
+    });
+    await page.locator('[data-qa-rerender-target="true"]').press("Enter");
+    await waitFor(page, () => Boolean(window.__detachedMeaningRoot && !window.__detachedMeaningRoot.isConnected));
+    await page.locator("#themeToggle").focus();
+    await page.locator("#themeToggle").press("Escape");
+    const detachedState = await page.evaluate(() => ({
+      focusUnchanged: document.activeElement?.id === "themeToggle",
+      visibleMeanings: document.querySelectorAll(".word-meaning-menu:not([hidden])").length,
+      detachedExpanded: window.__detachedMeaningRoot?.querySelector(".word-meaning-trigger")?.getAttribute("aria-expanded"),
+    }));
+    assert(
+      detachedState.focusUnchanged && detachedState.visibleMeanings === 0 && detachedState.detachedExpanded === "false",
+      `${profile.name}: detached Meaning owner responded to Escape: ${JSON.stringify(detachedState)}`,
+    );
+    await assertWorkspaceUnchanged("detached Meaning cleanup");
+
+    stage = "closed-state Escape";
+    const closedEscapeTarget = page.locator("#themeToggle");
+    await closedEscapeTarget.focus();
+    await closedEscapeTarget.press("Escape");
+    assert(await closedEscapeTarget.evaluate((node) => document.activeElement === node), `${profile.name}: closed-state Escape moved focus`);
+    assert(
+      await page.evaluate(() => !document.querySelector(".word-meaning-menu:not([hidden])") &&
+        !document.querySelector('.target-tag-picker-menu[data-menu-open="true"]')),
+      `${profile.name}: closed-state Escape exposed an overlay`,
+    );
+    await assertWorkspaceUnchanged("closed-state Escape");
+
+    return { name: profile.name, assertions: profile.mobile ? 18 : 20 };
   } catch (error) {
     error.message = `${profile.name} at ${stage}: ${error.message}`;
     throw error;
@@ -222,7 +369,11 @@ async function main() {
     ];
     const completed = [];
     for (const profile of profiles) completed.push(await runProfile(browser, url, profile));
-    console.log(JSON.stringify({ status: "ok", profiles: completed, assertions: completed.length * 2 }, null, 2));
+    console.log(JSON.stringify({
+      status: "ok",
+      profiles: completed.map(({ name }) => name),
+      assertions: completed.reduce((total, profile) => total + profile.assertions, 0),
+    }, null, 2));
   } finally {
     await browser.close();
     await new Promise((resolveClose) => server.close(resolveClose));
