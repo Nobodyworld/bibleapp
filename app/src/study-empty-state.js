@@ -29,11 +29,6 @@ const STUDY_EMPTY_STATES = {
     heading: "Word study data is not included in this private build.",
     body: "Install a Strong's and lexicon study pack to view definitions and source-word details.",
   },
-  translation: {
-    title: "Translation",
-    heading: "Translation drafting is available, but source-language study data is not included in this private build.",
-    body: "Install an interlinear study pack to unlock token alignment and source-word tools.",
-  },
   verseStudy: {
     title: "Study Tools",
     heading: "Study tools are not included for this verse in this private build.",

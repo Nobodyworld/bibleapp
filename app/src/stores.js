@@ -1,5 +1,6 @@
 import { DEFAULT_TAGS, JOB_TYPES, STORAGE_KEYS } from "./config.js?v=pr13-live-qa-20260711e";
 import {
+  createSourceTokenTarget,
   createVerseTarget,
   createTagAssertion,
   deriveTagTargetIndex,
@@ -355,8 +356,7 @@ function normalizeWorkspaceStore(value = {}) {
   const fallback = createDefaultWorkspaceStore();
   const store = { ...fallback, ...(value || {}) };
   store.verse_drafts = store.verse_drafts && typeof store.verse_drafts === "object" ? store.verse_drafts : {};
-  store.token_renderings =
-    store.token_renderings && typeof store.token_renderings === "object" ? store.token_renderings : {};
+  store.token_renderings = normalizeTokenRenderingCollection(store.token_renderings);
   store.red_letter_ranges =
     store.red_letter_ranges && typeof store.red_letter_ranges === "object" ? store.red_letter_ranges : {};
   store.conflicts = Array.isArray(store.conflicts) ? store.conflicts.slice(-100) : [];
@@ -364,6 +364,82 @@ function normalizeWorkspaceStore(value = {}) {
   store.version = fallback.version;
   store.available_job_types = fallback.available_job_types;
   return store;
+}
+
+function positiveTokenIndex(value) {
+  const index = Number(value);
+  return Number.isInteger(index) && index > 0 ? index : null;
+}
+
+function normalizeRenderingText(value) {
+  return typeof value === "string" ? value.trim() : String(value || "").trim();
+}
+
+function sourceTokenTargetForRendering(record = {}, options = {}) {
+  const referenceKey = String(options.reference_key || record.reference_key || "").trim();
+  const tokenIndex = positiveTokenIndex(options.token_index ?? record.token_index);
+  const fallbackTranslation = options.translation_id || record.translation_id || record.target?.translation_id || "bsb";
+  const supplied = normalizeTarget(options.target || record.target);
+  if (
+    supplied?.target_type === "source_token" &&
+    (!referenceKey || referenceKeyFromTarget(supplied) === referenceKey) &&
+    (!tokenIndex || Number(supplied.token?.token_index) === tokenIndex)
+  ) {
+    return supplied;
+  }
+  if (!referenceKey || !tokenIndex) return null;
+  return createSourceTokenTarget(
+    referenceKey,
+    {
+      token_index: tokenIndex,
+      original: record.original || supplied?.token?.original || "",
+      strong_code: record.strong_code || supplied?.token?.strong_code || "",
+      language: record.language || supplied?.token?.language || "",
+    },
+    fallbackTranslation,
+  );
+}
+
+export function normalizeTokenRendering(record, options = {}) {
+  if (!record || typeof record !== "object") return null;
+  const rendering = normalizeRenderingText(record.rendering);
+  if (!rendering) return null;
+  const target = sourceTokenTargetForRendering(record, options);
+  const referenceKey = String(options.reference_key || record.reference_key || referenceKeyFromTarget(target) || "").trim();
+  const tokenIndex = positiveTokenIndex(options.token_index ?? record.token_index ?? target?.token?.token_index);
+  if (!target || !referenceKey || !tokenIndex) return null;
+  const original = normalizeRenderingText(record.original || target.token?.original || "");
+  const strongCode = normalizeRenderingText(record.strong_code || target.token?.strong_code || "").toUpperCase();
+  return {
+    ...record,
+    target,
+    target_id: target.target_id,
+    translation_id: target.translation_id,
+    reference_key: referenceKey,
+    token_index: tokenIndex,
+    rendering,
+    original,
+    strong_code: strongCode || null,
+    updated_at: record.updated_at || nowIso(),
+  };
+}
+
+function normalizeTokenRenderingCollection(value) {
+  if (!value || typeof value !== "object") return {};
+  const normalized = {};
+  Object.entries(value).forEach(([referenceKey, entries]) => {
+    if (!entries || typeof entries !== "object") return;
+    const verseRenderings = {};
+    Object.entries(entries).forEach(([tokenIndex, record]) => {
+      const rendering = normalizeTokenRendering(record, {
+        reference_key: referenceKey,
+        token_index: tokenIndex,
+      });
+      if (rendering) verseRenderings[rendering.token_index] = rendering;
+    });
+    if (Object.keys(verseRenderings).length) normalized[referenceKey] = verseRenderings;
+  });
+  return normalized;
 }
 
 export function normalizeAssertionStore(value = {}, seedAssertions = {}) {
@@ -1320,6 +1396,59 @@ export function getTokenRenderings(state, key) {
   return state.workspaceStore.token_renderings[key] || {};
 }
 
+function resolveTokenRenderingTarget(state, targetOrKey, token = null) {
+  if (typeof targetOrKey === "string") {
+    return createSourceTokenTarget(
+      targetOrKey,
+      token || {},
+      state?.translationId || state?.translation_id || "bsb",
+    );
+  }
+  const target = normalizeTarget(targetOrKey);
+  return target?.target_type === "source_token" ? target : null;
+}
+
+function tokenRenderingLocation(state, targetOrKey, token = null) {
+  const target = resolveTokenRenderingTarget(state, targetOrKey, token);
+  const referenceKey = referenceKeyFromTarget(target);
+  const tokenIndex = positiveTokenIndex(target?.token?.token_index);
+  if (!target || !referenceKey || !tokenIndex) return null;
+  return { target, referenceKey, tokenIndex };
+}
+
+export function getTokenRendering(state, targetOrKey, token = null) {
+  ensureStores(state);
+  const location = tokenRenderingLocation(state, targetOrKey, token);
+  if (!location) return null;
+  const current = state.workspaceStore.token_renderings[location.referenceKey]?.[location.tokenIndex] || null;
+  return current
+    ? normalizeTokenRendering(current, {
+        target: location.target,
+        reference_key: location.referenceKey,
+        token_index: location.tokenIndex,
+      })
+    : null;
+}
+
+function queueTokenRenderingJobs(state, target, record) {
+  const referenceKey = referenceKeyFromTarget(target);
+  const tokenIndex = target.token?.token_index;
+  const strongCode = record?.strong_code || target.token?.strong_code || null;
+  const original = record?.original || target.token?.original || "";
+  const payload = {
+    reference_key: referenceKey,
+    token_index: tokenIndex,
+    strong_code: strongCode,
+    target,
+    target_id: target.target_id,
+  };
+  enqueueWorkspaceJob(state, JOB_TYPES.wordMapRefresh, payload);
+  enqueueWorkspaceJob(state, JOB_TYPES.personalGlossaryBuild, {
+    ...payload,
+    original,
+  });
+}
+
 export function getRedLetterRanges(state, key) {
   ensureStores(state);
   return state.workspaceStore.red_letter_ranges[key] || [];
@@ -1377,25 +1506,55 @@ export function setVerseDraft(state, key, draftText, options = {}) {
   return state.workspaceStore.verse_drafts[key];
 }
 
-export function setTokenRendering(state, key, token, rendering) {
+export function setTokenRendering(state, targetOrKey, tokenOrRendering, legacyRendering) {
   ensureStores(state);
-  const renderings = state.workspaceStore.token_renderings[key] || {};
-  renderings[token.token_index] = {
-    rendering,
-    original: token.original,
-    strong_code: token.strong_code,
-    updated_at: nowIso(),
+  const legacyCall = typeof targetOrKey === "string";
+  const token = legacyCall ? tokenOrRendering : null;
+  const rendering = legacyCall ? legacyRendering : tokenOrRendering;
+  const location = tokenRenderingLocation(state, targetOrKey, token);
+  if (!location) return null;
+  const text = normalizeRenderingText(rendering);
+  if (!text) {
+    deleteTokenRendering(state, location.target);
+    return null;
+  }
+  const existing = state.workspaceStore.token_renderings[location.referenceKey]?.[location.tokenIndex] || null;
+  const next = normalizeTokenRendering(
+    {
+      ...existing,
+      rendering: text,
+      original: location.target.token?.original || existing?.original || "",
+      strong_code: location.target.token?.strong_code || existing?.strong_code || "",
+      target: location.target,
+      updated_at: nowIso(),
+    },
+    {
+      reference_key: location.referenceKey,
+      token_index: location.tokenIndex,
+      translation_id: location.target.translation_id,
+    },
+  );
+  if (!next) return null;
+  const changed = !existing || existing.rendering !== next.rendering;
+  state.workspaceStore.token_renderings[location.referenceKey] = {
+    ...(state.workspaceStore.token_renderings[location.referenceKey] || {}),
+    [location.tokenIndex]: next,
   };
-  state.workspaceStore.token_renderings[key] = renderings;
   saveStorage(STORAGE_KEYS.workspace, state.workspaceStore);
-  enqueueWorkspaceJob(state, JOB_TYPES.wordMapRefresh, {
-    reference_key: key,
-    token_index: token.token_index,
-    strong_code: token.strong_code,
-  });
-  enqueueWorkspaceJob(state, JOB_TYPES.personalGlossaryBuild, {
-    reference_key: key,
-    strong_code: token.strong_code,
-    original: token.original,
-  });
+  if (changed) queueTokenRenderingJobs(state, location.target, next);
+  return next;
+}
+
+export function deleteTokenRendering(state, targetOrKey, token = null) {
+  ensureStores(state);
+  const location = tokenRenderingLocation(state, targetOrKey, token);
+  if (!location) return false;
+  const renderings = state.workspaceStore.token_renderings[location.referenceKey];
+  const existing = renderings?.[location.tokenIndex];
+  if (!existing) return false;
+  delete renderings[location.tokenIndex];
+  if (!Object.keys(renderings).length) delete state.workspaceStore.token_renderings[location.referenceKey];
+  saveStorage(STORAGE_KEYS.workspace, state.workspaceStore);
+  queueTokenRenderingJobs(state, location.target, existing);
+  return true;
 }

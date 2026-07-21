@@ -455,15 +455,11 @@
 }
 
 .original-language-word-card > .token-tag-actions,
-.original-language-word-card > .language-breakdown,
-.original-language-word-card > .token-rendering,
-.original-language-word-card > .workspace-word-map {
+.original-language-word-card > .language-breakdown {
   margin-inline: 12px;
 }
 
-.original-language-word-card > .language-breakdown,
-.original-language-word-card > .token-rendering,
-.original-language-word-card > .workspace-word-map {
+.original-language-word-card > .language-breakdown {
   margin-top: 10px;
 }
 

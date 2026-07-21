@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [index, css, contextCss, stylesPolish, app, pickerFlow, renderer, tagsView, strongsView] = await Promise.all([
+const [index, css, contextCss, stylesPolish, app, pickerFlow, renderer, tagsView, strongsView, interlinearView] = await Promise.all([
   readFile(new URL("../app/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/styles.css", import.meta.url), "utf8"),
   readFile(new URL("../app/styles-context.css", import.meta.url), "utf8"),
@@ -13,6 +13,7 @@ const [index, css, contextCss, stylesPolish, app, pickerFlow, renderer, tagsView
   readFile(new URL("../app/src/chapter-renderer.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/views/tags-view.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/views/strongs-view.js", import.meta.url), "utf8"),
+  readFile(new URL("../app/src/views/interlinear-translation-view.js", import.meta.url), "utf8"),
 ]);
 
 assert.equal((index.match(/id="study-marks-icon"/g) || []).length, 1, "Study Marks must have one official icon definition.");
@@ -33,6 +34,10 @@ assert(/\.detail-pane\s*{[\s\S]*?position:\s*sticky;[\s\S]*?top:\s*76px;[\s\S]*?
 assert(/\.strong-sticky-summary\s*{[\s\S]*?position:\s*static;/.test(css), "Strong summary must not create a second sticky scrolling region.");
 assert(/renderInlineTagPicker/.test(renderer), "Reader verse numbers must retain the canonical inline Study Marks picker.");
 assert(!/verse-study-marks-button/.test(renderer), "Reader rows must not render a duplicate Study Marks trigger beside the verse number.");
+assert(
+  /renderStudyMarksTrigger\(sourceTarget,\s*\{[\s\S]*?boundary:\s*"detail-pane"/.test(interlinearView),
+  "Interlinear exact-token Study Marks must stay contained within the detail pane.",
+);
 assert(/verseActions\.append\(studyButton\)/.test(renderer), "Reader row actions must retain only the ellipsis study-tools launcher.");
 assert(/@media\s*\(min-width:\s*641px\)\s*and\s*\(max-width:\s*1380px\)[\s\S]*?\.chapter-actions \.toolbar-button\s*{[\s\S]*?width:\s*34px;/.test(css), "Workspace controls must compact at intermediate widths.");
 assert(/:root\[data-theme="dark"\] \.parallel-verse\.active\s*{[\s\S]*?background:\s*rgba\(148,\s*163,\s*184,\s*0\.12\)/.test(css), "Dark parallel selection must not use a white background.");

@@ -2879,12 +2879,14 @@ button:disabled {
 
 .token-tag-controls {
   display: inline-flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin-left: auto;
 }
 
 .token-favorite-button,
-.token-tag-button {
+.token-tag-button,
+.word-meaning-trigger {
   min-height: 28px;
   padding: 3px 8px;
   border: 1px solid var(--line);
@@ -2905,9 +2907,155 @@ button:disabled {
 .token-favorite-button:hover,
 .token-favorite-button:focus-visible,
 .token-tag-button:hover,
-.token-tag-button:focus-visible {
+.token-tag-button:focus-visible,
+.word-meaning-trigger:hover,
+.word-meaning-trigger:focus-visible {
   border-color: var(--accent);
   color: var(--accent-dark);
+}
+
+.word-meaning-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.word-meaning-badge-host:empty {
+  display: none;
+}
+
+.word-meaning-badge {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 132px;
+  min-height: 24px;
+  overflow: hidden;
+  padding: 2px 7px;
+  border: 1px solid rgba(37, 99, 95, 0.45);
+  border-radius: 999px;
+  background: rgba(37, 99, 95, 0.08);
+  color: var(--accent-dark);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.word-meaning-badge:hover,
+.word-meaning-badge:focus-visible {
+  border-color: var(--accent);
+  background: var(--panel-alt);
+  outline: none;
+}
+
+.word-meaning-menu {
+  position: fixed;
+  z-index: 120;
+  display: grid;
+  gap: 8px;
+  max-height: min(360px, calc(100vh - 24px));
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--panel);
+  box-shadow: var(--shadow);
+  color: var(--text);
+  text-align: left;
+}
+
+.word-meaning-menu[hidden] {
+  display: none;
+}
+
+.word-meaning-menu h5,
+.word-meaning-menu p {
+  margin: 0;
+}
+
+.word-meaning-menu h5 {
+  color: var(--accent-dark);
+  font-size: 12px;
+}
+
+.word-meaning-hint,
+.word-meaning-empty,
+.word-meaning-validation {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.word-meaning-validation {
+  color: #8f3030;
+}
+
+.word-meaning-choices {
+  display: grid;
+  gap: 5px;
+}
+
+.word-meaning-option {
+  width: 100%;
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-alt);
+  color: var(--text);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.word-meaning-option:hover,
+.word-meaning-option:focus-visible {
+  border-color: var(--accent);
+  background: rgba(37, 99, 95, 0.1);
+  color: var(--accent-dark);
+  outline: none;
+}
+
+.word-meaning-other {
+  border-style: dashed;
+}
+
+.word-meaning-saved-actions,
+.word-meaning-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.word-meaning-custom-input {
+  width: 100%;
+  min-height: 34px;
+  box-sizing: border-box;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--panel-alt);
+  color: var(--text);
+  font: inherit;
+}
+
+.word-meaning-custom-input:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid rgba(37, 99, 95, 0.2);
+  outline-offset: 1px;
 }
 
 .target-tag-preview {
@@ -3061,8 +3209,7 @@ button.target-tag-badge:focus-visible {
 
 .token-translit,
 .token-meta,
-.token-gloss,
-.workspace-source {
+.token-gloss {
   font-size: 12px;
 }
 
@@ -3081,127 +3228,10 @@ button.target-tag-badge:focus-visible {
 }
 
 .token-meta,
-.token-gloss,
-.workspace-source {
+.token-gloss {
   color: var(--muted);
   line-height: 1.35;
   text-align: center;
-}
-
-.workspace-word-map {
-  display: grid;
-  gap: 4px;
-  margin-top: 5px;
-  padding-top: 8px;
-  border-top: 1px solid var(--line);
-  color: var(--text);
-  font-size: 12px;
-  grid-column: 1 / -1;
-}
-
-.workspace-word-map-title {
-  color: var(--accent-dark);
-  font-weight: 800;
-}
-
-.workspace-map-row {
-  display: grid;
-  grid-template-columns: 76px minmax(0, 1fr);
-  gap: 8px;
-  align-items: baseline;
-}
-
-.workspace-map-key {
-  color: var(--muted);
-  font-weight: 700;
-}
-
-.workspace-map-value {
-  min-width: 0;
-  overflow-wrap: anywhere;
-}
-
-.workspace-map-value.bsb-span {
-  color: var(--text);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: 14px;
-}
-
-.translation-alignment {
-  display: grid;
-  gap: 8px;
-  margin: 12px 0;
-  padding: 10px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  background: var(--panel-alt);
-}
-
-.translation-alignment h4,
-.translation-alignment p {
-  margin: 0;
-}
-
-.translation-alignment p {
-  color: var(--muted);
-  font-size: 12px;
-}
-
-.translation-alignment-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  align-items: stretch;
-}
-
-.translation-token-pair {
-  display: inline-grid;
-  grid-template-rows: auto auto auto;
-  gap: 3px;
-  min-width: 88px;
-  max-width: 160px;
-  padding: 8px;
-  border: 1px solid rgba(37, 99, 95, 0.18);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--text);
-  text-align: left;
-}
-
-.translation-token-pair:hover,
-.translation-token-pair:focus-visible,
-.translation-token-pair.selected-range {
-  border-color: rgba(37, 99, 95, 0.55);
-  background: #eef7f5;
-  outline: none;
-}
-
-.alignment-source {
-  color: var(--accent-dark);
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(28px, 4vw, 44px);
-  line-height: 1.05;
-}
-
-.alignment-source.rtl-token {
-  direction: rtl;
-  text-align: right;
-}
-
-.alignment-english {
-  color: var(--text);
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.alignment-meta {
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.25;
-}
-
-.workspace-word-map.missing {
-  color: var(--muted);
 }
 
 .tag-badges {
@@ -3354,15 +3384,6 @@ button.target-tag-badge:focus-visible {
   display: grid;
   gap: 8px;
   margin-top: 12px;
-}
-
-.token-rendering,
-.workspace-draft {
-  display: grid;
-  gap: 5px;
-  color: var(--text);
-  font-size: 13px;
-  grid-column: 1 / -1;
 }
 
 .tag-editor-toggle {
@@ -3681,28 +3702,6 @@ button.target-tag-badge:focus-visible {
 
 .import-status.error {
   color: #8f3030;
-}
-
-.token-rendering input,
-.workspace-draft textarea {
-  width: 100%;
-  border: 1px solid var(--line);
-  border-radius: 6px;
-  background: var(--panel);
-  color: var(--text);
-  font: inherit;
-}
-
-.token-rendering input {
-  min-height: 34px;
-  padding: 6px 8px;
-}
-
-.workspace-draft textarea {
-  resize: vertical;
-  min-height: 110px;
-  padding: 8px;
-  line-height: 1.45;
 }
 
 .outline-level-2 {
@@ -4508,4 +4507,25 @@ html[data-theme="light"] .fn-marker:focus-visible {
 
 html[data-theme="light"] .footnote-detail-marker {
   color: #2347fb !important;
+}
+
+/* Keep the compact personal-meaning controls aligned with tag actions across themes. */
+:root[data-theme="dark"] .word-meaning-trigger,
+html[data-theme="light"] .word-meaning-trigger,
+:root[data-theme="dark"] .word-meaning-badge,
+html[data-theme="light"] .word-meaning-badge,
+:root[data-theme="dark"] .word-meaning-option,
+html[data-theme="light"] .word-meaning-option,
+:root[data-theme="dark"] .word-meaning-save,
+html[data-theme="light"] .word-meaning-save,
+:root[data-theme="dark"] .word-meaning-cancel,
+html[data-theme="light"] .word-meaning-cancel {
+  border-width: 1px !important;
+}
+
+:root[data-theme="dark"] .word-meaning-menu,
+html[data-theme="light"] .word-meaning-menu {
+  background: var(--panel) !important;
+  border-color: var(--line) !important;
+  color: var(--text) !important;
 }

@@ -4,7 +4,7 @@ Reviewed: 2026-07-18
 
 ## Control placement
 
-- The chapter tool group contains Search, Language Study, Outline, Study Marks, Translate, Processing, and Study Data.
+- The chapter tool group contains Search, Language Study, Outline, Study Marks, Processing, and Study Data.
 - Contextual side-panel navigation follows one compact visible scope order: `Word → Verse`.
 - Word and Verse controls render in `#detailContext` when a verse detail is active. Chapter Language Study and Book Outline remain reader-header actions and do not mount as persistent side-panel groups.
 - The derived scope semantics and tool ownership remain centralized in `src/panel-context-model.js`; hiding Chapter and Book from the compact side panel does not remove their valid application scope.
@@ -151,7 +151,7 @@ IndexedDB initialization and migration have a three-second boundary. If the brow
 - `app/scripts/interaction-test.mjs`: rendered interaction behavior, including reader text-span selection, favorite controls, editable target badges, source-token tagging, Favorites grouping, panel history, and cleanup, when the browser runner is available.
 # Compact side-panel Study Marks contract
 
-The reader side panel is limited to the current exact Word (when present) and Verse context. Its selected-word summary is visually separated from a compact control row. Chapter Language Study and Book Outline remain reader-header actions. Study Marks is one reusable icon trigger backed by the canonical target-aware picker; Book, Chapter, Verse, selected English text, and exact source tokens preserve their existing separate semantic targets and Favorite remains the `favorite` tag assertion. Meaning remains a separate future action and is not a Study Marks behavior.
+The reader side panel is limited to the current exact Word (when present) and Verse context. Its selected-word summary is visually separated from a compact control row. Chapter Language Study and Book Outline remain reader-header actions. Study Marks is one reusable icon trigger backed by the canonical target-aware picker; Book, Chapter, Verse, selected English text, and exact source tokens preserve their existing separate semantic targets and Favorite remains the `favorite` tag assertion. Meaning is a separate action beside Study Marks on exact Language Study source-token cards and in the pinned exact-word Word row. It is absent from transient, lexicon-only, and whole-verse contexts and is not a Study Marks behavior.
 
 The reader verse number retains its inline picker as the canonical verse Study Marks control, while the adjacent ellipsis opens verse study tools. Book and Chapter use actual visible scope labels inside their shared triggers, not CSS-generated label text.
 

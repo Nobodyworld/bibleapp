@@ -10,9 +10,23 @@ import {
 import { resolveInterlinearVerseTokens } from "../strongs.js?v=pr13-live-qa-20260711e";
 import { createSourceTokenTarget, createVerseTarget } from "../semantic-targets.js?v=pr13-live-qa-20260711e";
 import { strongSectionControlState } from "../strong-section-lifecycle.js?v=pr13-live-qa-20260711e";
+import { fetchLexiconEntry, fetchVerseBook, fetchWordMapBook } from "../data-service.js";
 
 function getVerseText(ctx, verse) {
   return ctx.state.verseBook?.chapters?.[ctx.state.chapter]?.[verse] || "";
+}
+
+async function exactMappedBsbMeaning(ctx, token, verse) {
+  const [wordMapBook, bsbBook] = await Promise.all([
+    fetchWordMapBook("bsb", ctx.state.bookId),
+    fetchVerseBook("bsb", ctx.state.bookId),
+  ]);
+  const text = bsbBook?.chapters?.[ctx.state.chapter]?.[verse] || "";
+  const tokenIndex = Number(token?.token_index);
+  const row = (wordMapBook?.chapters?.[ctx.state.chapter]?.[verse] || [])
+    .find((item) => Number(item?.[1]) === tokenIndex);
+  if (!row) return "";
+  return String(text.slice(Number(row[2] || 0), Number(row[3] || row[2] || 0))).replace(/\s+/g, " ").trim();
 }
 
 function getCrossRecord(ctx, verse) {
@@ -286,8 +300,7 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
           ctx.state.translationId,
         );
         if (sourceTarget) {
-          controls.append(
-            ctx.detailViews.renderStudyMarksTrigger(sourceTarget, {
+          const marks = ctx.detailViews.renderStudyMarksTrigger(sourceTarget, {
               align: "right",
               boundary: "detail-pane",
               label: `selected source word in ${reference}`,
@@ -295,8 +308,18 @@ export function createVerseContextTabs(ctx, reference, verse, active, strongsCon
                 ctx.renderChapter();
                 ctx.syncFavoriteButtons?.();
               },
-            }),
-          );
+            });
+          const meaning = ctx.detailViews.renderWordMeaningControl({
+            target: sourceTarget,
+            token: wordContext.token,
+            label: `selected source word in ${reference}`,
+            loadExactMappedEnglish: () => exactMappedBsbMeaning(ctx, wordContext.token, verse),
+            loadLexicon: wordContext.token.strong_code
+              ? () => fetchLexiconEntry(wordContext.token.strong_code)
+              : null,
+          });
+          controls.append(marks);
+          if (meaning) controls.append(meaning);
         }
       }
       if (scope === "verse") {

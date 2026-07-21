@@ -12,6 +12,10 @@ import {
 } from "../stores.js?v=pr13-live-qa-20260711e";
 import { tagDefinitionId, targetId } from "../semantic-targets.js?v=pr13-live-qa-20260711e";
 import { createVerseContextTabs } from "./verse-context-tabs.js?v=pr13-live-qa-20260711e";
+import {
+  activateOverlay,
+  deactivateOverlay,
+} from "../overlay-coordinator.js?v=pr13-live-qa-20260711e";
 
 function tagIcon(tag) {
   return String(tag?.icon || tag?.label?.slice(0, 1) || "*").slice(0, 3);
@@ -392,6 +396,7 @@ export function createTagsView(ctx) {
   // restore focus to its equally detached trigger on a later Escape.
   function currentTargetTagMenu() {
     if (activeTargetTagMenu?.isConnected) return activeTargetTagMenu;
+    deactivateOverlay(activeTargetTagMenu?.__overlayOwner);
     activeTargetTagMenu = null;
     return null;
   }
@@ -441,6 +446,7 @@ export function createTagsView(ctx) {
     if (!menu) return;
     cancelTargetTagMenuClose();
     if (activeTargetTagMenu === menu) activeTargetTagMenu = null;
+    deactivateOverlay(menu.__overlayOwner);
     if (!menu.isConnected) return;
     delete menu.dataset.openedFromFocus;
     delete menu.__targetTagPointerStartedFocused;
@@ -465,6 +471,7 @@ export function createTagsView(ctx) {
     delete menu.dataset.menuClosed;
     menu.dataset.menuOpen = "true";
     setTargetTagMenuExpanded(menu, true);
+    activateOverlay(menu.__overlayOwner);
     positionTargetTagMenu(menu);
   }
 
@@ -485,19 +492,16 @@ export function createTagsView(ctx) {
       if (!menu || menu.contains(event.target)) return;
       closeTargetTagMenu(menu);
     });
-    document.addEventListener("keydown", (event) => {
-      if (event.key !== "Escape") return;
-      const menu = currentTargetTagMenu();
-      if (!menu) return;
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      closeTargetTagMenu(menu, { restoreFocus: true });
-    }, true);
     window.addEventListener("resize", () => positionTargetTagMenu(currentTargetTagMenu()));
   }
 
   function wireTargetTagMenu(menu) {
     ensureTargetTagMenuDismissal();
+    menu.__overlayOwner = {
+      document,
+      isConnected: () => menu.isConnected && menu.dataset.menuOpen === "true",
+      close: (options) => closeTargetTagMenu(menu, options),
+    };
     menu.addEventListener("pointerenter", () => openTargetTagMenu(menu));
     menu.addEventListener("pointerleave", () => scheduleTargetTagMenuClose(menu));
     menu.addEventListener("focusin", () => {
@@ -862,7 +866,7 @@ export function createTagsView(ctx) {
     heading.textContent = reference;
     const body = document.createElement("p");
     body.textContent = verseText;
-    wrap.append(heading, createVerseContextTabs(ctx, reference, verse, "tags", ctx.studyContext?.strong), body);
+    wrap.append(heading, createVerseContextTabs(ctx, reference, verse, "tags", ctx.getActiveWordContext?.(verse)), body);
 
     const group = document.createElement("div");
     group.className = "tag-editor";

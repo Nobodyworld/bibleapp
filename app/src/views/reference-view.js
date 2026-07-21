@@ -64,7 +64,7 @@ export function createReferenceViews(ctx) {
     wrap.className = "parallel-panel";
     const heading = document.createElement("h3");
     heading.textContent = reference;
-    const tabs = createVerseContextTabs(ctx, reference, verse, "par", ctx.studyContext?.strong);
+    const tabs = createVerseContextTabs(ctx, reference, verse, "par", ctx.getActiveWordContext?.(verse));
     const intro = document.createElement("p");
     intro.textContent = verseText;
     const list = document.createElement("div");
@@ -130,7 +130,7 @@ export function createReferenceViews(ctx) {
     heading.textContent = reference;
     wrap.append(heading);
     if (options.verse) {
-      wrap.append(createVerseContextTabs(ctx, reference, options.verse, "refs", ctx.studyContext?.strong));
+      wrap.append(createVerseContextTabs(ctx, reference, options.verse, "refs", ctx.getActiveWordContext?.(options.verse)));
     }
 
     const refs = [...(record.cross_references || []), ...(record.treasury || [])];

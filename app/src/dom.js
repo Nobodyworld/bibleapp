@@ -32,7 +32,6 @@ export const els = {
   showTags: document.querySelector("#showTags"),
   showJobs: document.querySelector("#showJobs"),
   showUserData: document.querySelector("#showUserData"),
-  showProverbs: document.querySelector("#showProverbs"),
   themeToggle: document.querySelector("#themeToggle"),
 };
 

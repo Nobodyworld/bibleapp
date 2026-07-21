@@ -21,6 +21,26 @@ cross-reference graph analysis.
 ## User Data
 
 User-created study state is separate from bundled canonical data. Favorites,
-tags, assertions, poll responses, package operations, workspace drafts, token
-renderings, and local job events live in browser storage and can be exported as
-portable JSON.
+tags, assertions, poll responses, package operations, legacy verse drafts,
+personal token renderings, and local job events live in browser storage and can
+be exported as portable JSON.
+
+### Personal meanings
+
+`workspaceStore.token_renderings` stores optional personal meanings for exact
+canonical schema-v2 `source_token` targets. A rendering is identified by its
+translation/reference and source-token index, not by display spelling or a
+shared Strong's code. These values are distinct from Favorites and
+classification tags: they do not create tag definitions or tag assertions.
+
+Legacy token-rendering records that contain only a rendering, original word,
+Strong's code, and update time remain valid. When they are edited, canonical
+target metadata is added without rejecting or deleting the saved value.
+
+### Legacy verse drafts and portable exports
+
+`workspaceStore.verse_drafts` remains independent legacy user data. The former
+Translation workspace has no primary editing surface, but drafts remain
+counted, importable, exportable, merge/replace-compatible, and separate from
+personal meanings. Existing `bibleapp:user-data` exports remain compatible,
+including exports with legacy token-rendering records or verse drafts.

@@ -12,8 +12,6 @@ const cliArgs = process.argv.slice(2);
 let baseUrl = cliArgs.find((argument) => !argument.startsWith("--")) || "";
 const qaDevice =
   cliArgs.includes("--mobile") || process.env.OPENBIBLE_QA_DEVICE === "mobile" ? "mobile" : "desktop";
-const qaDraft = `QA draft ${Date.now()}`;
-const tokenRendering = `QA token ${Date.now()}`;
 const customTagLabel = `QA Custom ${Date.now()}`;
 const customTagEditedLabel = `${customTagLabel} Edited`;
 
@@ -1588,58 +1586,11 @@ async function runQa(page) {
   );
   pass("custom tag edit and delete");
 
-  await click(page, "#showProverbs");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Translation'");
-  await click(page, "#detailContent .detail-list button");
-  await waitFor(page, "document.querySelector('.workspace-word-map')?.textContent.includes('These are the proverbs')", 15000);
-  const proverbsDraftReference = "proverbs:1:1";
-  const wordMapState = await evaluate(
-    page,
-    `(() => {
-      const first = document.querySelector('.interlinear-token .workspace-word-map');
-      return {
-        text: first?.textContent || '',
-        rowCount: first?.querySelectorAll('.workspace-map-row').length || 0
-      };
-    })()`,
-  );
-  assert(wordMapState.text.includes("BSB span") && wordMapState.text.includes("These are the proverbs"), "workspace word map missing BSB span");
-  assert(wordMapState.text.includes("Source token") && wordMapState.text.includes("#1"), "workspace word map missing source token");
-  assert(wordMapState.text.includes("Strong") && wordMapState.text.includes("H4912"), "workspace word map missing Strong's link");
-  assert(wordMapState.rowCount >= 4, "workspace word map rows incomplete");
-  pass("Proverbs workspace word map");
-  await evaluate(
-    page,
-    `(() => {
-      const textarea = document.querySelector('.workspace-draft textarea');
-      textarea.value = ${JSON.stringify(qaDraft)};
-      textarea.dispatchEvent(new Event('change', { bubbles: true }));
-      const input = document.querySelector('.token-rendering input');
-      input.value = ${JSON.stringify(tokenRendering)};
-      input.dispatchEvent(new Event('change', { bubbles: true }));
-      return true;
-    })()`,
-  );
-  await waitFor(page, workspacePersistenceExpression(proverbsDraftReference, qaDraft, tokenRendering), 15000);
-  await navigate(page, baseUrl);
-  await selectValue(page, "#bookSelect", "proverbs");
-  await waitFor(page, "document.querySelector('#chapterTitle')?.textContent.includes('Proverbs 1')");
-  await click(page, "#showProverbs");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Translation'");
-  await click(page, "#detailContent .detail-list button");
-  await waitFor(page, `document.querySelector('.workspace-draft textarea')?.value === ${JSON.stringify(qaDraft)}`);
-  await waitFor(page, `document.querySelector('.token-rendering input')?.value === ${JSON.stringify(tokenRendering)}`);
-  pass("Proverbs draft persistence");
-
   await click(page, "#showJobs");
   await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Local Processing'");
   state = await getQaState(page);
   assert(
-    state.detailText.includes("tag-index-refresh") &&
-      state.detailText.includes('"action": "retired"') &&
-      state.detailText.includes("translation-edit-analysis") &&
-      state.detailText.includes("word-map-refresh") &&
-      state.detailText.includes("personal-glossary-build"),
+    state.detailText.includes("tag-index-refresh") && state.detailText.includes('"action": "retired"'),
     "Local Processing panel did not show queued local job types",
   );
   pass("local jobs panel");
@@ -1685,12 +1636,6 @@ async function runQa(page) {
     "user-data summary missing expected counts",
   );
   assert(userDataExport.tagJobTypes.includes("tag-index-refresh"), "tag change did not queue tag-index-refresh job");
-  assert(
-    userDataExport.workspaceJobTypes.includes("translation-edit-analysis") &&
-      userDataExport.workspaceJobTypes.includes("word-map-refresh") &&
-      userDataExport.workspaceJobTypes.includes("personal-glossary-build"),
-    "workspace changes did not queue semantic jobs",
-  );
   await evaluate(
     page,
     `(() => {

@@ -35,7 +35,7 @@ export const CAPABILITY_REGISTRY = [
     label: "Interlinear",
     required_packs: ["hebrew-interlinear", "greek-interlinear"],
     optional_dependencies: ["hebrew-text", "greek-text-nestle", "greek-text-tr94"],
-    routes: ["interlinear", "translation-workspace"],
+    routes: ["interlinear"],
   },
   {
     capability_id: "commentary",

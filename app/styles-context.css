@@ -118,6 +118,11 @@
   overscroll-behavior: contain;
 }
 
+/* Author-level display rules must not override the native hidden state. */
+.word-meaning-menu[hidden] {
+  display: none;
+}
+
 @media (min-width: 769px) and (max-width: 960px) {
   .detail-pane {
     top: 184px;

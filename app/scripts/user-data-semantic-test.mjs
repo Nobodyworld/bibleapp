@@ -22,6 +22,7 @@ import {
   normalizeTagStore,
   createCustomTag,
   deleteCustomTag,
+  setTokenRendering,
   setVerseDraft,
   setVerseTag,
   updateCustomTag,
@@ -232,6 +233,69 @@ async function main() {
   corruptPayload.stores.assertions.assertions.corrupt = { target: createVerseTarget("john:1:3") };
   const corruptSummary = importUserData(corruptImportState, corruptPayload, "replace");
   assert(corruptSummary.quarantined_assertion_records === 1, "corrupt assertion records must be quarantined on import");
+
+  const legacyV3Payload = {
+    kind: "bibleapp:user-data",
+    version: 3,
+    exported_at: "2026-06-20T00:00:00.000Z",
+    stores: {
+      workspace: {
+        version: 3,
+        verse_drafts: {
+          "john:1:5": {
+            draft_text: "Legacy export draft",
+            revision: 3,
+            updated_at: "2026-06-20T00:00:00.000Z",
+          },
+        },
+        token_renderings: {
+          "john:1:5": {
+            2: {
+              rendering: "light",
+              original: "φῶς",
+              strong_code: "g5457",
+              updated_at: "2026-06-20T00:00:00.000Z",
+            },
+          },
+        },
+        red_letter_ranges: {},
+        conflicts: [],
+        job_events: [],
+      },
+    },
+  };
+  const mergeV3State = {};
+  setVerseDraft(mergeV3State, "john:1:4", "Local draft", { expected_revision: 0 });
+  const mergeV3Summary = importUserData(mergeV3State, legacyV3Payload, "merge");
+  assert(mergeV3Summary.verse_drafts === 2, "merge must retain local and legacy v3 verse drafts");
+  assert(mergeV3State.workspaceStore.verse_drafts["john:1:4"]?.draft_text === "Local draft");
+  assert(mergeV3State.workspaceStore.verse_drafts["john:1:5"]?.draft_text === "Legacy export draft");
+  const mergedLegacyMeaning = mergeV3State.workspaceStore.token_renderings["john:1:5"]?.[2];
+  assert(mergedLegacyMeaning?.rendering === "light", "merge must retain legacy v3 token renderings");
+  assert(
+    mergedLegacyMeaning?.target_id === "target:source_token:bsb:new:john:1:5:2" &&
+      mergedLegacyMeaning?.target?.target_type === "source_token",
+    "legacy v3 token renderings must gain canonical source-token metadata without losing the value",
+  );
+  assert(getUserDataSummary(mergeV3State).token_renderings === 1, "legacy v3 token renderings must remain counted");
+  const editedLegacyMeaning = setTokenRendering(mergeV3State, mergedLegacyMeaning.target, "radiance");
+  assert(editedLegacyMeaning?.rendering === "radiance", "legacy v3 token renderings must remain editable");
+  const mergedV3Export = createUserDataExport(mergeV3State);
+  assert(mergedV3Export.version === 3, "exports must remain compatible with user-data version 3");
+  assert(mergedV3Export.stores.workspace.verse_drafts["john:1:4"]?.draft_text === "Local draft");
+  assert(mergedV3Export.stores.workspace.verse_drafts["john:1:5"]?.draft_text === "Legacy export draft");
+  assert(mergedV3Export.stores.workspace.token_renderings["john:1:5"]?.[2]?.rendering === "radiance");
+
+  const replaceV3State = {};
+  setVerseDraft(replaceV3State, "john:1:4", "Draft to replace", { expected_revision: 0 });
+  const replaceV3Summary = importUserData(replaceV3State, legacyV3Payload, "replace");
+  assert(replaceV3Summary.verse_drafts === 1, "replace must preserve verse drafts contained in a legacy v3 export");
+  assert(replaceV3State.workspaceStore.verse_drafts["john:1:4"] === undefined, "replace must discard local drafts absent from the import");
+  assert(replaceV3State.workspaceStore.verse_drafts["john:1:5"]?.draft_text === "Legacy export draft");
+  assert(replaceV3State.workspaceStore.token_renderings["john:1:5"]?.[2]?.rendering === "light");
+  const replacedV3Export = createUserDataExport(replaceV3State);
+  assert(replacedV3Export.stores.workspace.verse_drafts["john:1:5"]?.draft_text === "Legacy export draft");
+  assert(replacedV3Export.stores.workspace.token_renderings["john:1:5"]?.[2]?.target_id === "target:source_token:bsb:new:john:1:5:2");
 
   console.log(
     JSON.stringify(
