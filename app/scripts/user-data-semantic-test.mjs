@@ -217,6 +217,7 @@ async function main() {
   );
 
   const exported = createUserDataExport(runtimeState);
+  assert(exported.kind === "bibleapp:user-data" && exported.version === 3, "backup contract must remain version 3");
   assert(exported.stores.assertions, "user data export must include assertion store");
   Object.values(exported.stores.assertions.assertions || {}).forEach((item) => {
     assertValidJsonSchema(item, assertionSchema, { schemas: { "target.schema.json": targetSchema } }, item.id);
@@ -233,6 +234,23 @@ async function main() {
   corruptPayload.stores.assertions.assertions.corrupt = { target: createVerseTarget("john:1:3") };
   const corruptSummary = importUserData(corruptImportState, corruptPayload, "replace");
   assert(corruptSummary.quarantined_assertion_records === 1, "corrupt assertion records must be quarantined on import");
+
+  const incompatibleState = {};
+  setVerseDraft(incompatibleState, "john:1:9", "Keep this local draft", { expected_revision: 0 });
+  const beforeIncompatible = JSON.stringify(createUserDataExport(incompatibleState).stores);
+  const incompatiblePayload = createUserDataExport(runtimeState);
+  incompatiblePayload.version = 4;
+  let incompatibleError = null;
+  try {
+    importUserData(incompatibleState, incompatiblePayload, "replace");
+  } catch (error) {
+    incompatibleError = error;
+  }
+  assert(incompatibleError?.message.includes("not compatible"), "future backup versions must report an understandable error");
+  assert(
+    JSON.stringify(createUserDataExport(incompatibleState).stores) === beforeIncompatible,
+    "incompatible backup must not partially mutate current stores",
+  );
 
   const legacyV3Payload = {
     kind: "bibleapp:user-data",

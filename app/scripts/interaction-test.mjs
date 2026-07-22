@@ -115,6 +115,9 @@ async function launchBrowser() {
   });
   const playwrightPage = await context.newPage();
   const page = {
+    async waitForDownload() {
+      return playwrightPage.waitForEvent("download");
+    },
     async press(selector, key) {
       await playwrightPage.locator(selector).press(key);
     },
@@ -1586,33 +1589,54 @@ async function runQa(page) {
   );
   pass("custom tag edit and delete");
 
-  await click(page, "#showJobs");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Local Processing'");
+  await click(page, "#showMyData");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'My Data'");
+  assert(
+    await evaluate(page, "!document.querySelector('.advanced-diagnostics')?.open"),
+    "Advanced diagnostics must be collapsed by default",
+  );
+  assert(
+    await evaluate(page, "document.querySelector('.advanced-diagnostics .job-payload') === null"),
+    "Raw diagnostic payloads must not render before expansion",
+  );
+  state = await getQaState(page);
+  assert(
+    state.detailText.includes("Personal meanings") && state.detailText.includes("Preserved legacy verse drafts"),
+    "My Data summary missing Meaning or preserved legacy draft counts",
+  );
+  pass("My Data summary and collapsed diagnostics");
+
+  const backupDownloadPromise = page.waitForDownload();
+  await clickButtonByText(page, "Download backup");
+  const backupDownload = await backupDownloadPromise;
+  assert(
+    /^bibleapp-user-data-\d{4}-\d{2}-\d{2}\.json$/.test(backupDownload.suggestedFilename()),
+    "Downloaded backup must use the compatible Bible App JSON filename",
+  );
+  pass("My Data backup download");
+
+  await click(page, "#showMyData");
+  await click(page, "#detailBack");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Study Marks'");
+  await click(page, "#detailForward");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'My Data'");
+  pass("My Data repeat activation and Back/Forward history");
+
+  await click(page, ".maintenance-section .mini-button");
+  await waitFor(page, "document.querySelector('.maintenance-status')?.textContent.includes('Personal study data was not changed')");
+  pass("plain-language local maintenance");
+
+  await click(page, ".advanced-diagnostics > summary");
+  await waitFor(page, "document.querySelector('.advanced-diagnostics')?.open && document.querySelector('.advanced-diagnostics .job-payload')");
   state = await getQaState(page);
   assert(
     state.detailText.includes("tag-index-refresh") && state.detailText.includes('"action": "retired"'),
-    "Local Processing panel did not show queued local job types",
+    "Advanced diagnostics did not preserve local job details",
   );
-  pass("local jobs panel");
+  pass("advanced local job diagnostics");
 
-  await click(page, ".job-action-review");
-  await waitFor(page, "document.querySelector('#detailContent')?.textContent.includes('planned')");
-  await click(page, ".job-action-process");
-  await waitFor(
-    page,
-    "document.querySelector('#detailContent')?.textContent.includes('simulation_only') && document.querySelector('#detailContent')?.textContent.includes('manual-stub')",
-  );
-  await click(page, ".job-action-requeue");
-  await waitFor(page, "document.querySelector('#detailContent')?.textContent.includes('queued')");
-  await click(page, ".job-action-process");
-  await waitFor(
-    page,
-    "document.querySelector('#detailContent')?.textContent.includes('simulation_only') && document.querySelector('#detailContent')?.textContent.includes('No background analysis was run')",
-  );
-  pass("local job lifecycle simulation");
-
-  await click(page, "#showUserData");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Study Data'");
+  await click(page, ".manual-json-panel > summary");
+  await waitFor(page, "Boolean(document.querySelector('.export-textarea')?.value)");
   const userDataExport = await evaluate(
     page,
     `(() => {
@@ -1632,10 +1656,23 @@ async function runQa(page) {
   assert(userDataExport.kind === "bibleapp:user-data", "user-data export has wrong kind");
   assert(userDataExport.hasTags && userDataExport.hasWorkspace, "user-data export missing local stores");
   assert(
-    userDataExport.summaryText.includes("Custom labels") && userDataExport.summaryText.includes("Workspace jobs"),
+    userDataExport.summaryText.includes("Custom labels") && userDataExport.summaryText.includes("My study data"),
     "user-data summary missing expected counts",
   );
   assert(userDataExport.tagJobTypes.includes("tag-index-refresh"), "tag change did not queue tag-index-refresh job");
+  await evaluate(page, "document.querySelector('.advanced-diagnostics').open = false");
+  await click(page, ".paste-json-panel > summary");
+  await evaluate(
+    page,
+    `(() => {
+      const textarea = document.querySelector('.import-textarea');
+      textarea.value = '{';
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`,
+  );
+  await clickButtonByText(page, "Merge backup");
+  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('not valid JSON')");
   await evaluate(
     page,
     `(() => {
@@ -1645,13 +1682,57 @@ async function runQa(page) {
       return true;
     })()`,
   );
-  await click(page, ".import-actions button");
-  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('Imported (merge)')");
-  await clickButtonByText(page, "Replace Import");
-  await waitFor(page, "document.querySelector('.danger-button')?.textContent.trim() === 'Confirm Replace'");
-  await clickButtonByText(page, "Confirm Replace");
-  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('Imported (replace)')");
-  pass("user data export and import");
+  await clickButtonByText(page, "Merge backup");
+  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('Backup merged')");
+  const storesBeforeReplaceCancel = await evaluate(
+    page,
+    `(() => {
+      const details = document.querySelector('.manual-json-panel');
+      details.dispatchEvent(new Event('toggle'));
+      return JSON.stringify(JSON.parse(document.querySelector('.export-textarea').value).stores);
+    })()`,
+  );
+  await clickButtonByText(page, "Replace all local data");
+  await waitFor(page, "!document.querySelector('.replace-confirmation')?.hidden");
+  assert(
+    await evaluate(page, "document.activeElement?.textContent.trim() === 'Cancel'"),
+    "Replace confirmation must move focus to Cancel",
+  );
+  await clickButtonByText(page, "Cancel", { scope: ".replace-confirmation" });
+  await waitFor(page, "document.querySelector('.replace-confirmation')?.hidden");
+  assert(
+    await evaluate(page, "document.activeElement?.textContent.trim() === 'Replace all local data'"),
+    "Cancel must restore focus to the replace trigger",
+  );
+  const storesAfterReplaceCancel = await evaluate(
+    page,
+    `(() => {
+      const details = document.querySelector('.manual-json-panel');
+      details.dispatchEvent(new Event('toggle'));
+      return JSON.stringify(JSON.parse(document.querySelector('.export-textarea').value).stores);
+    })()`,
+  );
+  assert(storesAfterReplaceCancel === storesBeforeReplaceCancel, "Cancel must not mutate any exported user-data store");
+  await clickButtonByText(page, "Replace all local data");
+  await click(page, ".replace-confirmation .danger-button");
+  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('Recovery backup created')");
+  pass("versioned backup merge, replace confirmation, cancellation, and recovery backup");
+
+  await click(page, "#homeButton");
+  await waitFor(page, "document.querySelector('#chapterTitle')?.textContent === 'Bible App Home'");
+  assert(
+    await evaluate(
+      page,
+      `(() => {
+        const labels = [...document.querySelectorAll('.home-action')].map((button) => button.textContent.trim());
+        return labels.filter((label) => label === 'My Data').length === 1 && !labels.includes('Jobs') && !labels.includes('Data');
+      })()`,
+    ),
+    "Home must expose one My Data action without Jobs or Data duplicates",
+  );
+  await clickButtonByText(page, "My Data", { scope: ".home-action-grid" });
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'My Data'");
+  pass("home My Data action");
 
   await click(page, "#showSearch");
   await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Search'");

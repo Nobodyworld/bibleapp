@@ -53,11 +53,24 @@ function checkIndex(indexHtml) {
   assert(unnamed.length === 0, "Static buttons must have visible text, title, or aria-label.", { unnamed });
   assert(/id="prevChapterFloat"[\s\S]*aria-label="Previous chapter"/.test(indexHtml), "Floating previous chapter button must distinguish Bible navigation.");
   assert(/id="detailBack"[\s\S]*aria-label="Panel history back"/.test(indexHtml), "Detail history back button must distinguish panel navigation.");
+  assert((indexHtml.match(/id="showMyData"/g) || []).length === 1, "Header must expose exactly one My Data control.");
+  assert(!/id="showJobs"|id="showUserData"/.test(indexHtml), "Legacy Processing and Study Data controls must be removed.");
   return {
     staticButtons: buttons.length,
     labeledControls: (indexHtml.match(/<label>/g) || []).length,
     landmarks: ["header", "main", "aside", "nav", "section"],
   };
+}
+
+function checkMyData(source) {
+  assert(/heading\.textContent = "My Data"/.test(source), "My Data panel must have a top-level visible heading.");
+  assert(/setAttribute\("role", "alertdialog"\)/.test(source), "Replace confirmation must expose alertdialog semantics.");
+  assert(/setAttribute\("aria-modal", "true"\)/.test(source), "Replace confirmation must be modal to assistive technology.");
+  assert(/setAttribute\("aria-labelledby", "replace-confirmation-title"\)/.test(source), "Replace confirmation must have an accessible name.");
+  assert(/event\.key === "Escape"/.test(source), "Replace confirmation must support Escape cancellation.");
+  assert(/cancel\.focus\(\)/.test(source) && /target\?\.focus\(\)/.test(source), "Replace confirmation must move and restore focus.");
+  assert(/event\.key !== "Tab"/.test(source), "Replace confirmation must contain keyboard focus.");
+  return { namedDialog: true, escapeCancel: true, containedFocus: true, restoredFocus: true };
 }
 
 function checkCss(css) {
@@ -197,6 +210,7 @@ async function main() {
       renderer: checkRenderer(chapterRenderer),
       languageTooltips: checkLanguageTooltips(languageTooltips),
       pressedStates: checkPressedStates(tagsView, tabsView),
+      myData: checkMyData(userDataView),
       createdButtons: checkCreatedButtons({
         "app.js": app,
         "src/chapter-renderer.js": chapterRenderer,

@@ -38,7 +38,7 @@ assert.match(
 );
 assert.match(
   readme,
-  /side-panel[\s\S]*Meaning[\s\S]*Study Marks[\s\S]*Processing[\s\S]*Study Data/i,
+  /side-panel[\s\S]*Meaning[\s\S]*Study Marks[\s\S]*My Data/i,
   "README must identify the evolving interface surfaces",
 );
 assert.match(
