@@ -1,14 +1,29 @@
-import { createUserDataExport, getUserDataSummary, importUserData, setPackageStore } from "../stores.js?v=pr13-live-qa-20260711e";
+import {
+  completeJob,
+  createUserDataExport,
+  getUserDataSummary,
+  importUserData,
+  requestTagIndexRefresh,
+  setPackageStore,
+  updateJobStatus,
+} from "../stores.js?v=pr13-live-qa-20260711e";
 import { setDetail } from "../dom.js?v=pr13-live-qa-20260711e";
 import { resolveCapabilities } from "../capabilities.js";
+import { canRunJob, runJob } from "../job-processor.js?v=pr13-live-qa-20260711e";
 import { setCapabilityDisabled } from "../package-state.js";
+import { renderJobsDiagnostics } from "./jobs-view.js?v=pr13-live-qa-20260711e";
 
 function renderSummaryGrid(rows) {
   const grid = document.createElement("div");
   grid.className = "user-data-summary";
-  rows.forEach(([label, value]) => {
-    const item = document.createElement("div");
-    item.className = "user-data-summary-item";
+  rows.forEach(([label, value, action]) => {
+    const item = document.createElement(action ? "button" : "div");
+    item.className = `user-data-summary-item${action ? " summary-link" : ""}`;
+    if (action) {
+      item.type = "button";
+      item.setAttribute("aria-label", `${label}: ${value}. Open Study Marks.`);
+      item.addEventListener("click", action);
+    }
     const number = document.createElement("strong");
     number.textContent = String(value);
     const text = document.createElement("span");
@@ -19,57 +34,46 @@ function renderSummaryGrid(rows) {
   return grid;
 }
 
-function renderUserDataSummary(summary) {
-  const wrap = document.createElement("div");
+function renderStudyDataSummary(summary, showStudyMarks) {
+  const section = document.createElement("section");
+  section.className = "my-data-section study-data-section";
+  const title = document.createElement("h4");
+  title.textContent = "My study data";
   const intro = document.createElement("p");
   intro.className = "study-data-intro";
-  intro.textContent = "Study data lives in this browser. Export JSON regularly if these marks, labels, drafts, or study queues matter.";
-  wrap.append(intro);
-
-  const studySection = document.createElement("section");
-  studySection.className = "study-data-section";
-  const studyTitle = document.createElement("h4");
-  studyTitle.textContent = "Study data";
-  studySection.append(
-    studyTitle,
+  intro.textContent =
+    "This data is stored in this browser, not in an online account. Download backups you care about so you can recover them later.";
+  section.append(
+    title,
+    intro,
     renderSummaryGrid([
       ["Custom labels", summary.custom_tags],
       ["Tagged verses", summary.tagged_verses],
-      ["Study mark assertions", summary.tag_assertions],
-      ["Active assertions", summary.assertions],
-      ["Preserved verse drafts", summary.verse_drafts],
+      ["Study Mark assertions", summary.tag_assertions],
+      ["Active Study Marks", summary.assertions, showStudyMarks],
       ["Personal meanings", summary.token_renderings],
+      ["Preserved legacy verse drafts", summary.verse_drafts],
     ]),
   );
-  wrap.append(studySection);
+  return section;
+}
 
-  const processingSection = document.createElement("section");
-  processingSection.className = "study-data-section";
-  const processingTitle = document.createElement("h4");
-  processingTitle.textContent = "Local processing";
-  processingSection.append(
-    processingTitle,
+function renderTechnicalSummary(summary) {
+  const section = document.createElement("section");
+  section.className = "diagnostic-section";
+  const title = document.createElement("h4");
+  title.textContent = "Storage and data records";
+  const health = document.createElement("p");
+  health.className = "storage-health-status";
+  health.textContent = `Storage authority: ${summary.user_store_authority || summary.user_store_backend}; migration: ${summary.user_store_migration}${summary.user_store_failure ? `; fallback reason: ${summary.user_store_failure}` : ""}.`;
+  section.append(
+    title,
+    health,
     renderSummaryGrid([
       ["Tag jobs", summary.tag_jobs],
       ["Workspace jobs", summary.workspace_jobs],
       ["Package ops", summary.package_operations],
       ["Installed packs", summary.installed_feature_packs],
-    ]),
-  );
-  wrap.append(processingSection);
-
-  const details = document.createElement("details");
-  details.className = "storage-details-panel";
-  const summaryEl = document.createElement("summary");
-  summaryEl.textContent = "Storage details";
-  const health = document.createElement("p");
-  health.className = "storage-health-status";
-  health.textContent = `Storage authority: ${summary.user_store_authority || summary.user_store_backend}; migration: ${summary.user_store_migration}${summary.user_store_failure ? `; fallback reason: ${summary.user_store_failure}` : ""
-    }. Browser storage is local to this browser and is not a backed-up account. Use JSON export for recovery.`;
-  details.append(
-    summaryEl,
-    health,
-    renderSummaryGrid([
       ["Assertion events", summary.assertion_events],
       ["Quarantined assertions", summary.quarantined_assertion_records],
       ["Poll responses", summary.poll_responses],
@@ -80,8 +84,7 @@ function renderUserDataSummary(summary) {
       ["Migration", summary.user_store_migration],
     ]),
   );
-  wrap.append(details);
-  return wrap;
+  return section;
 }
 
 function downloadUserData(exportText) {
@@ -96,9 +99,12 @@ function downloadUserData(exportText) {
 
 function renderCapabilityManager(ctx, refresh) {
   const section = document.createElement("section");
+  section.className = "diagnostic-section";
   const heading = document.createElement("h4");
-  heading.textContent = "Capabilities";
-  section.append(heading);
+  heading.textContent = "Diagnostic capability controls";
+  const warning = document.createElement("p");
+  warning.textContent = "These technical controls are intended for package troubleshooting and testing.";
+  section.append(heading, warning);
 
   const packageManifest = ctx.state.packageManifest || ctx.state.manifest?.package_manifest;
   if (!packageManifest) {
@@ -141,70 +147,175 @@ function renderCapabilityManager(ctx, refresh) {
   return section;
 }
 
-export function createUserDataView(ctx) {
+function createReplaceConfirmation(onConfirm) {
+  const panel = document.createElement("div");
+  panel.className = "replace-confirmation";
+  panel.hidden = true;
+  panel.setAttribute("role", "alertdialog");
+  panel.setAttribute("aria-modal", "true");
+  panel.setAttribute("aria-labelledby", "replace-confirmation-title");
+
+  const title = document.createElement("h5");
+  title.id = "replace-confirmation-title";
+  title.textContent = "Replace all local data?";
+  const explanation = document.createElement("p");
+  explanation.textContent =
+    "Replacement overwrites current local data. A recovery backup will be created first. Cancel makes no change.";
+  const actions = document.createElement("div");
+  actions.className = "user-data-actions confirmation-actions";
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.className = "mini-button";
+  cancel.textContent = "Cancel";
+  const confirm = document.createElement("button");
+  confirm.type = "button";
+  confirm.className = "mini-button danger-button";
+  confirm.textContent = "Replace all local data";
+  actions.append(cancel, confirm);
+  panel.append(title, explanation, actions);
+
+  let returnFocus = null;
+  const handleKeydown = (event) => {
+    if (!panel.isConnected) {
+      document.removeEventListener("keydown", handleKeydown, true);
+      return;
+    }
+    if (panel.hidden) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      close();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const controls = [cancel, confirm];
+    const current = controls.indexOf(document.activeElement);
+    const next = event.shiftKey ? (current <= 0 ? controls.length - 1 : current - 1) : (current + 1) % controls.length;
+    event.preventDefault();
+    controls[next].focus();
+  };
+  const close = () => {
+    panel.hidden = true;
+    document.removeEventListener("keydown", handleKeydown, true);
+    const target = returnFocus;
+    returnFocus = null;
+    target?.focus();
+  };
+  const open = (trigger) => {
+    returnFocus = trigger;
+    panel.hidden = false;
+    document.addEventListener("keydown", handleKeydown, true);
+    cancel.focus();
+  };
+  cancel.addEventListener("click", close);
+  confirm.addEventListener("click", () => {
+    close();
+    onConfirm();
+  });
+
+  return { panel, open };
+}
+
+export function createUserDataView(ctx, options = {}) {
   return function showUserData() {
     const wrap = document.createElement("div");
     wrap.className = "user-data-panel";
     const heading = document.createElement("h3");
-    heading.textContent = "Study Data";
+    heading.textContent = "My Data";
     wrap.append(heading);
 
     const summarySlot = document.createElement("div");
+    const currentExportText = () => JSON.stringify(createUserDataExport(ctx.state), null, 2);
+    const refreshSummary = () => {
+      summarySlot.replaceChildren(renderStudyDataSummary(getUserDataSummary(ctx.state), options.showStudyMarks));
+    };
+    refreshSummary();
+    wrap.append(summarySlot);
+
+    const backupSection = document.createElement("section");
+    backupSection.className = "my-data-section backup-restore-section";
+    const backupTitle = document.createElement("h4");
+    backupTitle.textContent = "Backup and restore";
+    const backupIntro = document.createElement("p");
+    backupIntro.textContent = "Download a versioned JSON backup, or merge or replace data from a Bible App backup.";
+    const download = document.createElement("button");
+    download.type = "button";
+    download.className = "mini-button primary-action";
+    download.textContent = "Download backup";
+    download.addEventListener("click", () => downloadUserData(currentExportText()));
+
+    const exportDetails = document.createElement("details");
+    exportDetails.className = "manual-json-panel";
+    const exportSummary = document.createElement("summary");
+    exportSummary.textContent = "Show or copy backup JSON";
     const exportArea = document.createElement("textarea");
     exportArea.className = "user-data-textarea export-textarea";
     exportArea.readOnly = true;
     exportArea.rows = 8;
-
-    const refreshExport = () => {
-      summarySlot.replaceChildren(renderUserDataSummary(getUserDataSummary(ctx.state)));
-      exportArea.value = JSON.stringify(createUserDataExport(ctx.state), null, 2);
+    exportArea.setAttribute("aria-label", "Backup JSON");
+    const refreshExportArea = () => {
+      exportArea.value = currentExportText();
     };
-    refreshExport();
-    wrap.append(summarySlot);
+    exportDetails.addEventListener("toggle", () => {
+      if (exportDetails.open) refreshExportArea();
+    });
+    const copy = document.createElement("button");
+    copy.type = "button";
+    copy.className = "mini-button";
+    copy.textContent = "Copy backup JSON";
+    const copyStatus = document.createElement("span");
+    copyStatus.className = "inline-status";
+    copy.addEventListener("click", async () => {
+      refreshExportArea();
+      try {
+        await navigator.clipboard.writeText(exportArea.value);
+        copyStatus.textContent = "Copied.";
+      } catch {
+        exportArea.focus();
+        exportArea.select();
+        copyStatus.textContent = "Select and copy the highlighted JSON.";
+      }
+    });
+    exportDetails.append(exportSummary, exportArea, copy, copyStatus);
 
-    const exportTitle = document.createElement("h4");
-    exportTitle.textContent = "Export backup";
-    const exportActions = document.createElement("div");
-    exportActions.className = "user-data-actions export-actions";
-    const refresh = document.createElement("button");
-    refresh.type = "button";
-    refresh.className = "mini-button";
-    refresh.textContent = "Refresh";
-    refresh.addEventListener("click", refreshExport);
-    const download = document.createElement("button");
-    download.type = "button";
-    download.className = "mini-button";
-    download.textContent = "Download";
-    download.addEventListener("click", () => downloadUserData(exportArea.value));
-    exportActions.append(refresh, download);
-    wrap.append(exportTitle, exportArea, exportActions);
-
-    const importTitle = document.createElement("h4");
-    importTitle.textContent = "Import backup";
+    const fileLabel = document.createElement("label");
+    fileLabel.className = "user-data-file-label";
+    const fileLabelText = document.createElement("span");
+    fileLabelText.textContent = "Choose backup file";
     const fileInput = document.createElement("input");
     fileInput.className = "user-data-file";
     fileInput.type = "file";
     fileInput.accept = "application/json,.json";
+    fileLabel.append(fileLabelText, fileInput);
+
+    const pasteDetails = document.createElement("details");
+    pasteDetails.className = "manual-json-panel paste-json-panel";
+    const pasteSummary = document.createElement("summary");
+    pasteSummary.textContent = "Paste backup JSON";
     const importArea = document.createElement("textarea");
     importArea.className = "user-data-textarea import-textarea";
     importArea.rows = 8;
     importArea.placeholder = "Paste a Bible App user-data export JSON file here.";
+    importArea.setAttribute("aria-label", "Backup JSON to import");
+    pasteDetails.append(pasteSummary, importArea);
+
     const status = document.createElement("p");
     status.className = "import-status";
-
+    status.setAttribute("role", "status");
     const runImport = (mode) => {
       try {
         const payload = JSON.parse(importArea.value);
         const summary = importUserData(ctx.state, payload, mode);
         ctx.renderChapter();
-        refreshExport();
-        status.textContent = `Imported (${mode}). Custom labels: ${summary.custom_tags}; drafts: ${summary.verse_drafts}.`;
+        refreshSummary();
+        status.textContent = `Backup ${mode === "merge" ? "merged" : "replaced"}. Custom labels: ${summary.custom_tags}; preserved legacy drafts: ${summary.verse_drafts}.`;
         if (mode === "replace" && summary.last_import_backup?.created_at) {
-          status.textContent += ` Backup created ${summary.last_import_backup.created_at}.`;
+          status.textContent += ` Recovery backup created ${summary.last_import_backup.created_at}.`;
         }
         status.className = "import-status success";
       } catch (error) {
-        status.textContent = error instanceof Error ? error.message : "Import failed.";
+        status.textContent = error instanceof SyntaxError
+          ? "That file is not valid JSON. No local data was changed."
+          : `${error instanceof Error ? error.message : "Import failed."} No local data was changed.`;
         status.className = "import-status error";
       }
     };
@@ -212,17 +323,14 @@ export function createUserDataView(ctx) {
     fileInput.addEventListener("change", () => {
       const file = fileInput.files?.[0];
       if (!file) return;
-      file
-        .text()
-        .then((text) => {
-          importArea.value = text;
-          status.textContent = `Loaded ${file.name}.`;
-          status.className = "import-status";
-        })
-        .catch(() => {
-          status.textContent = "Could not read import file.";
-          status.className = "import-status error";
-        });
+      file.text().then((text) => {
+        importArea.value = text;
+        status.textContent = `Loaded ${file.name}. Choose Merge backup or Replace all local data.`;
+        status.className = "import-status";
+      }).catch(() => {
+        status.textContent = "Could not read that backup file. No local data was changed.";
+        status.className = "import-status error";
+      });
     });
 
     const importActions = document.createElement("div");
@@ -230,40 +338,106 @@ export function createUserDataView(ctx) {
     const merge = document.createElement("button");
     merge.type = "button";
     merge.className = "mini-button";
-    merge.textContent = "Merge Import";
+    merge.textContent = "Merge backup";
     merge.addEventListener("click", () => runImport("merge"));
     const replace = document.createElement("button");
     replace.type = "button";
     replace.className = "mini-button danger-button";
-    replace.textContent = "Replace Import";
-    replace.addEventListener("click", () => {
-      if (replace.dataset.confirm === "true") {
-        replace.dataset.confirm = "false";
-        replace.textContent = "Replace Import";
-        runImport("replace");
-        return;
-      }
-      replace.dataset.confirm = "true";
-      replace.textContent = "Confirm Replace";
-      window.setTimeout(() => {
-        if (!replace.isConnected || replace.dataset.confirm !== "true") return;
-        replace.dataset.confirm = "false";
-        replace.textContent = "Replace Import";
-      }, 4000);
-    });
+    replace.textContent = "Replace all local data";
+    const confirmation = createReplaceConfirmation(() => runImport("replace"));
+    replace.addEventListener("click", () => confirmation.open(replace));
     importActions.append(merge, replace);
-    wrap.append(importTitle, fileInput, importArea, importActions, status);
+    backupSection.append(
+      backupTitle,
+      backupIntro,
+      download,
+      exportDetails,
+      fileLabel,
+      pasteDetails,
+      importActions,
+      confirmation.panel,
+      status,
+    );
+    wrap.append(backupSection);
 
-    const capabilitySlot = document.createElement("div");
-    const refreshCapabilities = () => {
-      capabilitySlot.replaceChildren(renderCapabilityManager(ctx, () => {
-        refreshExport();
-        refreshCapabilities();
-      }));
+    const settingsSection = document.createElement("section");
+    settingsSection.className = "my-data-section app-settings-section";
+    const settingsTitle = document.createElement("h4");
+    settingsTitle.textContent = "App settings";
+    const settingsText = document.createElement("p");
+    settingsText.textContent = "Theme remains available in the global header. Technical feature controls are under Advanced diagnostics.";
+    settingsSection.append(settingsTitle, settingsText);
+    wrap.append(settingsSection);
+
+    const maintenanceSection = document.createElement("section");
+    maintenanceSection.className = "my-data-section maintenance-section";
+    const maintenanceTitle = document.createElement("h4");
+    maintenanceTitle.textContent = "Local maintenance";
+    const maintenanceText = document.createElement("p");
+    maintenanceText.textContent =
+      "Refresh the browser-local index used by Study Marks if results look stale. This rebuilds a derived view, does not change personal study data, and never leaves this browser.";
+    const maintenanceAction = document.createElement("button");
+    maintenanceAction.type = "button";
+    maintenanceAction.className = "mini-button";
+    maintenanceAction.textContent = "Refresh Study Marks index";
+    const maintenanceStatus = document.createElement("p");
+    maintenanceStatus.className = "maintenance-status";
+    maintenanceStatus.setAttribute("role", "status");
+    let maintenanceBusy = false;
+    maintenanceAction.addEventListener("click", async () => {
+      if (maintenanceBusy) return;
+      maintenanceBusy = true;
+      maintenanceAction.disabled = true;
+      maintenanceStatus.className = "maintenance-status";
+      maintenanceStatus.textContent = "Refreshing the local Study Marks index…";
+      const job = requestTagIndexRefresh(ctx.state);
+      if (!job || !canRunJob(job)) {
+        maintenanceStatus.textContent = "Study Marks index refresh is unavailable in this app package.";
+      } else {
+        updateJobStatus(ctx.state, job.store, job.id, "running");
+        try {
+          const result = await runJob(job, ctx.state);
+          completeJob(ctx.state, job.store, job.id, result, "completed");
+          const finding = result.findings?.[0];
+          maintenanceStatus.textContent = `Study Marks index refreshed for ${finding?.reference_count ?? 0} scripture reference(s). Personal study data was not changed.`;
+        } catch (error) {
+          completeJob(ctx.state, job.store, job.id, { message: error?.message || "Refresh failed." }, "failed");
+          maintenanceStatus.textContent = `Could not refresh the Study Marks index: ${error?.message || "unknown error"}. Personal study data was not changed.`;
+          maintenanceStatus.className = "maintenance-status error";
+        }
+      }
+      maintenanceBusy = false;
+      maintenanceAction.disabled = false;
+      refreshSummary();
+      refreshDiagnostics();
+    });
+    maintenanceSection.append(maintenanceTitle, maintenanceText, maintenanceAction, maintenanceStatus);
+    wrap.append(maintenanceSection);
+
+    const diagnostics = document.createElement("details");
+    diagnostics.className = "advanced-diagnostics";
+    const diagnosticsSummary = document.createElement("summary");
+    diagnosticsSummary.textContent = "Advanced diagnostics";
+    const diagnosticsIntro = document.createElement("p");
+    diagnosticsIntro.textContent = "Inspect browser storage, package capabilities, and technical local job controls.";
+    const diagnosticsSlot = document.createElement("div");
+    const refreshDiagnostics = () => {
+      const summary = getUserDataSummary(ctx.state);
+      const jobsTitle = document.createElement("h4");
+      jobsTitle.textContent = "Local job console";
+      diagnosticsSlot.replaceChildren(
+        renderTechnicalSummary(summary),
+        renderCapabilityManager(ctx, refreshDiagnostics),
+        jobsTitle,
+        renderJobsDiagnostics(ctx, refreshDiagnostics),
+      );
     };
-    refreshCapabilities();
-    wrap.append(capabilitySlot);
+    diagnostics.addEventListener("toggle", () => {
+      if (diagnostics.open && !diagnosticsSlot.childNodes.length) refreshDiagnostics();
+    });
+    diagnostics.append(diagnosticsSummary, diagnosticsIntro, diagnosticsSlot);
+    wrap.append(diagnostics);
 
-    setDetail("Study Data", wrap);
+    setDetail("My Data", wrap);
   };
 }

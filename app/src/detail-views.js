@@ -1,7 +1,6 @@
 import { clearActiveWordContext, getActiveWordContext, setActiveWordContext } from "./active-word-context.js?v=pr13-live-qa-20260711e";
 import { createCommentaryOutlineViews } from "./views/commentary-outline-view.js?v=pr13-live-qa-20260711e";
 import { createInterlinearTranslationViews } from "./views/interlinear-translation-view.js?v=pr13-live-qa-20260711e";
-import { createJobsView } from "./views/jobs-view.js?v=pr13-live-qa-20260711e";
 import { createReferenceViews } from "./views/reference-view.js?v=pr13-live-qa-20260711e";
 import { createSearchView } from "./views/search-view.js?v=pr13-live-qa-20260711e";
 import { createStrongsView } from "./views/strongs-view.js?v=pr13-live-qa-20260711e";
@@ -56,7 +55,6 @@ export function createDetailViews(ctx) {
     showStrong,
     scrollStrongSection: strongsView.scrollStrongSection,
   });
-  const jobsView = createJobsView(ctx);
   const referenceViews = createReferenceViews(ctx);
   const tagsView = createTagsView(ctx);
   const renderWordMeaningControl = (options = {}) => createWordMeaningControl({ state: ctx.state, ...options });
@@ -82,11 +80,10 @@ export function createDetailViews(ctx) {
     showStudyUnavailable: (title, node, options = {}) => setDetail(title, node, options),
     showStrong,
     scrollStrongSection: strongsView.scrollStrongSection,
-    showJobs: jobsView,
     showFavorites: tagsView.showFavorites,
     showTargetTagEditor: tagsView.showTargetTagEditor,
     showTagEditor: tagsView.showTagEditor,
     showTagIndex: tagsView.showTagIndex,
-    showUserData: createUserDataView(ctx),
+    showMyData: createUserDataView(ctx, { showStudyMarks: tagsView.showTagIndex }),
   };
 }

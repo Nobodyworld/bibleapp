@@ -3633,7 +3633,33 @@ button.target-tag-badge:focus-visible {
 
 .user-data-panel {
   display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.user-data-panel > h3,
+.my-data-section > h4,
+.diagnostic-section > h4,
+.advanced-diagnostics h4,
+.replace-confirmation h5 {
+  margin: 0;
+}
+
+.my-data-section {
+  display: grid;
   gap: 10px;
+  min-width: 0;
+  padding-block: 2px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.my-data-section > p,
+.diagnostic-section > p,
+.advanced-diagnostics > p,
+.replace-confirmation > p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .user-data-summary {
@@ -3650,6 +3676,24 @@ button.target-tag-badge:focus-visible {
   border: 1px solid var(--line);
   border-radius: 6px;
   background: var(--panel-alt);
+}
+
+button.user-data-summary-item {
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.user-data-summary-item.summary-link:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.user-data-summary-item.summary-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .user-data-summary-item strong {
@@ -3681,6 +3725,93 @@ button.target-tag-badge:focus-visible {
   width: 100%;
   color: var(--muted);
   font-size: 12px;
+}
+
+.user-data-file-label {
+  display: grid;
+  gap: 6px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.manual-json-panel,
+.advanced-diagnostics {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-alt);
+  padding: 9px 10px;
+}
+
+.manual-json-panel > summary,
+.advanced-diagnostics > summary {
+  cursor: pointer;
+  color: var(--accent-dark);
+  font-weight: 900;
+}
+
+.manual-json-panel[open],
+.advanced-diagnostics[open] {
+  display: grid;
+  gap: 10px;
+}
+
+.advanced-diagnostics {
+  overflow: hidden;
+}
+
+.advanced-diagnostics[open] {
+  overflow: visible;
+}
+
+.diagnostic-section,
+.advanced-diagnostics > div {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.replace-confirmation {
+  display: grid;
+  gap: 10px;
+  border: 2px solid #b85b5b;
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 12px;
+}
+
+.replace-confirmation[hidden] {
+  display: none;
+}
+
+.primary-action {
+  justify-self: start;
+  font-weight: 900;
+}
+
+.inline-status,
+.maintenance-status,
+.import-status {
+  min-height: 1.3em;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.maintenance-status.error,
+.import-status.error {
+  color: #8f3030;
+}
+
+.import-status.success {
+  color: var(--accent-dark);
+}
+
+:root[data-theme="dark"] .maintenance-status.error,
+:root[data-theme="dark"] .import-status.error {
+  color: #ffaaaa;
 }
 
 .user-data-actions {

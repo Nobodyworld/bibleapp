@@ -834,6 +834,18 @@ function enqueueTagJob(state, type, payload) {
   saveStorage(STORAGE_KEYS.tags, state.tagStore);
 }
 
+export function requestTagIndexRefresh(state) {
+  const payload = { source: "manual-maintenance" };
+  enqueueTagJob(state, JOB_TYPES.tagIndexRefresh, payload);
+  return getAllJobEvents(state).find(
+    (job) =>
+      job.store === "tags" &&
+      job.type === JOB_TYPES.tagIndexRefresh &&
+      job.state === "queued" &&
+      job.payload?.source === payload.source,
+  ) || null;
+}
+
 function enqueueWorkspaceJob(state, type, payload) {
   ensureStores(state);
   state.workspaceStore.job_events = markStaleJobResults(state.workspaceStore.job_events, type, payload);
@@ -1122,6 +1134,10 @@ function extractUserDataStores(payload) {
   }
   if (payload.kind !== USER_DATA_EXPORT_KIND && !LEGACY_USER_DATA_EXPORT_KINDS.has(payload.kind)) {
     throw new Error("Import data is not a Bible App user-data export.");
+  }
+  const version = Number(payload.version || 0);
+  if (!Number.isInteger(version) || version < 1 || version > USER_DATA_EXPORT_VERSION) {
+    throw new Error(`This backup version is not compatible with this Bible App (supported through version ${USER_DATA_EXPORT_VERSION}).`);
   }
   const stores = payload.stores || {};
   return {
