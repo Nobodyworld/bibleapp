@@ -183,6 +183,7 @@ function createReplaceConfirmation(onConfirm) {
     if (panel.hidden) return;
     if (event.key === "Escape") {
       event.preventDefault();
+      event.stopImmediatePropagation();
       close();
       return;
     }
@@ -313,9 +314,12 @@ export function createUserDataView(ctx, options = {}) {
         }
         status.className = "import-status success";
       } catch (error) {
+        const message = error instanceof Error ? error.message : "Import failed.";
         status.textContent = error instanceof SyntaxError
           ? "That file is not valid JSON. No local data was changed."
-          : `${error instanceof Error ? error.message : "Import failed."} No local data was changed.`;
+          : message.includes("No local data was changed.")
+            ? message
+            : `${message} No local data was changed.`;
         status.className = "import-status error";
       }
     };

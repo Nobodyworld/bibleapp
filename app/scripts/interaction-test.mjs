@@ -223,6 +223,70 @@ function workspacePersistenceExpression(referenceKey, expectedDraft, expectedRen
   })`;
 }
 
+function userDataInvariantExpression() {
+  return `(async () => {
+    const details = document.querySelector('.manual-json-panel');
+    details?.dispatchEvent(new Event('toggle'));
+    const stores = JSON.stringify(JSON.parse(document.querySelector('.export-textarea')?.value || '{}').stores || {});
+    const localBackupCount = (() => {
+      try {
+        return JSON.parse(localStorage.getItem('bibleapp:import-backups:v1') || '{}').backups?.length || 0;
+      } catch {
+        return 0;
+      }
+    })();
+    const indexedBackupCount = await new Promise((resolve) => {
+      if (!window.indexedDB) return resolve(null);
+      const request = indexedDB.open('bibleapp', 2);
+      request.onerror = () => resolve(null);
+      request.onblocked = () => resolve(null);
+      request.onsuccess = () => {
+        const db = request.result;
+        try {
+          const get = db.transaction('user_stores', 'readonly').objectStore('user_stores').get('importBackups');
+          get.onsuccess = () => {
+            const count = get.result?.value?.backups?.length || 0;
+            db.close();
+            resolve(count);
+          };
+          get.onerror = () => {
+            db.close();
+            resolve(null);
+          };
+        } catch {
+          db.close();
+          resolve(null);
+        }
+      };
+    });
+    const pane = document.querySelector('.detail-pane');
+    const paneStyle = pane ? getComputedStyle(pane) : null;
+    return {
+      stores,
+      backupCount: indexedBackupCount ?? localBackupCount,
+      detailTitle: document.querySelector('#detailTitle')?.textContent.trim(),
+      detailBackDisabled: Boolean(document.querySelector('#detailBack')?.disabled),
+      detailForwardDisabled: Boolean(document.querySelector('#detailForward')?.disabled),
+      panelVisibleClass: Boolean(pane?.classList.contains('visible')),
+      panelDisplay: paneStyle?.display || '',
+      panelVisibility: paneStyle?.visibility || '',
+      route: location.href,
+      readerContext: JSON.stringify([...document.querySelectorAll('.reader-context-word, .reader-context-verse')].map((node) => ({
+        className: node.className,
+        verse: node.dataset.verse || '',
+        strongCode: node.dataset.strongCode || '',
+        tokenIndex: node.dataset.tokenIndex || ''
+      }))),
+      readerLocation: JSON.stringify({
+        title: document.querySelector('#chapterTitle')?.textContent.trim(),
+        book: document.querySelector('#bookSelect')?.value,
+        chapter: document.querySelector('#chapterSelect')?.value,
+        translation: document.querySelector('#translationSelect')?.value
+      })
+    };
+  })()`;
+}
+
 async function click(page, selector, timeoutMs = 10000) {
   await waitFor(page, `document.querySelector(${JSON.stringify(selector)})`, timeoutMs);
   await evaluate(
@@ -1684,39 +1748,169 @@ async function runQa(page) {
   );
   await clickButtonByText(page, "Merge backup");
   await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('Backup merged')");
-  const storesBeforeReplaceCancel = await evaluate(
-    page,
-    `(() => {
-      const details = document.querySelector('.manual-json-panel');
-      details.dispatchEvent(new Event('toggle'));
-      return JSON.stringify(JSON.parse(document.querySelector('.export-textarea').value).stores);
-    })()`,
-  );
+  const beforeReplaceEscape = await evaluate(page, userDataInvariantExpression());
   await clickButtonByText(page, "Replace all local data");
   await waitFor(page, "!document.querySelector('.replace-confirmation')?.hidden");
   assert(
     await evaluate(page, "document.activeElement?.textContent.trim() === 'Cancel'"),
     "Replace confirmation must move focus to Cancel",
   );
+  await page.press(".replace-confirmation .mini-button:not(.danger-button)", "Shift+Tab");
+  assert(
+    await evaluate(page, "document.activeElement === document.querySelector('.replace-confirmation .danger-button')"),
+    "Shift+Tab must wrap focus from Cancel to the final Replace action",
+  );
+  await page.press(".replace-confirmation .danger-button", "Tab");
+  assert(
+    await evaluate(page, "document.activeElement?.textContent.trim() === 'Cancel'"),
+    "Tab must wrap focus from the final Replace action to Cancel",
+  );
+  await page.press(".replace-confirmation .mini-button:not(.danger-button)", "Escape");
+  await waitFor(page, "document.querySelector('.replace-confirmation')?.hidden");
+  assert(
+    await evaluate(page, "document.activeElement?.textContent.trim() === 'Replace all local data'"),
+    "Escape must restore focus to the replace trigger",
+  );
+  const afterReplaceEscape = await evaluate(page, userDataInvariantExpression());
+  assert(
+    JSON.stringify(afterReplaceEscape) === JSON.stringify(beforeReplaceEscape),
+    `Escape must leave My Data, route, panel, history, reader context, stores, and recovery backups unchanged: ${JSON.stringify({ beforeReplaceEscape, afterReplaceEscape })}`,
+  );
+  await page.press(".import-actions .danger-button", "Escape");
+  if (qaDevice === "mobile") {
+    await waitFor(page, "!document.querySelector('.detail-pane')?.classList.contains('visible')");
+  } else {
+    await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Details'");
+  }
+  pass("Replace confirmation isolates real keyboard Escape and preserves Tab trapping");
+  pass("ordinary Escape retains normal application behavior after confirmation closes");
+
+  await click(page, "#showMyData");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'My Data'");
+  await click(page, ".manual-json-panel > summary");
+  await click(page, ".paste-json-panel > summary");
+  await evaluate(
+    page,
+    `(() => {
+      const textarea = document.querySelector('.import-textarea');
+      textarea.value = ${JSON.stringify(userDataExport.text)};
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`,
+  );
+  const beforeReplaceCancel = await evaluate(page, userDataInvariantExpression());
+  await clickButtonByText(page, "Replace all local data");
   await clickButtonByText(page, "Cancel", { scope: ".replace-confirmation" });
   await waitFor(page, "document.querySelector('.replace-confirmation')?.hidden");
   assert(
     await evaluate(page, "document.activeElement?.textContent.trim() === 'Replace all local data'"),
     "Cancel must restore focus to the replace trigger",
   );
-  const storesAfterReplaceCancel = await evaluate(
+  const afterReplaceCancel = await evaluate(page, userDataInvariantExpression());
+  assert(
+    JSON.stringify(afterReplaceCancel) === JSON.stringify(beforeReplaceCancel),
+    "Cancel must leave route, history, stores, and recovery backups unchanged",
+  );
+  pass("Replace confirmation Cancel behavior remains unchanged");
+
+  await evaluate(
     page,
     `(() => {
-      const details = document.querySelector('.manual-json-panel');
-      details.dispatchEvent(new Event('toggle'));
-      return JSON.stringify(JSON.parse(document.querySelector('.export-textarea').value).stores);
+      window.__importSideEffects = { localStorageWrites: 0, indexedDbWrites: 0, publications: 0 };
+      const storageSetItem = Storage.prototype.setItem;
+      const indexedDbPut = IDBObjectStore.prototype.put;
+      const broadcastPostMessage = window.BroadcastChannel?.prototype.postMessage;
+      Storage.prototype.setItem = function(...args) {
+        window.__importSideEffects.localStorageWrites += 1;
+        return storageSetItem.apply(this, args);
+      };
+      IDBObjectStore.prototype.put = function(...args) {
+        window.__importSideEffects.indexedDbWrites += 1;
+        return indexedDbPut.apply(this, args);
+      };
+      if (broadcastPostMessage) {
+        BroadcastChannel.prototype.postMessage = function(...args) {
+          window.__importSideEffects.publications += 1;
+          return broadcastPostMessage.apply(this, args);
+        };
+      }
+      window.__restoreImportSideEffectHooks = () => {
+        Storage.prototype.setItem = storageSetItem;
+        IDBObjectStore.prototype.put = indexedDbPut;
+        if (broadcastPostMessage) BroadcastChannel.prototype.postMessage = broadcastPostMessage;
+      };
+      return true;
     })()`,
   );
-  assert(storesAfterReplaceCancel === storesBeforeReplaceCancel, "Cancel must not mutate any exported user-data store");
+  const beforeMalformedImports = await evaluate(page, userDataInvariantExpression());
+  await evaluate(
+    page,
+    `(() => {
+      const textarea = document.querySelector('.import-textarea');
+      textarea.value = JSON.stringify({ kind: 'bibleapp:user-data', version: 3 });
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`,
+  );
+  await clickButtonByText(page, "Merge backup");
+  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('Backup structure is invalid')");
+  await evaluate(
+    page,
+    `(() => {
+      const textarea = document.querySelector('.import-textarea');
+      textarea.value = JSON.stringify({ kind: 'bibleapp:user-data', version: 3, stores: { workspace: [] } });
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`,
+  );
+  await clickButtonByText(page, "Replace all local data");
+  await click(page, ".replace-confirmation .danger-button");
+  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('workspace must be an object')");
+  const afterMalformedImports = await evaluate(page, userDataInvariantExpression());
+  const malformedSideEffects = await evaluate(
+    page,
+    `(() => {
+      const result = { ...window.__importSideEffects };
+      window.__restoreImportSideEffectHooks?.();
+      return result;
+    })()`,
+  );
+  assert(
+    JSON.stringify(afterMalformedImports) === JSON.stringify(beforeMalformedImports),
+    `Malformed merge and replace must leave route, history, stores, and recovery backups unchanged: ${JSON.stringify({ beforeMalformedImports, afterMalformedImports })}`,
+  );
+  assert(
+    malformedSideEffects.localStorageWrites === 0 && malformedSideEffects.indexedDbWrites === 0 && malformedSideEffects.publications === 0,
+    `Malformed imports must not write storage or publish changes: ${JSON.stringify(malformedSideEffects)}`,
+  );
+  pass("malformed merge and replace backups are atomic before persistence or publication");
+
+  await evaluate(
+    page,
+    `(() => {
+      const textarea = document.querySelector('.import-textarea');
+      textarea.value = JSON.stringify({ kind: 'bibleapp:user-data', version: 3, stores: { workspace: {} } });
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`,
+  );
+  await clickButtonByText(page, "Merge backup");
+  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('Backup merged')");
+  pass("sparse legacy version-3 workspace backup remains compatible");
+
+  await evaluate(
+    page,
+    `(() => {
+      const textarea = document.querySelector('.import-textarea');
+      textarea.value = ${JSON.stringify(userDataExport.text)};
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`,
+  );
   await clickButtonByText(page, "Replace all local data");
   await click(page, ".replace-confirmation .danger-button");
   await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('Recovery backup created')");
-  pass("versioned backup merge, replace confirmation, cancellation, and recovery backup");
+  pass("versioned backup merge, replace confirmation, and recovery backup");
 
   await click(page, "#homeButton");
   await waitFor(page, "document.querySelector('#chapterTitle')?.textContent === 'Bible App Home'");

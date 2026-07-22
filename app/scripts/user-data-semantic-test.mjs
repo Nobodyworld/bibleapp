@@ -252,6 +252,59 @@ async function main() {
     "incompatible backup must not partially mutate current stores",
   );
 
+  const malformedBackups = [
+    ["missing stores", { kind: "bibleapp:user-data", version: 3 }],
+    ["null stores", { kind: "bibleapp:user-data", version: 3, stores: null }],
+    ["array stores", { kind: "bibleapp:user-data", version: 3, stores: [] }],
+    ["string stores", { kind: "bibleapp:user-data", version: 3, stores: "invalid" }],
+    ["array workspace", { kind: "bibleapp:user-data", version: 3, stores: { workspace: [] } }],
+    ["string tags", { kind: "bibleapp:user-data", version: 3, stores: { tags: "invalid" } }],
+  ];
+  for (const mode of ["merge", "replace"]) {
+    for (const [label, payload] of malformedBackups) {
+      const atomicState = {};
+      setVerseDraft(atomicState, "john:1:9", `Keep ${mode} ${label}`, { expected_revision: 0 });
+      atomicState.lastUserDataBackup = {
+        id: "backup:existing",
+        reason: "existing",
+        created_at: "2026-06-19T00:00:00.000Z",
+      };
+      const beforeStores = JSON.stringify(createUserDataExport(atomicState).stores);
+      const beforeState = JSON.stringify(atomicState);
+      const beforeSummary = getUserDataSummary(atomicState);
+      const beforeJobs = JSON.stringify({
+        tags: atomicState.tagStore.job_events,
+        workspace: atomicState.workspaceStore.job_events,
+      });
+      let structureError = null;
+      try {
+        importUserData(atomicState, payload, mode);
+      } catch (error) {
+        structureError = error;
+      }
+      assert(
+        structureError?.message.includes("Backup structure is invalid") &&
+          structureError.message.includes("No local data was changed"),
+        `${mode} ${label} must report an understandable atomic structure error`,
+      );
+      assert(JSON.stringify(atomicState) === beforeState, `${mode} ${label} must not assign any state`);
+      assert(
+        JSON.stringify(createUserDataExport(atomicState).stores) === beforeStores,
+        `${mode} ${label} must leave exported stores byte-for-byte identical`,
+      );
+      const afterSummary = getUserDataSummary(atomicState);
+      assert(afterSummary.import_backups === beforeSummary.import_backups, `${mode} ${label} must not create an import backup`);
+      assert(
+        JSON.stringify(afterSummary.last_import_backup) === JSON.stringify(beforeSummary.last_import_backup),
+        `${mode} ${label} must not change lastUserDataBackup`,
+      );
+      assert(
+        JSON.stringify({ tags: atomicState.tagStore.job_events, workspace: atomicState.workspaceStore.job_events }) === beforeJobs,
+        `${mode} ${label} must not add job events`,
+      );
+    }
+  }
+
   const legacyV3Payload = {
     kind: "bibleapp:user-data",
     version: 3,

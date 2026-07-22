@@ -1128,8 +1128,18 @@ function mergePackageStores(current, incoming) {
   });
 }
 
+function isPlainObject(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function invalidBackupStructure(detail) {
+  return new Error(`Backup structure is invalid: ${detail} No local data was changed.`);
+}
+
 function extractUserDataStores(payload) {
-  if (!payload || typeof payload !== "object") {
+  if (!isPlainObject(payload)) {
     throw new Error("Import data must be a JSON object.");
   }
   if (payload.kind !== USER_DATA_EXPORT_KIND && !LEGACY_USER_DATA_EXPORT_KINDS.has(payload.kind)) {
@@ -1139,7 +1149,15 @@ function extractUserDataStores(payload) {
   if (!Number.isInteger(version) || version < 1 || version > USER_DATA_EXPORT_VERSION) {
     throw new Error(`This backup version is not compatible with this Bible App (supported through version ${USER_DATA_EXPORT_VERSION}).`);
   }
-  const stores = payload.stores || {};
+  if (!isPlainObject(payload.stores)) {
+    throw invalidBackupStructure("stores must be an object.");
+  }
+  const stores = payload.stores;
+  ["tags", "workspace", "assertions", "polls", "packages"].forEach((section) => {
+    if (Object.prototype.hasOwnProperty.call(stores, section) && !isPlainObject(stores[section])) {
+      throw invalidBackupStructure(`${section} must be an object when supplied.`);
+    }
+  });
   return {
     tagStore: normalizeTagStore(stores.tags || {}),
     workspaceStore: normalizeWorkspaceStore(stores.workspace || {}),
@@ -1216,11 +1234,11 @@ export function getUserDataSummary(state) {
 }
 
 export function importUserData(state, payload, mode = "merge") {
-  ensureStores(state);
   const incoming = extractUserDataStores(payload);
   if (mode !== "merge" && mode !== "replace") {
     throw new Error("Import mode must be merge or replace.");
   }
+  ensureStores(state);
 
   if (mode === "replace") {
     createUserDataBackup(state, "before-replace-import");
