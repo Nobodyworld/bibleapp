@@ -115,6 +115,9 @@ async function launchBrowser() {
   });
   const playwrightPage = await context.newPage();
   const page = {
+    async waitForDownload() {
+      return playwrightPage.waitForEvent("download");
+    },
     async press(selector, key) {
       await playwrightPage.locator(selector).press(key);
     },
@@ -218,6 +221,70 @@ function workspacePersistenceExpression(referenceKey, expectedDraft, expectedRen
       }
     };
   })`;
+}
+
+function userDataInvariantExpression() {
+  return `(async () => {
+    const details = document.querySelector('.manual-json-panel');
+    details?.dispatchEvent(new Event('toggle'));
+    const stores = JSON.stringify(JSON.parse(document.querySelector('.export-textarea')?.value || '{}').stores || {});
+    const localBackupCount = (() => {
+      try {
+        return JSON.parse(localStorage.getItem('bibleapp:import-backups:v1') || '{}').backups?.length || 0;
+      } catch {
+        return 0;
+      }
+    })();
+    const indexedBackupCount = await new Promise((resolve) => {
+      if (!window.indexedDB) return resolve(null);
+      const request = indexedDB.open('bibleapp', 2);
+      request.onerror = () => resolve(null);
+      request.onblocked = () => resolve(null);
+      request.onsuccess = () => {
+        const db = request.result;
+        try {
+          const get = db.transaction('user_stores', 'readonly').objectStore('user_stores').get('importBackups');
+          get.onsuccess = () => {
+            const count = get.result?.value?.backups?.length || 0;
+            db.close();
+            resolve(count);
+          };
+          get.onerror = () => {
+            db.close();
+            resolve(null);
+          };
+        } catch {
+          db.close();
+          resolve(null);
+        }
+      };
+    });
+    const pane = document.querySelector('.detail-pane');
+    const paneStyle = pane ? getComputedStyle(pane) : null;
+    return {
+      stores,
+      backupCount: indexedBackupCount ?? localBackupCount,
+      detailTitle: document.querySelector('#detailTitle')?.textContent.trim(),
+      detailBackDisabled: Boolean(document.querySelector('#detailBack')?.disabled),
+      detailForwardDisabled: Boolean(document.querySelector('#detailForward')?.disabled),
+      panelVisibleClass: Boolean(pane?.classList.contains('visible')),
+      panelDisplay: paneStyle?.display || '',
+      panelVisibility: paneStyle?.visibility || '',
+      route: location.href,
+      readerContext: JSON.stringify([...document.querySelectorAll('.reader-context-word, .reader-context-verse')].map((node) => ({
+        className: node.className,
+        verse: node.dataset.verse || '',
+        strongCode: node.dataset.strongCode || '',
+        tokenIndex: node.dataset.tokenIndex || ''
+      }))),
+      readerLocation: JSON.stringify({
+        title: document.querySelector('#chapterTitle')?.textContent.trim(),
+        book: document.querySelector('#bookSelect')?.value,
+        chapter: document.querySelector('#chapterSelect')?.value,
+        translation: document.querySelector('#translationSelect')?.value
+      })
+    };
+  })()`;
 }
 
 async function click(page, selector, timeoutMs = 10000) {
@@ -1586,33 +1653,54 @@ async function runQa(page) {
   );
   pass("custom tag edit and delete");
 
-  await click(page, "#showJobs");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Local Processing'");
+  await click(page, "#showMyData");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'My Data'");
+  assert(
+    await evaluate(page, "!document.querySelector('.advanced-diagnostics')?.open"),
+    "Advanced diagnostics must be collapsed by default",
+  );
+  assert(
+    await evaluate(page, "document.querySelector('.advanced-diagnostics .job-payload') === null"),
+    "Raw diagnostic payloads must not render before expansion",
+  );
+  state = await getQaState(page);
+  assert(
+    state.detailText.includes("Personal meanings") && state.detailText.includes("Preserved legacy verse drafts"),
+    "My Data summary missing Meaning or preserved legacy draft counts",
+  );
+  pass("My Data summary and collapsed diagnostics");
+
+  const backupDownloadPromise = page.waitForDownload();
+  await clickButtonByText(page, "Download backup");
+  const backupDownload = await backupDownloadPromise;
+  assert(
+    /^bibleapp-user-data-\d{4}-\d{2}-\d{2}\.json$/.test(backupDownload.suggestedFilename()),
+    "Downloaded backup must use the compatible Bible App JSON filename",
+  );
+  pass("My Data backup download");
+
+  await click(page, "#showMyData");
+  await click(page, "#detailBack");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Study Marks'");
+  await click(page, "#detailForward");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'My Data'");
+  pass("My Data repeat activation and Back/Forward history");
+
+  await click(page, ".maintenance-section .mini-button");
+  await waitFor(page, "document.querySelector('.maintenance-status')?.textContent.includes('Personal study data was not changed')");
+  pass("plain-language local maintenance");
+
+  await click(page, ".advanced-diagnostics > summary");
+  await waitFor(page, "document.querySelector('.advanced-diagnostics')?.open && document.querySelector('.advanced-diagnostics .job-payload')");
   state = await getQaState(page);
   assert(
     state.detailText.includes("tag-index-refresh") && state.detailText.includes('"action": "retired"'),
-    "Local Processing panel did not show queued local job types",
+    "Advanced diagnostics did not preserve local job details",
   );
-  pass("local jobs panel");
+  pass("advanced local job diagnostics");
 
-  await click(page, ".job-action-review");
-  await waitFor(page, "document.querySelector('#detailContent')?.textContent.includes('planned')");
-  await click(page, ".job-action-process");
-  await waitFor(
-    page,
-    "document.querySelector('#detailContent')?.textContent.includes('simulation_only') && document.querySelector('#detailContent')?.textContent.includes('manual-stub')",
-  );
-  await click(page, ".job-action-requeue");
-  await waitFor(page, "document.querySelector('#detailContent')?.textContent.includes('queued')");
-  await click(page, ".job-action-process");
-  await waitFor(
-    page,
-    "document.querySelector('#detailContent')?.textContent.includes('simulation_only') && document.querySelector('#detailContent')?.textContent.includes('No background analysis was run')",
-  );
-  pass("local job lifecycle simulation");
-
-  await click(page, "#showUserData");
-  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Study Data'");
+  await click(page, ".manual-json-panel > summary");
+  await waitFor(page, "Boolean(document.querySelector('.export-textarea')?.value)");
   const userDataExport = await evaluate(
     page,
     `(() => {
@@ -1632,10 +1720,23 @@ async function runQa(page) {
   assert(userDataExport.kind === "bibleapp:user-data", "user-data export has wrong kind");
   assert(userDataExport.hasTags && userDataExport.hasWorkspace, "user-data export missing local stores");
   assert(
-    userDataExport.summaryText.includes("Custom labels") && userDataExport.summaryText.includes("Workspace jobs"),
+    userDataExport.summaryText.includes("Custom labels") && userDataExport.summaryText.includes("My study data"),
     "user-data summary missing expected counts",
   );
   assert(userDataExport.tagJobTypes.includes("tag-index-refresh"), "tag change did not queue tag-index-refresh job");
+  await evaluate(page, "document.querySelector('.advanced-diagnostics').open = false");
+  await click(page, ".paste-json-panel > summary");
+  await evaluate(
+    page,
+    `(() => {
+      const textarea = document.querySelector('.import-textarea');
+      textarea.value = '{';
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`,
+  );
+  await clickButtonByText(page, "Merge backup");
+  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('not valid JSON')");
   await evaluate(
     page,
     `(() => {
@@ -1645,13 +1746,187 @@ async function runQa(page) {
       return true;
     })()`,
   );
-  await click(page, ".import-actions button");
-  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('Imported (merge)')");
-  await clickButtonByText(page, "Replace Import");
-  await waitFor(page, "document.querySelector('.danger-button')?.textContent.trim() === 'Confirm Replace'");
-  await clickButtonByText(page, "Confirm Replace");
-  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('Imported (replace)')");
-  pass("user data export and import");
+  await clickButtonByText(page, "Merge backup");
+  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('Backup merged')");
+  const beforeReplaceEscape = await evaluate(page, userDataInvariantExpression());
+  await clickButtonByText(page, "Replace all local data");
+  await waitFor(page, "!document.querySelector('.replace-confirmation')?.hidden");
+  assert(
+    await evaluate(page, "document.activeElement?.textContent.trim() === 'Cancel'"),
+    "Replace confirmation must move focus to Cancel",
+  );
+  await page.press(".replace-confirmation .mini-button:not(.danger-button)", "Shift+Tab");
+  assert(
+    await evaluate(page, "document.activeElement === document.querySelector('.replace-confirmation .danger-button')"),
+    "Shift+Tab must wrap focus from Cancel to the final Replace action",
+  );
+  await page.press(".replace-confirmation .danger-button", "Tab");
+  assert(
+    await evaluate(page, "document.activeElement?.textContent.trim() === 'Cancel'"),
+    "Tab must wrap focus from the final Replace action to Cancel",
+  );
+  await page.press(".replace-confirmation .mini-button:not(.danger-button)", "Escape");
+  await waitFor(page, "document.querySelector('.replace-confirmation')?.hidden");
+  assert(
+    await evaluate(page, "document.activeElement?.textContent.trim() === 'Replace all local data'"),
+    "Escape must restore focus to the replace trigger",
+  );
+  const afterReplaceEscape = await evaluate(page, userDataInvariantExpression());
+  assert(
+    JSON.stringify(afterReplaceEscape) === JSON.stringify(beforeReplaceEscape),
+    `Escape must leave My Data, route, panel, history, reader context, stores, and recovery backups unchanged: ${JSON.stringify({ beforeReplaceEscape, afterReplaceEscape })}`,
+  );
+  await page.press(".import-actions .danger-button", "Escape");
+  if (qaDevice === "mobile") {
+    await waitFor(page, "!document.querySelector('.detail-pane')?.classList.contains('visible')");
+  } else {
+    await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Details'");
+  }
+  pass("Replace confirmation isolates real keyboard Escape and preserves Tab trapping");
+  pass("ordinary Escape retains normal application behavior after confirmation closes");
+
+  await click(page, "#showMyData");
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'My Data'");
+  await click(page, ".manual-json-panel > summary");
+  await click(page, ".paste-json-panel > summary");
+  await evaluate(
+    page,
+    `(() => {
+      const textarea = document.querySelector('.import-textarea');
+      textarea.value = ${JSON.stringify(userDataExport.text)};
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`,
+  );
+  const beforeReplaceCancel = await evaluate(page, userDataInvariantExpression());
+  await clickButtonByText(page, "Replace all local data");
+  await clickButtonByText(page, "Cancel", { scope: ".replace-confirmation" });
+  await waitFor(page, "document.querySelector('.replace-confirmation')?.hidden");
+  assert(
+    await evaluate(page, "document.activeElement?.textContent.trim() === 'Replace all local data'"),
+    "Cancel must restore focus to the replace trigger",
+  );
+  const afterReplaceCancel = await evaluate(page, userDataInvariantExpression());
+  assert(
+    JSON.stringify(afterReplaceCancel) === JSON.stringify(beforeReplaceCancel),
+    "Cancel must leave route, history, stores, and recovery backups unchanged",
+  );
+  pass("Replace confirmation Cancel behavior remains unchanged");
+
+  await evaluate(
+    page,
+    `(() => {
+      window.__importSideEffects = { localStorageWrites: 0, indexedDbWrites: 0, publications: 0 };
+      const storageSetItem = Storage.prototype.setItem;
+      const indexedDbPut = IDBObjectStore.prototype.put;
+      const broadcastPostMessage = window.BroadcastChannel?.prototype.postMessage;
+      Storage.prototype.setItem = function(...args) {
+        window.__importSideEffects.localStorageWrites += 1;
+        return storageSetItem.apply(this, args);
+      };
+      IDBObjectStore.prototype.put = function(...args) {
+        window.__importSideEffects.indexedDbWrites += 1;
+        return indexedDbPut.apply(this, args);
+      };
+      if (broadcastPostMessage) {
+        BroadcastChannel.prototype.postMessage = function(...args) {
+          window.__importSideEffects.publications += 1;
+          return broadcastPostMessage.apply(this, args);
+        };
+      }
+      window.__restoreImportSideEffectHooks = () => {
+        Storage.prototype.setItem = storageSetItem;
+        IDBObjectStore.prototype.put = indexedDbPut;
+        if (broadcastPostMessage) BroadcastChannel.prototype.postMessage = broadcastPostMessage;
+      };
+      return true;
+    })()`,
+  );
+  const beforeMalformedImports = await evaluate(page, userDataInvariantExpression());
+  await evaluate(
+    page,
+    `(() => {
+      const textarea = document.querySelector('.import-textarea');
+      textarea.value = JSON.stringify({ kind: 'bibleapp:user-data', version: 3 });
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`,
+  );
+  await clickButtonByText(page, "Merge backup");
+  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('Backup structure is invalid')");
+  await evaluate(
+    page,
+    `(() => {
+      const textarea = document.querySelector('.import-textarea');
+      textarea.value = JSON.stringify({ kind: 'bibleapp:user-data', version: 3, stores: { workspace: [] } });
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`,
+  );
+  await clickButtonByText(page, "Replace all local data");
+  await click(page, ".replace-confirmation .danger-button");
+  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('workspace must be an object')");
+  const afterMalformedImports = await evaluate(page, userDataInvariantExpression());
+  const malformedSideEffects = await evaluate(
+    page,
+    `(() => {
+      const result = { ...window.__importSideEffects };
+      window.__restoreImportSideEffectHooks?.();
+      return result;
+    })()`,
+  );
+  assert(
+    JSON.stringify(afterMalformedImports) === JSON.stringify(beforeMalformedImports),
+    `Malformed merge and replace must leave route, history, stores, and recovery backups unchanged: ${JSON.stringify({ beforeMalformedImports, afterMalformedImports })}`,
+  );
+  assert(
+    malformedSideEffects.localStorageWrites === 0 && malformedSideEffects.indexedDbWrites === 0 && malformedSideEffects.publications === 0,
+    `Malformed imports must not write storage or publish changes: ${JSON.stringify(malformedSideEffects)}`,
+  );
+  pass("malformed merge and replace backups are atomic before persistence or publication");
+
+  await evaluate(
+    page,
+    `(() => {
+      const textarea = document.querySelector('.import-textarea');
+      textarea.value = JSON.stringify({ kind: 'bibleapp:user-data', version: 3, stores: { workspace: {} } });
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`,
+  );
+  await clickButtonByText(page, "Merge backup");
+  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('Backup merged')");
+  pass("sparse legacy version-3 workspace backup remains compatible");
+
+  await evaluate(
+    page,
+    `(() => {
+      const textarea = document.querySelector('.import-textarea');
+      textarea.value = ${JSON.stringify(userDataExport.text)};
+      textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      return true;
+    })()`,
+  );
+  await clickButtonByText(page, "Replace all local data");
+  await click(page, ".replace-confirmation .danger-button");
+  await waitFor(page, "document.querySelector('.import-status')?.textContent.includes('Recovery backup created')");
+  pass("versioned backup merge, replace confirmation, and recovery backup");
+
+  await click(page, "#homeButton");
+  await waitFor(page, "document.querySelector('#chapterTitle')?.textContent === 'Bible App Home'");
+  assert(
+    await evaluate(
+      page,
+      `(() => {
+        const labels = [...document.querySelectorAll('.home-action')].map((button) => button.textContent.trim());
+        return labels.filter((label) => label === 'My Data').length === 1 && !labels.includes('Jobs') && !labels.includes('Data');
+      })()`,
+    ),
+    "Home must expose one My Data action without Jobs or Data duplicates",
+  );
+  await clickButtonByText(page, "My Data", { scope: ".home-action-grid" });
+  await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'My Data'");
+  pass("home My Data action");
 
   await click(page, "#showSearch");
   await waitFor(page, "document.querySelector('#detailTitle')?.textContent === 'Search'");

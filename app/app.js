@@ -436,7 +436,7 @@ function showHomePage(options = {}) {
   const heading = document.createElement("h3");
   heading.textContent = "Study workspace";
   const text = document.createElement("p");
-  text.textContent = "Open the reader, search, study marks, language study, jobs, and data tools from one place.";
+  text.textContent = "Open the reader, search, Study Marks, language study, and your browser-local data from one place.";
   intro.append(heading, text);
 
   const grid = document.createElement("div");
@@ -448,9 +448,8 @@ function showHomePage(options = {}) {
   const actions = [
     ["Continue reading", () => void navigateToRoute(currentRoute(), { replace: true })],
     ["Search", runWithReaderData(detailViews.showSearch)],
-    ["Tags", runWithReaderData(detailViews.showTagIndex)],
-    ["Jobs", runWithReaderData(detailViews.showJobs)],
-    ["Data", runWithReaderData(detailViews.showUserData)],
+    ["Study Marks", runWithReaderData(detailViews.showTagIndex)],
+    ["My Data", runWithReaderData(detailViews.showMyData)],
   ];
   actions.forEach(([label, action]) => {
     const button = document.createElement("button");
@@ -690,8 +689,7 @@ function bindEvents() {
   });
   els.showSearch.addEventListener("click", clearStudyContextAndCall(detailViews.showSearch));
   els.showTags.addEventListener("click", clearStudyContextAndCall(detailViews.showTagIndex));
-  els.showJobs.addEventListener("click", clearStudyContextAndCall(detailViews.showJobs));
-  els.showUserData.addEventListener("click", clearStudyContextAndCall(detailViews.showUserData));
+  els.showMyData.addEventListener("click", clearStudyContextAndCall(detailViews.showMyData));
   els.detailBack.addEventListener("click", () => {
     detailViews.clearStrongPin();
     const restoredLocation = goBackDetail();

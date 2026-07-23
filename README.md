@@ -3,7 +3,7 @@
 > **PUBLIC PREVIEW — ACTIVE DEVELOPMENT**
 >
 > The static reader is functional and actively developed. The side-panel,
-> personal Meaning, Study Marks, Processing, and Study Data interfaces are still
+> personal Meaning, Study Marks, and My Data interfaces are still
 > evolving. This repository does not promise a production release or stable API.
 >
 > Application code, tests, scripts, schemas, and tooling are MIT-licensed.
@@ -80,12 +80,13 @@ tracked in issue #16.
   source tokens, and source-token spans.
 - Favorites and applicable tags at supported scopes.
 - A Study Marks dashboard for reviewing tagged and favorited targets.
-- Browser-local summary counts, JSON export/import, storage recovery, and
-  capability controls.
+- One My Data surface for understandable summary counts, versioned backup and
+  restore, local maintenance, and collapsed advanced diagnostics.
 
-The current Study Marks interaction is being unified under issue #25. The draft
-personal Meaning implementation is tracked by issue #18 and PR #24. Processing
-and Study Data simplification is tracked by issue #19.
+Study Marks and personal Meaning remain separate user tools. My Data keeps raw
+job, package, storage, and capability controls out of the ordinary reader path.
+Browser-local data is not an account; users should download backups they care
+about.
 
 ### Resilience and accessibility
 
@@ -136,8 +137,6 @@ Additional current captures:
 - [Search](docs/images/search.png)
 - [Study Marks](docs/images/study-marks.png)
 - [Dark Study Marks](docs/images/study-marks-dark.png)
-- [Study Data](docs/images/study-data.png)
-- [Local Processing](docs/images/local-processing.png)
 
 ## Run Locally
 
@@ -255,7 +254,7 @@ repository-security posture.
 - There is no collaborative account system or cloud backup.
 - Automated browser QA is currently Edge-focused.
 - The bundled package increases clone and checkout size.
-- The side-panel, Meaning, Study Marks, Processing, and Study Data interfaces are
+- The side-panel, Meaning, Study Marks, and My Data interfaces are
   active-development surfaces rather than stable APIs.
 - Bundled data should be redistributed only after reviewing the included source
   notices and manifest.
@@ -269,15 +268,12 @@ Current work:
 
 - issue #15 — documentation and loose-file reconciliation;
 - issue #16 — hover-first supplemental study UX;
-- issue #17 — compact side-panel corrective redesign;
-- issue #18 and draft PR #24 — source-word personal Meaning utility;
-- issue #19 — Processing and Study Data simplification;
-- issue #25 — unified Study Marks icon and popdown controls;
+- issue #19 — active My Data simplification phase;
 - issue #5 — public-preview activation, post-public security activation, and
   later final release/tag gates.
 
-PR #24 remains draft and unmerged. Its product-review hold under issues #17 and
-#25 is not waived by public-preview visibility.
+Reader context, Study Marks, and personal Meaning dependencies are merged. My
+Data remains the current focused public-preview implementation phase.
 
 Issues #6 and #7 remain post-public performance and broader manual browser-QA
 work unless they reveal a severe blocker.

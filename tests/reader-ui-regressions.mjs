@@ -3,7 +3,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const [index, css, contextCss, stylesPolish, app, pickerFlow, renderer, tagsView, strongsView, interlinearView] = await Promise.all([
+const [index, css, contextCss, stylesPolish, app, pickerFlow, renderer, tagsView, strongsView, interlinearView, userDataView, detailViews, jobsView] = await Promise.all([
   readFile(new URL("../app/index.html", import.meta.url), "utf8"),
   readFile(new URL("../app/styles.css", import.meta.url), "utf8"),
   readFile(new URL("../app/styles-context.css", import.meta.url), "utf8"),
@@ -14,6 +14,9 @@ const [index, css, contextCss, stylesPolish, app, pickerFlow, renderer, tagsView
   readFile(new URL("../app/src/views/tags-view.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/views/strongs-view.js", import.meta.url), "utf8"),
   readFile(new URL("../app/src/views/interlinear-translation-view.js", import.meta.url), "utf8"),
+  readFile(new URL("../app/src/views/user-data-view.js", import.meta.url), "utf8"),
+  readFile(new URL("../app/src/detail-views.js", import.meta.url), "utf8"),
+  readFile(new URL("../app/src/views/jobs-view.js", import.meta.url), "utf8"),
 ]);
 
 assert.equal((index.match(/id="study-marks-icon"/g) || []).length, 1, "Study Marks must have one official icon definition.");
@@ -27,6 +30,31 @@ const homeButtonMarkup = index.match(/<button id="homeButton"[\s\S]*?<\/button>/
 assert(chapterTools.includes('id="showOutline"'), "Outline must remain available in reader header tools.");
 assert(chapterTools.includes('id="showInterlinear"'), "Language Study must remain available in reader header tools.");
 assert.equal(sideTools, "", "Chapter and Book tool groups must not reserve side-panel height.");
+assert.equal((chapterTools.match(/id="showMyData"/g) || []).length, 1, "Workspace tools must expose exactly one My Data control.");
+assert(!/id="showJobs"|>Processing<|id="showUserData"|>Study Data</.test(chapterTools), "Processing and Study Data must not remain header controls.");
+assert(
+  /\["My Data", runWithReaderData\(detailViews\.showMyData\)\]/.test(app) &&
+    !/\["Jobs"|\["Data"/.test(app),
+  "Home must expose one My Data action without Jobs or Data duplicates.",
+);
+assert(
+  /showMyData: createUserDataView\(ctx, \{ showStudyMarks: tagsView\.showTagIndex \}\)/.test(detailViews) &&
+    /setDetail\("My Data", wrap\)/.test(userDataView),
+  "My Data must use one stable global detail view.",
+);
+assert(
+  /diagnostics\.className = "advanced-diagnostics"/.test(userDataView) &&
+    !/diagnostics\.open\s*=\s*true/.test(userDataView) &&
+    /renderJobsDiagnostics/.test(userDataView) &&
+    /payload\.textContent = JSON\.stringify/.test(jobsView),
+  "Technical job controls must be text-only and nested in collapsed-by-default diagnostics.",
+);
+assert(
+  /Refresh Study Marks index/.test(userDataView) &&
+    !/\bSync\b/.test(userDataView) &&
+    /does not change personal study data/.test(userDataView),
+  "Local maintenance must use plain-language Refresh wording and explain data impact.",
+);
 
 assert(/html\s*{\s*overflow-x:\s*clip;/.test(css), "The document must not create a sticky-breaking horizontal overflow container.");
 assert(/body\s*{[\s\S]*?overflow-x:\s*clip;/.test(css), "The body must not create a sticky-breaking horizontal overflow container.");
@@ -215,4 +243,4 @@ assert(
   "Browser-visible app and stylesheet entry points must use the current cache-buster key.",
 );
 
-console.log(JSON.stringify({ status: "ok", assertions: 51 }, null, 2));
+console.log(JSON.stringify({ status: "ok", assertions: 56 }, null, 2));

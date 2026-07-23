@@ -30,8 +30,7 @@ export const els = {
   showSearch: document.querySelector("#showSearch"),
   openStudyPanel: document.querySelector("#openStudyPanel"),
   showTags: document.querySelector("#showTags"),
-  showJobs: document.querySelector("#showJobs"),
-  showUserData: document.querySelector("#showUserData"),
+  showMyData: document.querySelector("#showMyData"),
   themeToggle: document.querySelector("#themeToggle"),
 };
 
@@ -51,7 +50,7 @@ export function setStatus(text) {
 }
 
 const defaultDetailText =
-  "Select a footnote, cross-reference, commentary, outline item, interlinear token, search result, verse tag, job, or user-data tool.";
+  "Select a footnote, cross-reference, commentary, outline item, language-study token, search result, Study Mark, or My Data tool.";
 const detailHistory = [];
 const detailForwardHistory = [];
 let currentDetailTransient = false;

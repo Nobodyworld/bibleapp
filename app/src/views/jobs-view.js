@@ -24,15 +24,12 @@ function jobFriendlySummary(job) {
   return parts.filter(Boolean).join(" • ") || "Local study processing task";
 }
 
-export function createJobsView(ctx) {
-  return function showJobs() {
+export function renderJobsDiagnostics(ctx, refresh = () => {}) {
     const wrap = document.createElement("div");
-    const heading = document.createElement("h3");
-    heading.textContent = "Local Processing";
     const intro = document.createElement("p");
     intro.className = "local-processing-intro";
-    intro.textContent = "Local processing keeps study indexes, derived views, and browser-local study data current without a remote service.";
-    wrap.append(heading, intro);
+    intro.textContent = "Technical job history and controls for troubleshooting browser-local processing.";
+    wrap.append(intro);
 
     const jobs = getAllJobEvents(ctx.state);
     const summary = document.createElement("p");
@@ -47,8 +44,7 @@ export function createJobsView(ctx) {
       const empty = document.createElement("p");
       empty.textContent = "No local processing tasks are queued.";
       wrap.append(empty);
-      setDetail("Local Processing", wrap);
-      return;
+      return wrap;
     }
 
     const addJobAction = (parent, job, label, status, className = "") => {
@@ -58,7 +54,7 @@ export function createJobsView(ctx) {
       button.textContent = label;
       button.addEventListener("click", () => {
         updateJobStatus(ctx.state, job.store, job.id, status);
-        showJobs();
+        refresh();
       });
       parent.append(button);
     };
@@ -70,7 +66,7 @@ export function createJobsView(ctx) {
       button.textContent = "Run";
       button.addEventListener("click", async () => {
         updateJobStatus(ctx.state, job.store, job.id, "running");
-        showJobs();
+        refresh();
         try {
           const result = await runJob(job, ctx.state);
           completeJob(ctx.state, job.store, job.id, result, "completed");
@@ -87,7 +83,7 @@ export function createJobsView(ctx) {
             "failed",
           );
         }
-        showJobs();
+        refresh();
       });
       parent.append(button);
     };
@@ -182,6 +178,17 @@ export function createJobsView(ctx) {
       wrap.append(section);
     }
 
+    return wrap;
+}
+
+export function createJobsView(ctx) {
+  return function showJobs() {
+    const wrap = document.createElement("div");
+    const heading = document.createElement("h3");
+    heading.textContent = "Local Processing";
+    wrap.append(heading);
+    const refresh = () => showJobs();
+    wrap.append(renderJobsDiagnostics(ctx, refresh));
     setDetail("Local Processing", wrap);
   };
 }

@@ -44,3 +44,24 @@ Translation workspace has no primary editing surface, but drafts remain
 counted, importable, exportable, merge/replace-compatible, and separate from
 personal meanings. Existing `bibleapp:user-data` exports remain compatible,
 including exports with legacy token-rendering records or verse drafts.
+
+### My Data backup and maintenance contract
+
+The My Data surface reports user-owned records before implementation history:
+custom labels, tagged verses, Study Mark assertions, active Study Marks,
+personal meanings, and preserved legacy verse drafts. These stores remain local
+to the current browser profile and are not associated with an online account.
+
+Portable backups retain kind `bibleapp:user-data` and version `3`. Download,
+raw JSON copy, file selection, pasted JSON, merge, and replace all use the same
+export/import contract. Replace creates a browser-local recovery backup before
+overwriting current stores. Import normalization and compatibility checks occur
+before mutation; malformed, foreign, or unsupported future-version payloads do
+not partially change current stores.
+
+`tag-index-refresh` rebuilds a disposable Study Marks projection from canonical
+local assertions. The ordinary maintenance action does not edit assertions or
+other personal study data. Job history, package state, raw payloads/results,
+storage authority and migrations, quarantined records, and capability controls
+remain diagnostics. No part of this contract adds cloud backup, accounts,
+cross-device synchronization, remote package checks, or network calls.
