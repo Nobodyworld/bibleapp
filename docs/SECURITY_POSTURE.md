@@ -42,10 +42,8 @@ Issue #5 is the system of record for which controls are owner-confirmed, which
 are connector-verified, and which remain pending. Availability alone is not
 verification.
 
-Draft PR #24 has completed a successful post-public rerun of both Verify matrix
-jobs, but it remains draft and product-review blocked. It must be reconciled with
-current `main` before any future merge decision.
-
 Public visibility does not create a production release, stable API promise, or
-release tag. It also does not relicense bundled third-party Bible and study data;
-see `NOTICE.md` and `app/data/source-manifest.json`.
+release tag, and green checks do not authorize one. A later release or tag
+requires the final gates in issue #5 and explicit owner authorization. Public
+visibility also does not relicense bundled third-party Bible and study data; see
+`NOTICE.md` and `app/data/source-manifest.json`.

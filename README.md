@@ -2,9 +2,10 @@
 
 > **PUBLIC PREVIEW — ACTIVE DEVELOPMENT**
 >
-> The static reader is functional and actively developed. The side-panel,
-> personal Meaning, Study Marks, and My Data interfaces are still
-> evolving. This repository does not promise a production release or stable API.
+> The static reader is functional and actively developed. Compact reader
+> context, personal Meaning, Study Marks, and My Data remain evolving product
+> surfaces. This repository does not promise a production release or stable
+> API.
 >
 > Application code, tests, scripts, schemas, and tooling are MIT-licensed.
 > Bundled Bible and study data retains its own source rights and notices.
@@ -78,15 +79,21 @@ tracked in issue #16.
 
 - Canonical semantic targets for books, chapters, verses, ranges, text spans,
   source tokens, and source-token spans.
-- Favorites and applicable tags at supported scopes.
+- Favorite remains the canonical `favorite` assertion, with applicable tags at
+  each supported scope.
 - A Study Marks dashboard for reviewing tagged and favorited targets.
-- One My Data surface for understandable summary counts, versioned backup and
-  restore, local maintenance, and collapsed advanced diagnostics.
+- Personal Meaning is separate from Study Marks and applies only to exact
+  canonical source-token identity.
+- One My Data surface organized as My study data, Backup and restore, App
+  settings, Local maintenance, and Advanced diagnostics. Advanced diagnostics
+  is collapsed and lazy by default.
 
 Study Marks and personal Meaning remain separate user tools. My Data keeps raw
 job, package, storage, and capability controls out of the ordinary reader path.
-Browser-local data is not an account; users should download backups they care
-about.
+Portable exports retain kind `bibleapp:user-data` and version `3`, including
+sparse legacy compatibility, recovery backups before replacement, and
+all-or-nothing rejection of malformed imports. Browser-local data is not an
+account; users should download backups they care about.
 
 ### Resilience and accessibility
 
@@ -108,15 +115,21 @@ Study information exists at different scopes:
 - a **book** owns outline and book-level study context;
 - global/user tools own personal data, package, and diagnostic functions.
 
-The current hierarchy is functional but is undergoing a compact corrective
-redesign under issue #17. The intended panel must make the active occupant
-obvious, preserve lock and history behavior, and reserve more space for study
-material than navigation chrome.
+The accepted compact contextual side-panel hierarchy is `Word → Verse`. Word is
+present only for exact canonical word or source-token context; Verse retains its
+parallel, reference, commentary, Language Study, and Study Marks actions.
+Chapter Language Study and Book Outline remain reader-header actions rather than
+persistent side-panel groups. The shared detail pane preserves panel lock,
+highlight, and history behavior while leaving more room for study material.
 
 ## Screenshots
 
-These captures document the current preview baseline. They are not a promise
-that evolving UI surfaces are final.
+These retained captures document an earlier public-preview baseline. They
+predate the accepted compact context, exact-token Meaning, and consolidated My
+Data work, so they are historical visual evidence rather than the current
+release candidate. Capture repair, replacement, and visual approval are
+deferred to issue #33; the existing links remain in place until reviewed
+replacements exist.
 
 ### Reader and navigation
 
@@ -126,7 +139,7 @@ that evolving UI surfaces are final.
 | Detail panel | ![Reader detail panel](docs/images/detail-panel.png) | ![Dark reader detail panel](docs/images/detail-panel-dark.png) |
 | Mobile | ![Mobile reader](docs/images/mobile.png) | ![Dark mobile reader](docs/images/mobile-dark.png) |
 
-Additional current captures:
+Additional retained captures:
 
 - [Book picker](docs/images/book-picker.png)
 - [Verse context controls](docs/images/verse-context-tabs.png)
@@ -200,8 +213,8 @@ Further documentation:
 - [UI functionality contract](app/docs/UI_FUNCTIONALITY_SCHEMA.md)
 - [Test inventory](tests/TEST_INVENTORY.md)
 
-Repository-wide documentation and loose-file reconciliation is tracked in issue
-#15.
+Repository-wide documentation and loose-file reconciliation is completed
+through issue #15. The dependency-ordered program roadmap is issue #22.
 
 ## Package Inventory and Repository Size
 
@@ -261,22 +274,23 @@ repository-security posture.
 
 ## Project Status
 
-The repository is being prepared for **PUBLIC PREVIEW — ACTIVE DEVELOPMENT**.
-Public visibility is separate from final release or tag readiness.
+The repository is **PUBLIC PREVIEW — ACTIVE DEVELOPMENT**. Public visibility is
+separate from a stable release, release tag, API promise, or blanket relicensing
+of bundled data.
 
-Current work:
+Compact `Word → Verse` context, unified target-aware Study Marks, exact
+source-token Meaning, consolidated My Data, and repository documentation
+reconciliation are complete. Remaining work is dependency-ordered under issue
+#22:
 
-- issue #15 — documentation and loose-file reconciliation;
-- issue #16 — hover-first supplemental study UX;
-- issue #19 — active My Data simplification phase;
-- issue #5 — public-preview activation, post-public security activation, and
-  later final release/tag gates.
+- issue #16 — remaining hover-first, touch, and containment evidence;
+- issue #33 — screenshot workflow repair and final capture review after
+  documentation reconciliation;
+- issues #6 and #7 — later package/performance classification and broader
+  manual browser QA;
+- issue #5 — live security evidence and final release/tag gates.
 
-Reader context, Study Marks, and personal Meaning dependencies are merged. My
-Data remains the current focused public-preview implementation phase.
-
-Issues #6 and #7 remain post-public performance and broader manual browser-QA
-work unless they reveal a severe blocker.
+No release or tag is authorized by this status or by automated checks alone.
 
 ## Contributing
 

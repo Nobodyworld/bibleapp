@@ -1,6 +1,6 @@
 # UI Functionality Contract
 
-Reviewed: 2026-07-21
+Reviewed: 2026-07-23
 
 ## Control placement
 
@@ -21,7 +21,7 @@ Reviewed: 2026-07-21
 - Book and Chapter mark controls rerender after tag changes and after navigation so their labels, icons, counts, badges, targets, and menu contents remain current.
 - The reader ellipsis is only the verse study-tools launcher. It remains hover/focus-revealed on pointer devices and touch-reachable on coarse layouts; a locked reader context does not make it permanently visible.
 - Verse-context and Language Study source-token Study Marks controls use canonical targets and preserve Favorite as the `favorite` assertion.
-- Interlinear source-token tag actions open the target-aware tag editor. The editor only presents active tags whose `allowed_target_types` include `source_token`.
+- Language Study source-token tag actions open the target-aware tag editor. The editor only presents active tags whose `allowed_target_types` include `source_token`.
 - Selecting reader text exposes Favorite, Tags, Study, Draft, and Red letters actions. Favorite and Tags use one canonical `text_span` target.
 
 The executable control map is `src/ui-contracts.js`. The scoped navigation order and tool matrix are `src/panel-context-model.js`.
@@ -71,7 +71,7 @@ Every study control resolves to exactly one state:
 | `capability_unavailable` | no | A required package or capability is disabled, missing, or invalid. |
 | `data_unavailable` | no | The capability exists, but the current book, chapter, or verse has no applicable data. |
 
-The chapter Language Study control and Translation workspace require the internal interlinear capability plus at least one tokenized verse in the current chapter. The verse `Int` automation label represents the visibly rendered Language control and requires tokens for that exact verse. Strong's concordance controls resolve in this order: recognized canonical selected-token language, Strong code or authoritative Strong metadata, source metadata, then book/testament fallback. An unrecognized canonical placeholder may still yield to exact Strong/source evidence, but never to broad testament inference; otherwise unknown language renders neither. Only the resolved Hebrew or Greek control renders. The rendered control follows the existing loading/present/absent lifecycle with native `disabled`, `aria-disabled`, title, accessible name, and unavailable state. The current scoped self-control uses `aria-current="page"` and remains visually distinct.
+The chapter Language Study control requires the internal interlinear capability plus at least one tokenized verse in the current chapter. The verse `Int` automation label represents the visibly rendered Language control and requires tokens for that exact verse. Strong's concordance controls resolve in this order: recognized canonical selected-token language, Strong code or authoritative Strong metadata, source metadata, then book/testament fallback. An unrecognized canonical placeholder may still yield to exact Strong/source evidence, but never to broad testament inference; otherwise unknown language renders neither. Only the resolved Hebrew or Greek control renders. The rendered control follows the existing loading/present/absent lifecycle with native `disabled`, `aria-disabled`, title, accessible name, and unavailable state. The current scoped self-control uses `aria-current="page"` and remains visually distinct.
 
 ## Panel interaction modes
 
@@ -86,19 +86,19 @@ Transitions:
 - Hover alone never enters `locked`.
 - Clicking a disengage/background target, clearing the panel, or resetting it returns to `follow`.
 - Changing translation, book, or chapter returns to `follow`, clears the Strong's pin and stale detail content, and preserves reader-location Back/Forward history.
-- Panel Back/Forward restores the saved panel and mode. Restoring an Interlinear verse view must re-arm its lazy loader.
+- Panel Back/Forward restores the saved panel and mode. Restoring an internal interlinear verse view must re-arm its lazy loader.
 - Scope navigation reuses the existing detail-history and lock authority in `src/dom.js`; it must not create another history stack or independent lock state.
 
 ## Runtime module identity
 
 All versioned static JavaScript imports use one release query key. Stateful modules, especially `dom.js` and `stores.js`, must resolve to one URL throughout the runtime graph. Different query strings create independent browser module instances and would split panel history, lock state, or persistence authority.
 
-## Interlinear rendering and synchronization
+## Internal interlinear rendering and synchronization
 
 Reader and panel tokens match by `verse + token_index`. Strong's code is used only when it identifies exactly one token.
 
 - Reader token hover/focus highlights and scrolls the matching interlinear card into view.
-- Interlinear card hover/focus highlights the matching reader token.
+- Language Study card hover/focus highlights the matching reader token.
 - Leaving either token clears both temporary highlights.
 - Synchronization does not unlock or replace a locked panel.
 - A verse inspection renders one verse initially and appends the next verse as the user nears the bottom of `#detailContent`.
@@ -162,7 +162,7 @@ IndexedDB initialization and migration have a three-second boundary. If the brow
 - `app/scripts/panel-context-interaction-test.mjs`: light/dark desktop, narrow, and mobile Word-first ordering, inherited Verse navigation, Verse-only clearing, contained source-word and verse Study Marks popovers, picker-wheel ownership, horizontal-overflow checks, sticky-header placement, visible headings, and browser-error coverage.
 - `app/scripts/original-language-study-interaction-test.mjs`: rendered source/transliteration rows, lazy study enhancement, related-reference preview/navigation/history, and tooltip-containment behavior when the browser runner is available.
 - `app/scripts/interaction-test.mjs`: rendered interaction behavior, including reader text-span selection, favorite controls, editable target badges, source-token tagging, Favorites grouping, panel history, and cleanup, when the browser runner is available.
-# Compact side-panel Study Marks contract
+## Compact side-panel Study Marks contract
 
 The reader side panel is limited to the current exact Word (when present) and Verse context. Its selected-word summary is visually separated from a compact control row. Chapter Language Study and Book Outline remain reader-header actions. Study Marks is one reusable icon trigger backed by the canonical target-aware picker; Book, Chapter, Verse, selected English text, and exact source tokens preserve their existing separate semantic targets and Favorite remains the `favorite` tag assertion. Meaning is a separate action beside Study Marks on exact Language Study source-token cards and in the pinned exact-word Word row. It is absent from transient, lexicon-only, and whole-verse contexts and is not a Study Marks behavior.
 
