@@ -57,5 +57,7 @@ release posture materially changes; do not describe CodeQL as enabled.
 Activation and verification evidence is tracked in issue #5. A control must not
 be described as verified merely because it is available for public repositories.
 
-Public visibility is not a release tag and does not waive the product-review hold
-on draft PR #24.
+Public visibility and green automated checks do not create a production release,
+stable API promise, release tag, or release authorization. Issue #5 records the
+live security and release-gate evidence; a later release or tag still requires
+explicit owner authorization.

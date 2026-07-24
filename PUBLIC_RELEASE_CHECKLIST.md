@@ -1,125 +1,170 @@
 # Public Preview and Release Checklist
 
-Bible App Reader uses three separate readiness states. Public visibility must not
-be confused with a stable release or a blanket rights conclusion for bundled
-data.
+Bible App Reader uses separate gates for public-preview visibility, product
+stabilization, final-candidate evidence, and any later release or tag. Public
+visibility must not be confused with a stable release, API promise, release
+authorization, or blanket rights conclusion for bundled data.
+
+Issue #5 is the live record for completed evidence and control state. This file
+defines the maintained repository procedure; neither source authorizes a
+release or tag without an explicit owner decision.
 
 ## Phase A — Public Preview Visibility
 
-Status language:
+Required status language:
 
 > **PUBLIC PREVIEW — ACTIVE DEVELOPMENT**
 
-The repository is public as a functional preview while planned interface work
-remains open.
+### Completed visibility gates
 
-### Completed preview gates
-
-- [x] `main` baseline identified and tested.
 - [x] README states that the reader is functional and actively developed.
-- [x] README identifies the side-panel, Meaning, Study Marks, Processing, and
-  Study Data interfaces as evolving.
 - [x] README promises neither a production release nor a stable API.
-- [x] README and NOTICE distinguish MIT-licensed application code/tooling from
-  bundled third-party data.
+- [x] README and NOTICE distinguish MIT-licensed application code and tooling
+  from bundled third-party data.
 - [x] README directs redistributors to `NOTICE.md` and
   `app/data/source-manifest.json`.
 - [x] Source-attached notices remain intact without a new legal conclusion.
-- [x] Generated package metadata points to the source manifest and does not label
-  the complete bundled package as MIT, CC0, or public domain.
-- [x] Local static, desktop-browser, mobile-browser, inventory, publish-audit,
-  npm-audit, complete-history Gitleaks, and diff checks passed on the recorded
-  preview baseline.
-- [x] No tracked local absolute paths, personal notes, agent artifacts, scan
-  reports, browser profiles, or databases were found by the public-file review.
-- [x] Existing tracked screenshots were retained without replacement for the
-  initial public preview; generated differences remain uncommitted.
-- [x] Repository visibility changed to public.
+- [x] Generated package metadata does not apply one blanket MIT, CC0, or
+  public-domain label to the complete bundled package.
+- [x] Initial public-preview validation covered static, desktop-browser,
+  mobile-browser, inventory, publish-audit, dependency-audit, Gitleaks, and diff
+  checks.
+- [x] Repository visibility is public.
 
-Public-preview visibility does not require completion of every open UX issue.
-PR #24 remains draft and must not merge merely to publish the repository.
+Public-preview visibility does not require every final-candidate gate to be
+complete and does not authorize a release or tag.
 
-## Phase B — Final Release or Tag Readiness
+## Phase B — Product Stabilization
 
-This phase is intentionally stricter and remains incomplete after public-preview
-visibility.
+- [x] Compact contextual side-panel navigation is `Word → Verse`.
+- [x] Chapter Language Study and Book Outline remain reader-header actions.
+- [x] Study Marks remains target-aware across Book, Chapter, Verse, selected
+  text, and exact source tokens; Favorite remains the canonical `favorite`
+  assertion.
+- [x] Meaning is separate from Study Marks and applies only to exact canonical
+  source-token identity.
+- [x] Separate Processing and Study Data user-facing surfaces are retired.
+- [x] My Data contains My study data, Backup and restore, App settings, Local
+  maintenance, and collapsed, lazy Advanced diagnostics.
+- [x] Browser-local operation, sparse legacy compatibility, recovery backups,
+  malformed-import atomicity, and the no-network boundary remain intact.
 
-- [ ] Classify issues #15, #16, #17, #18, #19, and #25 as completed, blocking,
-  or intentionally deferred for a stable release.
-- [ ] Complete the accepted side-panel, Meaning, and Study Marks interaction
-  design.
-- [ ] Complete Processing and Study Data simplification or explicitly defer it.
-- [ ] Complete repository documentation and loose-file reconciliation.
-- [ ] Refresh and approve screenshots against the accepted final UI.
-- [ ] Complete broader browser QA under issue #7.
-- [ ] Complete post-public package/performance review under issue #6.
-- [ ] Confirm README copy, screenshots, and maintained documentation match the
-  final application.
-- [ ] Confirm the publication-rights review is complete for the intended release
-  contents.
-- [ ] Confirm `main` is the intended release commit and all required checks are
-  green.
-- [ ] Create a public tag or release only after the owner explicitly authorizes
-  it.
+## Phase C — Documentation and Artifact Reconciliation
 
-## Phase C — Post-Public GitHub Security Activation
+Completed through issue #15.
 
-### Confirmed
+- [x] Reconcile maintained product, architecture, data-model, security, release,
+  test, and screenshot documentation.
+- [x] Classify every tracked documentation and relevant loose-file candidate.
+- [x] Check inbound references before any deletion, rename, or archive.
+- [x] Replace transient pull-request assertions with durable documentation
+  invariants.
+- [x] Expand executable documentation-consistency coverage.
+- [x] Preserve `NOTICE.md` and `app/data/source-manifest.json`.
+- [x] Keep screenshot generation and image replacement deferred to issue #33.
 
-- [x] Draft PR #24 was rerun after publication without changing its draft or
-  product-review status.
-- [x] PR #24 passed `verify (20)` and `verify (24)` on its exact public head.
-- [x] Secret Protection and push protection are owner-confirmed enabled.
-- [x] Private vulnerability reporting is owner-confirmed enabled.
-- [x] Branch protection is owner-confirmed configured with `verify (20)` and
-  `verify (24)` as required checks.
-- [x] GitHub Actions remain pinned to full-length commit SHAs.
-- [x] CodeQL Default Setup intentionally remains disabled by owner decision for
-  the current public preview; local and hosted static verification, dependency
-  auditing, complete-history secret scanning, and manual review remain active.
+Final screenshot work begins only after this reconciled documentation is on
+`main`.
 
-### Still to verify
+## Phase D — Final Candidate Evidence
 
-- [ ] Manually dispatch `Verify` on current `main`.
-- [ ] Confirm `verify (20)` and `verify (24)` pass on current `main`.
-- [ ] Enable or verify Dependabot alerts.
-- [ ] Enable or verify Dependabot security updates.
-- [ ] Confirm public rendering of README, notices, screenshots, issue templates,
-  and the security policy.
-- [ ] Recheck branch/ruleset behavior after the first successful public `main`
-  Verify run.
+### Screenshots — issue #33
 
-## Latest Public-Preview Baseline Verification
+- [ ] Repair the public capture workflow against the accepted reader and My Data
+  interfaces.
+- [ ] Generate and visually approve reader, compact context, Language Study,
+  Study Marks, Meaning, My Data, search, and representative mobile captures.
+- [ ] Make filenames, the generated inventory, public descriptions, and README
+  references agree.
 
-Validated locally on 2026-07-14 America/Chicago at:
+### Cross-browser QA — issues #7 and #16
 
-```text
-b89e1e42c94b346c9c9ea4b83eebf3552ae0f45b
+- [ ] Complete the recorded desktop and mobile browser matrix where the
+  platforms are available.
+- [ ] Verify compact context, Study Marks, Meaning, My Data, backup/restore,
+  maintenance, diagnostics, and hover-first interactions.
+- [ ] Resolve severe public-facing defects or explicitly record focused
+  follow-up.
+
+### Package and performance — issue #6
+
+- [ ] Measure cold and warm runtime workflows and distribution methods on the
+  exact candidate.
+- [ ] Classify findings as acceptable, follow-up, blocker, or unavailable
+  evidence.
+- [ ] Do not remove or relocate bundled data without explicit owner approval.
+
+## Phase E — Final Rights, Security, Metadata, and Clean-Checkout Gate
+
+- [ ] Confirm README, architecture, UI documentation, screenshots, and
+  application behavior agree.
+- [ ] Confirm publication-rights review for the intended contents is complete.
+- [ ] Confirm `NOTICE.md` and `app/data/source-manifest.json` remain accurate and
+  intact.
+- [ ] Validate a clean checkout with supported Node versions and `npm ci`.
+- [ ] Run full `npm run verify` on the exact candidate.
+- [ ] Run `npm audit --audit-level=low` and record the result.
+- [ ] Run the required Gitleaks history or exact-range scan and record its
+  version, command, range, and result.
+- [ ] Confirm worktree cleanliness and local/remote candidate equality.
+- [ ] Confirm required hosted checks pass on the exact candidate.
+- [ ] Recheck public rendering, repository metadata, and required-check
+  enforcement.
+
+## Post-Public GitHub Security Posture
+
+### Owner-confirmed controls
+
+- [x] Private vulnerability reporting.
+- [x] Secret Protection and push protection.
+- [x] Branch protection requiring `verify (20)` and `verify (24)`.
+
+### Repository-verified configuration
+
+- [x] Verify runs on Node 20 and Node 24.
+- [x] GitHub Actions references are pinned to full commit SHAs.
+- [x] Dependabot is configured weekly for npm and GitHub Actions.
+
+CodeQL Default Setup intentionally remains disabled for the current public
+preview by owner decision. Local and hosted static verification, dependency
+auditing, Gitleaks, pinned Actions, and manual security review remain active
+controls. Reassess CodeQL only if the architecture, threat model, licensing, or
+release posture materially changes.
+
+### Recheck on the final candidate
+
+- [ ] Confirm Dependabot alerts and security updates remain enabled.
+- [ ] Confirm Secret Protection, push protection, and private vulnerability
+  reporting remain enabled.
+- [ ] Confirm required checks actually block an unsuitable merge.
+- [ ] Confirm repository About metadata and public documentation rendering are
+  current.
+
+## Exact-Candidate Validation
+
+Record commands and exit codes for the exact candidate:
+
+```powershell
+npm ci
+node ./tests/public-preview-readiness.mjs
+node ./app/scripts/doc-consistency-test.mjs
+npm run test:static
+npm run verify
+npm audit --audit-level=low
+gitleaks git . --log-opts="<accepted-base>..HEAD"
+git diff --check
+git status --short --branch
 ```
 
-Results:
+Issue-specific work may require additional focused tests. Screenshot generation
+belongs to issue #33 and must be followed by manual visual review.
 
-- `npm ci`: passed; zero vulnerabilities reported.
-- `npm run inventory:check`: passed; 29 feature packs and 2,804 files.
-- `npm run test:static`: passed.
-- `npm run test:browser`: passed; desktop and responsive browser journeys.
-- `npm run test:browser:mobile`: passed; 38 mobile checks.
-- `npm run verify`: passed.
-- `npm audit --audit-level=low`: passed; zero vulnerabilities.
-- `gitleaks detect --source . --no-git=false`: passed; 171 commits and
-  approximately 990.24 MB scanned with no leaks.
-- `git diff --check`: passed.
-- `npm run screenshots:public`: passed; generated 17 current captures for visual
-  review, but generated image differences were not committed.
-- Original checkout and isolated worktree had no untracked files before
-  screenshot generation.
-- Tracked path and suspicious-filename searches found no matches.
+## Authorization Boundary
 
-## Do Not Do Automatically
-
-- Do not create tags or releases as part of the public-preview change.
-- Do not merge PR #24 without product approval.
+- Do not create a tag or release because automated checks are green.
 - Do not delete or simplify source notices.
 - Do not describe all bundled data as open source, MIT, CC0, or public domain.
-- Do not alter branch protection, rulesets, or security settings without explicit
-  owner authorization.
+- Do not alter branch protection, rulesets, security settings, licensing, or
+  release configuration without explicit owner authorization.
+- Create a release or tag only after all applicable gates are completed,
+  accepted, or intentionally deferred and the owner separately authorizes it.

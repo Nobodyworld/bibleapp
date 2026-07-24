@@ -6,7 +6,7 @@ reproducible reader behavior. Pull requests may be reviewed case by case.
 
 ## Before Opening an Issue
 
-- Check the README known limitations.
+- Check the [README current boundaries](README.md#current-boundaries).
 - Include the route or reference being viewed.
 - Include browser and operating system details.
 - For data-rights questions, include the relevant file path and notice text.
